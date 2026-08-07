@@ -583,19 +583,14 @@ tr.new-row{animation:rowIn .2s ease both;}
     </div>
     <div class="admin-body">
 
-      <!-- Password admin -->
-      <div class="admin-section-title">Password Admin</div>
-      <div class="admin-pwd-row">
-        <input type="password" id="new-admin-pwd" placeholder="Nuova password admin..."/>
-        <button class="btn btn-sm" style="background:var(--orange);color:#fff;border:none;" id="btn-change-pwd">Cambia</button>
-      </div>
+      <!-- (la password si modifica dalla matita accanto a ogni utente) -->
 
       <!-- Utenti -->
       <div class="admin-section-title">Utenti registrati</div>
       <table class="users-table">
         <thead>
           <tr>
-            <th>Username</th>
+            <th>Nome e Cognome</th>
             <th>Password</th>
             <th>Ruolo</th>
             <th>Stato</th>
@@ -611,15 +606,19 @@ tr.new-row{animation:rowIn .2s ease both;}
       <div class="add-user-form">
         <div class="form-row">
           <div class="form-field">
-            <label>Username</label>
-            <input type="text" id="new-username" placeholder="es. mario"/>
+            <label>Nome</label>
+            <input type="text" id="new-nome" placeholder="es. Mario"/>
           </div>
+          <div class="form-field">
+            <label>Cognome</label>
+            <input type="text" id="new-cognome" placeholder="es. Rossi"/>
+          </div>
+        </div>
+        <div class="form-row" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="form-field">
             <label>Password</label>
             <input type="password" id="new-password" placeholder="password"/>
           </div>
-        </div>
-        <div class="form-row" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
           <div class="form-field">
             <label>Ruolo</label>
             <select id="new-role">
@@ -628,16 +627,15 @@ tr.new-row{animation:rowIn .2s ease both;}
               <option value="admin">Admin</option>
             </select>
           </div>
-          <div class="form-field" style="justify-content:flex-end;">
-            <label>&nbsp;</label>
-            <button class="btn btn-blue" id="btn-add-user" style="width:100%;">+ Aggiungi</button>
-          </div>
         </div>
         <div class="form-row" id="new-lab-row" style="display:none;grid-template-columns:1fr;margin-bottom:14px;">
           <div class="form-field">
             <label>Laboratorio assegnato</label>
             <select id="new-lab"></select>
           </div>
+        </div>
+        <div class="form-row" style="grid-template-columns:1fr;margin-bottom:6px;">
+          <button class="btn btn-blue" id="btn-add-user" style="width:100%;">+ Aggiungi utente</button>
         </div>
         <div id="add-user-err" style="font-size:11px;color:var(--red);display:none;"></div>
       </div>
@@ -658,12 +656,47 @@ tr.new-row{animation:rowIn .2s ease both;}
         </div>
         <div>
           <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Miscele di CLS</label>
+          <div style="font-size:10px;color:var(--muted);margin:2px 0 4px;">Per ogni miscela: cubetti del prelievo <b>Sett.</b>imanale, del <b>1°</b> e del <b>2°</b>+ della giornata. Il tasto <b>⚙</b> apre gli intervalli ammessi (slump, spandimento, temperatura CLS).</div>
           <div style="display:flex;gap:8px;margin:6px 0 10px;">
             <input type="text" id="ra-mix-input" placeholder="es. C28/35" style="flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;"/>
             <button class="btn btn-blue btn-sm" id="ra-mix-add">+ Aggiungi</button>
           </div>
           <div id="ra-mix-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <details style="margin-top:10px;">
+            <summary style="cursor:pointer;font-size:11px;color:var(--accent);">⬆ Importa elenco da Excel (incolla)</summary>
+            <div style="font-size:11px;color:var(--muted);margin:6px 0;">Copia la colonna delle miscele da Excel e incollala qui sotto (una per riga). Poi premi «Importa elenco».</div>
+            <textarea id="ra-mix-bulk" rows="5" placeholder="C25/30&#10;C28/35&#10;C32/40&#10;..." style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+            <button class="btn btn-blue btn-sm" id="ra-mix-bulk-add" style="margin-top:6px;">Importa elenco</button>
+          </details>
         </div>
+      </div>
+      <div style="margin-top:16px;">
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Imprese esecutrici</label>
+        <div style="display:flex;gap:8px;margin:6px 0 10px;">
+          <input type="text" id="ra-imp-input" placeholder="es. Rossi Costruzioni S.r.l." style="flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;"/>
+          <button class="btn btn-blue btn-sm" id="ra-imp-add">+ Aggiungi</button>
+        </div>
+        <div id="ra-imp-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;font-size:11px;color:var(--accent);">⬆ Importa imprese da Excel (incolla)</summary>
+          <div style="font-size:11px;color:var(--muted);margin:6px 0;">Copia la colonna delle imprese da Excel e incollala qui sotto (una per riga). Poi premi «Importa elenco».</div>
+          <textarea id="ra-imp-bulk" rows="5" placeholder="Rossi Costruzioni S.r.l.&#10;Bianchi Appalti S.p.A.&#10;..." style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+          <button class="btn btn-blue btn-sm" id="ra-imp-bulk-add" style="margin-top:6px;">Importa elenco</button>
+        </details>
+      </div>
+      <div style="margin-top:16px;">
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">WBS</label>
+        <div style="display:flex;gap:8px;margin:6px 0 10px;">
+          <input type="text" id="ra-wbs-input" placeholder="es. 0P09" style="flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;"/>
+          <button class="btn btn-blue btn-sm" id="ra-wbs-add">+ Aggiungi</button>
+        </div>
+        <div id="ra-wbs-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;font-size:11px;color:var(--accent);">⬆ Importa WBS da Excel (incolla)</summary>
+          <div style="font-size:11px;color:var(--muted);margin:6px 0;">Copia la colonna delle WBS da Excel e incollala qui sotto (una per riga). Poi premi «Importa elenco».</div>
+          <textarea id="ra-wbs-bulk" rows="5" placeholder="0P09&#10;VI10&#10;AB01&#10;..." style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+          <button class="btn btn-blue btn-sm" id="ra-wbs-bulk-add" style="margin-top:6px;">Importa elenco</button>
+        </details>
       </div>
       <div style="margin-top:16px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;">
         <div class="form-field" style="max-width:150px;">
@@ -731,7 +764,7 @@ tr.new-row{animation:rowIn .2s ease both;}
       <button class="tab-btn" onclick="switchMainTab('editor-pdf',this)">&#9998; Editor PDF</button>
       <button class="tab-btn" onclick="switchMainTab('spacchetta-targhette',this)">&#127991;&#65039; Spacchetta Targhette</button>
       <button class="tab-btn" onclick="switchMainTab('editor-cartellini',this)">&#128397;&#65039; Editor Cartellini</button>
-      <button class="tab-btn" onclick="switchMainTab('registro',this)">&#129514; Registro Prelievi</button>
+      <button class="tab-btn" onclick="switchMainTab('registro',this)">&#129514; Registro CLS</button>
     </nav>
 
     <!-- ══ TAB 1: RINOMINA ══ -->
@@ -2198,7 +2231,23 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-grid{display:block;}
 #tab-registro .reg-f{display:flex;flex-direction:column;gap:7px;}
 #tab-registro .reg-f label{font-size:13px;letter-spacing:0;text-transform:none;color:var(--text);font-weight:600;}
-#tab-registro .reg-f input,#tab-registro .reg-f select{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:9px;padding:13px;font-size:15px;font-family:inherit;width:100%;}
+#tab-registro .reg-f input,#tab-registro .reg-f select{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:9px;padding:13px;font-size:15px;font-family:inherit;width:100%;box-sizing:border-box;}
+#tab-registro .reg-f input[type=date]{-webkit-appearance:none;appearance:none;min-height:48px;}
+#tab-registro .reg-chips{display:flex;gap:8px;flex-wrap:wrap;}
+#tab-registro .reg-chip{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:9px;padding:12px 20px;font-size:15px;cursor:pointer;min-width:54px;}
+#tab-registro .reg-chip:hover{border-color:var(--accent);}
+#tab-registro .reg-chip.on{border-color:var(--accent);background:rgba(var(--accent-rgb),.12);color:var(--accent);font-weight:700;}
+#tab-registro .reg-guide{background:rgba(var(--accent-rgb),.07);border:1px solid var(--accent);border-radius:14px;padding:14px 16px;margin-bottom:16px;font-size:13px;}
+#tab-registro .reg-guide-t{font-weight:700;margin-bottom:8px;}
+#tab-registro .reg-guide-list{display:flex;flex-direction:column;gap:4px;color:var(--text);}
+#tab-registro .reg-guide-list b{color:var(--accent);}
+#tab-registro .reg-guide-empty{color:var(--muted);}
+#tab-registro .reg-guide-suggest{margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);font-size:14px;}
+#tab-registro .reg-guide-suggest b{color:var(--accent);}
+#tab-registro .reg-guide-ok{color:var(--green);font-size:11px;}
+#tab-registro .reg-guide-warn{color:var(--red);font-size:11px;font-weight:700;}
+#tab-registro .reg-rangewarn{background:rgba(224,90,90,.10);border:1px solid var(--red);border-radius:14px;padding:12px 16px;margin-bottom:16px;color:var(--text);font-size:13px;}
+#tab-registro .reg-rangewarn b{color:var(--red);}
 #tab-registro .reg-f input:focus,#tab-registro .reg-f select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15);}
 #tab-registro .reg-mixrow{display:flex;gap:8px;}
 #tab-registro .reg-mixrow select{flex:1;}
@@ -2246,6 +2295,10 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
 #tab-registro table.reg-table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap;}
 #tab-registro table.reg-table th{background:var(--header-bg);color:var(--muted);text-align:left;padding:9px 10px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;position:sticky;top:0;border-bottom:2px solid var(--accent);}
+#tab-registro table.reg-table th.reg-th{cursor:grab;user-select:none;white-space:nowrap;}
+#tab-registro table.reg-table th.reg-th:hover{color:var(--text);}
+#tab-registro table.reg-table th.reg-th.drag{opacity:.35;}
+#tab-registro table.reg-table th.reg-th.over{border-left:3px solid var(--accent);color:var(--accent);}
 #tab-registro table.reg-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);}
 #tab-registro table.reg-table tr:hover td{background:rgba(var(--accent-rgb),.05);}
 #tab-registro table.reg-table tr.rip td{background:rgba(224,90,90,.07);}
@@ -2310,7 +2363,7 @@ tr.new-row{animation:rowIn .2s ease both;}
   <div class="reg-wrap">
 
     <div class="reg-topbar">
-      <div class="reg-title">🧪 Registro Prelievi CLS <small>&mdash; minute digitali dei laboratori</small></div>
+      <div class="reg-title">🧪 Registro CLS <small>&mdash; prelievi e minute digitali</small></div>
     </div>
 
     <!-- Barra laboratori -->
@@ -2327,12 +2380,22 @@ tr.new-row{animation:rowIn .2s ease both;}
 
       <section class="reg-sec">
         <div class="reg-sec-t">1 · Dati generali</div>
-        <div class="reg-f"><label>Data</label><input type="date" id="reg-data"/></div>
-        <div class="reg-f"><label>DDT</label><input type="text" id="reg-ddt" placeholder="n° DDT"/></div>
-        <div class="reg-f"><label>Impresa esecutrice</label><input type="text" id="reg-impresa"/></div>
-        <div class="reg-f"><label>WBS</label><input type="text" id="reg-wbs" placeholder="es. 0P09"/></div>
-        <div class="reg-f"><label>Opera</label><input type="text" id="reg-opera"/></div>
-        <div class="reg-f"><label>Parte d'opera</label><input type="text" id="reg-parte"/></div>
+        <div class="reg-f"><label>Data</label><input type="date" id="reg-data" autocomplete="off"/></div>
+        <div class="reg-f"><label>DDT</label>
+          <input type="text" id="reg-ddt" placeholder="n° DDT" list="reg-ddt-list" autocomplete="off"/>
+          <datalist id="reg-ddt-list"></datalist>
+          <div class="reg-verbhint" id="reg-ddt-hint" style="margin-top:4px;"></div>
+        </div>
+        <div class="reg-f"><label>Impresa esecutrice</label>
+          <select id="reg-impresa"></select>
+          <input type="text" id="reg-impresa-other" placeholder="scrivi l'impresa" style="display:none;margin-top:8px;" autocomplete="off"/>
+        </div>
+        <div class="reg-f"><label>WBS</label>
+          <select id="reg-wbs"></select>
+          <input type="text" id="reg-wbs-other" placeholder="scrivi la WBS (es. 0P09)" style="display:none;margin-top:8px;" autocomplete="off"/>
+        </div>
+        <div class="reg-f"><label>Opera</label><input type="text" id="reg-opera" autocomplete="off"/></div>
+        <div class="reg-f"><label>Parte d'opera</label><input type="text" id="reg-parte" autocomplete="off"/></div>
       </section>
 
       <section class="reg-sec">
@@ -2343,11 +2406,15 @@ tr.new-row{animation:rowIn .2s ease both;}
             <select id="reg-mix"></select>
             <button class="reg-mini" id="reg-mix-add" title="Aggiungi nuova miscela">+</button>
           </div>
+          <input type="text" id="reg-mix-other" placeholder="scrivi la miscela" style="display:none;margin-top:8px;" autocomplete="off"/>
         </div>
-        <div class="reg-f"><label>Metri cubi (m³)</label><input type="number" step="0.01" id="reg-mc"/></div>
-        <div class="reg-f"><label>Temperatura ambiente (°C)</label><input type="number" step="0.1" id="reg-temp-amb" placeholder="es. 22"/></div>
-        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="number" step="0.1" id="reg-temp-cls" placeholder="es. 18"/></div>
+        <div class="reg-f"><label>Metri cubi (m³)</label><input type="number" step="0.01" id="reg-mc" autocomplete="off"/></div>
+        <div class="reg-f"><label>Temperatura ambiente (°C)</label><input type="number" step="0.1" id="reg-temp-amb" placeholder="es. 22" autocomplete="off"/></div>
+        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="number" step="0.1" id="reg-temp-cls" placeholder="es. 18" autocomplete="off"/></div>
       </section>
+
+      <div class="reg-guide" id="reg-guide" style="display:none;"></div>
+      <div class="reg-rangewarn" id="reg-range-warn" style="display:none;"></div>
 
       <section class="reg-sec reg-tests">
         <div class="reg-sec-t">3 · Prove eseguite</div>
@@ -2359,27 +2426,37 @@ tr.new-row{animation:rowIn .2s ease both;}
         <div class="reg-sec-t">4 · Prelievo <span style="font-weight:400;color:var(--muted);font-size:12px;">(facoltativo)</span></div>
         <div class="reg-sec-hint">Il numero parte dalla WBS. Quello definitivo viene assegnato al salvataggio dal sistema, senza rischio di doppioni anche se più persone salvano insieme.</div>
         <div class="reg-verbrow">
-          <label class="reg-prel-toggle"><input type="checkbox" id="reg-prel-done"/> <span>Prelievo eseguito</span></label>
+          <label class="reg-prel-toggle"><input type="checkbox" id="reg-prel-done" autocomplete="off"/> <span>Prelievo eseguito</span></label>
           <div class="reg-numwrap" id="reg-numwrap" style="display:none;">
             <span class="reg-numlbl">N° prelievo</span>
             <button type="button" class="reg-numbtn" id="reg-num-dec">&minus;</button>
-            <input type="number" id="reg-num" min="1" inputmode="numeric"/>
+            <input type="number" id="reg-num" min="1" inputmode="numeric" autocomplete="off"/>
             <button type="button" class="reg-numbtn" id="reg-num-inc">+</button>
           </div>
         </div>
         <div class="reg-verbpreview" id="reg-verbpreview" style="display:none;"></div>
-        <input type="hidden" id="reg-verbale"/>
+        <input type="hidden" id="reg-verbale" autocomplete="off"/>
         <div class="reg-verbhint" id="reg-verbhint"></div>
       </section>
 
       <section class="reg-sec">
         <div class="reg-sec-t">5 · Altro</div>
-        <div class="reg-f"><label>N° cubetti realizzati</label><input type="number" min="0" id="reg-cubetti"/></div>
-        <div class="reg-f"><label>Note (facoltative)</label><input type="text" id="reg-note"/></div>
+        <div class="reg-f">
+          <label>N° cubetti realizzati</label>
+          <div class="reg-chips" id="reg-cubetti-chips">
+            <button type="button" class="reg-chip" data-v="4">4</button>
+            <button type="button" class="reg-chip" data-v="6">6</button>
+            <button type="button" class="reg-chip" data-v="8">8</button>
+            <button type="button" class="reg-chip" data-v="__altro">Altro</button>
+          </div>
+          <input type="number" min="0" id="reg-cubetti-manual" placeholder="numero cubetti" style="display:none;margin-top:8px;" autocomplete="off"/>
+          <input type="hidden" id="reg-cubetti" autocomplete="off"/>
+        </div>
+        <div class="reg-f"><label>Note (facoltative)</label><input type="text" id="reg-note" autocomplete="off"/></div>
       </section>
 
       <div class="reg-actions">
-        <button class="reg-btn primary" id="reg-save">＋ Salva prelievo</button>
+        <button class="reg-btn primary" id="reg-save">＋ Salva riga</button>
         <button class="reg-btn ghost" id="reg-clear">Pulisci campi</button>
         <button class="reg-btn ghost" id="reg-cancel-edit" style="display:none;">Annulla modifica</button>
       </div>
@@ -2391,17 +2468,14 @@ tr.new-row{animation:rowIn .2s ease both;}
       <button class="reg-btn excel" id="reg-exp-lab">⬇ Esporta laboratorio</button>
       <button class="reg-btn excel" id="reg-exp-all">⬇ Scarica database (tutti)</button>
       <button class="reg-btn ghost" id="reg-imp-btn">⬆ Carica / aggiorna da Excel</button>
-      <input type="file" id="reg-imp-file" accept=".xlsx,.xls" style="display:none;"/>
+      <input type="file" id="reg-imp-file" accept=".xlsx,.xls" style="display:none;" autocomplete="off"/>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin:2px 2px 8px;">↔ Trascina le intestazioni della tabella per riordinare le colonne. <a href="#" id="reg-colreset" style="color:var(--accent);text-decoration:none;">Ripristina ordine</a></div>
 
     <div class="reg-tablewrap">
       <table class="reg-table">
         <thead>
-          <tr>
-            <th>Data</th><th>DDT</th><th>Impresa</th><th>WBS</th><th>Opera</th><th>Parte</th>
-            <th>Mix</th><th>m³</th><th>T.amb °C</th><th>T.CLS °C</th><th>Slump</th><th>Spand.</th><th>Aria%</th><th>A/C</th>
-            <th>Essud.</th><th>M.vol.</th><th>Verbale</th><th>Rip.</th><th>Cubetti</th><th>Note</th><th></th>
-          </tr>
+          <tr id="reg-thead-row"></tr>
         </thead>
         <tbody id="reg-tbody"></tbody>
       </table>
@@ -25112,14 +25186,16 @@ async function renderAdminUsers() {
   const labAssignHtml=(usr)=>{
     if(!_RA) return '';
     const cur=_assign[usr]||'';
-    const opts=['<option value="">— assegna lab —</option>'].concat(_labs.map(l=>'<option'+(l===cur?' selected':'')+'>'+escHtml(l)+'</option>')).join('');
-    return '<br/><select class="lab-assign" data-usr="'+escHtml(usr)+'" style="margin-top:5px;font-size:10px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:2px 4px;">'+opts+'</select>';
+    const opts=['<option value="">— assegna laboratorio —</option>'].concat(_labs.map(l=>'<option'+(l===cur?' selected':'')+'>'+escHtml(l)+'</option>')).join('');
+    return '<div style="margin-top:7px;display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;">'
+      +'<span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Lab:</span>'
+      +'<select class="lab-assign" data-usr="'+escHtml(usr)+'" style="font-size:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:5px 8px;min-width:120px;">'+opts+'</select></div>';
   };
   users.forEach(u => {
     const isMe = u.username === currentUser?.username;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="padding:8px 10px;font-size:12px;">${u.username}${isMe?' <span style="font-size:9px;color:var(--accent);">(tu)</span>':''}</td>
+      <td style="padding:10px;font-size:13px;font-weight:600;white-space:nowrap;">${escHtml(u.username)}${isMe?' <span style="font-size:9px;color:var(--accent);font-weight:400;">(tu)</span>':''}</td>
       <td style="padding:8px 10px;text-align:center;">${u.role === 'admin' ? '<span class="badge-admin">Admin</span>' : ((u.role||'').toLowerCase().trim()==='laboratorio' ? '<span style="font-size:10px;color:var(--accent);font-weight:600;">Laboratorio</span>'+labAssignHtml(u.username) : '<span style="font-size:10px;color:var(--muted)">Utente</span>')}</td>
       <td style="padding:8px 10px;font-size:11px;"><span id="pwd-${u.username.replace(/\s/g,'_')}" style="letter-spacing:.12em;font-family:monospace;">••••••••</span></td>
       <td style="padding:8px 10px;font-size:10px;color:var(--muted);">${u.last_login||'—'}</td>
@@ -25129,7 +25205,9 @@ async function renderAdminUsers() {
       <td style="padding:8px 10px;text-align:center;">
         <button class="btn btn-sm btn-ghost btn-show-pwd" data-pwdid="pwd-${u.username.replace(/\s/g,'_')}" data-plain="${u.password||''}" style="font-size:10px;padding:2px 8px;">👁</button>
       </td>
-      <td style="padding:8px 10px;text-align:center;">${!isMe ? `<button class="btn-del-user" data-usr="${u.username}" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:3px;padding:3px 10px;cursor:pointer;font-size:12px;">✕</button>` : '—'}
+      <td style="padding:8px 10px;text-align:center;white-space:nowrap;">
+        <button class="btn-ren-user" data-usr="${u.username}" title="Rinomina" style="background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:3px;padding:3px 9px;cursor:pointer;font-size:12px;margin-right:4px;">✎</button>
+        ${!isMe ? `<button class="btn-del-user" data-usr="${u.username}" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:3px;padding:3px 10px;cursor:pointer;font-size:12px;">✕</button>` : ''}
       </td>
     `;
     tbody.appendChild(tr);
@@ -25152,6 +25230,38 @@ async function renderAdminUsers() {
       const users = await sbGetUsers(); _usersCache = users;
       addLog(`${!u.active?'Abilitato':'Disabilitato'}: ${u.username}`);
       renderAdminUsers();
+    });
+  });
+  tbody.querySelectorAll('.btn-ren-user').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const oldName = btn.dataset.usr;
+      const u = getUsers().find(x => x.username === oldName);
+      if(!u) return;
+      const nn = prompt('Modifica Nome e Cognome:', oldName);
+      if(nn===null) return;
+      const newName = nn.trim().replace(/\s+/g,' ');
+      if(!newName){ alert('Nome e cognome non validi.'); return; }
+      const np = prompt('Password (lascia invariata per confermarla):', u.password||'');
+      if(np===null) return;
+      const newPass = np;
+      const nameChanged = newName.toLowerCase() !== oldName.toLowerCase();
+      if(nameChanged && getUsers().find(x => (x.username||'').toLowerCase() === newName.toLowerCase())) { alert('Esiste già un utente con questo nome.'); return; }
+      if(!nameChanged && newPass===(u.password||'')){ return; }  // niente da cambiare
+      const okNew = await sbSaveUser({ username:newName, password:newPass, role:u.role, active:u.active, last_login:u.last_login||'—' });
+      if(!okNew){ alert('Errore durante il salvataggio. Riprova.'); return; }
+      if(nameChanged){
+        // sposta l'eventuale assegnazione laboratorio ed elimina il vecchio nome
+        if(window.RegAdmin && window.RegAdmin.getLabUsers){
+          const map = window.RegAdmin.getLabUsers();
+          if(map && map[oldName]){ window.RegAdmin.setUserLab(newName, map[oldName]); window.RegAdmin.setUserLab(oldName, ''); }
+        }
+        await sbDeleteUser(oldName);
+      }
+      const users = await sbGetUsers(); _usersCache = users;
+      addLog(nameChanged ? ('Utente aggiornato: '+oldName+' → '+newName) : ('Password aggiornata: '+newName));
+      if(currentUser && currentUser.username === oldName){ currentUser.username = newName; currentUser.password = newPass; }  // aggiorna la sessione
+      renderAdminUsers(); renderRegAdmin();
+      showStatus('✅ Utente aggiornato', 'success');
     });
   });
   tbody.querySelectorAll('.btn-del-user').forEach(btn => {
@@ -25219,17 +25329,19 @@ document.getElementById('btn-admin-close').addEventListener('click',()=>adminPan
 adminPanel.addEventListener('click',e=>{if(e.target===adminPanel)adminPanel.classList.remove('open');});
 
 document.getElementById('btn-add-user').addEventListener('click', async () => {
-  const username = document.getElementById('new-username').value.trim();
+  const nome     = document.getElementById('new-nome').value.trim();
+  const cognome  = document.getElementById('new-cognome').value.trim();
+  const username = (nome + ' ' + cognome).trim().replace(/\s+/g,' ');
   const password = document.getElementById('new-password').value;
   const role     = document.getElementById('new-role').value;
   const errEl    = document.getElementById('add-user-err');
-  if (!username || !password) { errEl.textContent = 'Compila username e password.'; errEl.style.display='block'; return; }
-  if (getUsers().find(u => u.username === username)) { errEl.textContent = 'Username già esistente.'; errEl.style.display='block'; return; }
+  if (!nome || !cognome || !password) { errEl.textContent = 'Compila nome, cognome e password.'; errEl.style.display='block'; return; }
+  if (getUsers().find(u => (u.username||'').toLowerCase() === username.toLowerCase())) { errEl.textContent = 'Utente già esistente.'; errEl.style.display='block'; return; }
   errEl.style.display = 'none';
   const btn = document.getElementById('btn-add-user');
   btn.textContent = '⏳ Salvataggio...'; btn.disabled = true;
   const ok = await sbSaveUser({ username, password, role, active: true, last_login: '—' });
-  btn.textContent = '+ Aggiungi'; btn.disabled = false;
+  btn.textContent = '+ Aggiungi utente'; btn.disabled = false;
   if(!ok){ errEl.textContent = 'Errore salvataggio. Riprova.'; errEl.style.display='block'; return; }
   // se è un utente Laboratorio, assegna il laboratorio scelto (config condivisa)
   if(role==='laboratorio' && window.RegAdmin){
@@ -25238,7 +25350,8 @@ document.getElementById('btn-add-user').addEventListener('click', async () => {
   }
   const users = await sbGetUsers(); _usersCache = users;
   addLog(`Aggiunto utente: ${username} (${role})`);
-  document.getElementById('new-username').value = '';
+  document.getElementById('new-nome').value = '';
+  document.getElementById('new-cognome').value = '';
   document.getElementById('new-password').value = '';
   renderAdminUsers(); renderAdminLog(); renderRegAdmin();
   showStatus('✅ Utente aggiunto!', 'success');
@@ -25258,27 +25371,105 @@ function renderRegAdmin(){
       const row=document.createElement('div');
       row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:13px;';
       row.innerHTML='<span>🧪 '+escHtml(l)+'</span>';
+      const acts=document.createElement('div'); acts.style.cssText='display:flex;gap:6px;align-items:center;';
+      const ren=document.createElement('button');
+      ren.textContent='✎'; ren.title='Rinomina';
+      ren.style.cssText='border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px;';
+      ren.onclick=()=>{
+        if(!RA.renameLab) return;
+        const nn=prompt('Nuovo nome per il laboratorio «'+l+'»:', l);
+        if(nn===null) return;
+        const res=RA.renameLab(l, nn.trim());
+        if(res && res.ok===false && res.reason==='exists'){ alert('Esiste già un laboratorio con questo nome.'); return; }
+        addLog('Laboratorio rinominato: '+l+' → '+nn.trim());
+        renderRegAdmin(); renderAdminUsers();
+      };
       const x=document.createElement('button');
       x.textContent='✕'; x.title='Rimuovi';
       x.style.cssText='border:none;background:none;color:var(--red);cursor:pointer;font-size:14px;';
-      x.onclick=()=>{ if(confirm('Rimuovere il laboratorio "'+l+'"? (le registrazioni già salvate restano)')){ RA.removeLab(l); renderRegAdmin(); } };
-      row.appendChild(x); labWrap.appendChild(row);
+      x.onclick=()=>{ if(confirm('Rimuovere il laboratorio "'+l+'"? (le registrazioni già salvate restano)')){ RA.removeLab(l); renderRegAdmin(); renderAdminUsers(); } };
+      acts.appendChild(ren); acts.appendChild(x); row.appendChild(acts); labWrap.appendChild(row);
     });
   }
   // elenco miscele
+  // helper: riga di elenco con ✎ (modifica) e ✕ (rimuovi)
+  const raItemRow=(wrap, label, onRen, onRem)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:13px;';
+    row.innerHTML='<span>'+escHtml(label)+'</span>';
+    const acts=document.createElement('div'); acts.style.cssText='display:flex;gap:6px;align-items:center;';
+    const ren=document.createElement('button'); ren.textContent='✎'; ren.title='Modifica'; ren.style.cssText='border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px;'; ren.onclick=onRen;
+    const rem=document.createElement('button'); rem.textContent='✕'; rem.title='Rimuovi'; rem.style.cssText='border:none;background:none;color:var(--red);cursor:pointer;font-size:14px;'; rem.onclick=onRem;
+    acts.appendChild(ren); acts.appendChild(rem); row.appendChild(acts); wrap.appendChild(row);
+  };
+  const raRename=(label, cur, fn)=>{ const nn=prompt('Modifica '+label+':', cur); if(nn===null) return; const v=nn.trim(); if(!v||v===cur) return; const res=fn(cur, v); if(res && res.ok===false && res.reason==='exists'){ alert('Esiste già una voce con questo nome.'); return; } renderRegAdmin(); };
   const mixWrap=document.getElementById('ra-mix-list');
   if(mixWrap){
     const mixes=RA.getMixes();
     mixWrap.innerHTML = mixes.length ? '' : '<div style="color:var(--muted);font-size:11px;">Nessuna miscela.</div>';
     mixes.forEach(m=>{
+      const cfg = RA.getMixCfg ? RA.getMixCfg(m) : {sett:0,g1:4,g2:4};
       const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:13px;';
-      row.innerHTML='<span>'+escHtml(m)+'</span>';
-      const x=document.createElement('button');
-      x.textContent='✕'; x.title='Rimuovi';
-      x.style.cssText='border:none;background:none;color:var(--red);cursor:pointer;font-size:14px;';
-      x.onclick=()=>{ if(confirm('Rimuovere la miscela "'+m+'"?')){ RA.removeMix(m); renderRegAdmin(); } };
-      row.appendChild(x); mixWrap.appendChild(row);
+      row.style.cssText='display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:13px;flex-wrap:wrap;';
+      row.innerHTML='<span style="flex:1;min-width:80px;font-weight:600;">'+escHtml(m)+'</span>';
+      const mkNum=(lbl,val,key)=>{
+        const wrap=document.createElement('label');
+        wrap.style.cssText='display:flex;align-items:center;gap:3px;font-size:10px;color:var(--muted);';
+        wrap.appendChild(document.createTextNode(lbl));
+        const inp=document.createElement('input'); inp.type='number'; inp.min='0'; inp.value=(val||0);
+        inp.title=lbl+' cubetti'; inp.style.cssText='width:42px;background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:3px 4px;font-size:12px;text-align:center;';
+        wrap.appendChild(inp); return inp;
+      };
+      const iS=mkNum('Sett.',cfg.sett,'sett'), i1=mkNum('1°',cfg.g1,'g1'), i2=mkNum('2°',cfg.g2,'g2');
+      const saveCfg=()=>{ if(RA.setMixCfg) RA.setMixCfg(m,{sett:iS.value, g1:i1.value, g2:i2.value}); };
+      [iS,i1,i2].forEach(inp=>inp.addEventListener('change',saveCfg));
+      [iS.parentNode,i1.parentNode,i2.parentNode].forEach(w=>row.appendChild(w));
+      const acts=document.createElement('div'); acts.style.cssText='display:flex;gap:6px;align-items:center;';
+      const gear=document.createElement('button'); gear.textContent='⚙'; gear.title='Limiti slump / spandimento / temperatura'; gear.style.cssText='border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px;';
+      const ren=document.createElement('button'); ren.textContent='✎'; ren.title='Rinomina'; ren.style.cssText='border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px;'; ren.onclick=()=>raRename('la miscela', m, RA.renameMix);
+      const rem=document.createElement('button'); rem.textContent='✕'; rem.title='Rimuovi'; rem.style.cssText='border:none;background:none;color:var(--red);cursor:pointer;font-size:14px;'; rem.onclick=()=>{ if(confirm('Rimuovere la miscela "'+m+'"?')){ RA.removeMix(m); renderRegAdmin(); } };
+      acts.appendChild(gear); acts.appendChild(ren); acts.appendChild(rem); row.appendChild(acts);
+      // sotto-riga con gli intervalli ammessi (nascosta, si apre con ⚙)
+      const sub=document.createElement('div');
+      sub.style.cssText='display:none;flex-wrap:wrap;gap:14px;width:100%;margin-top:8px;padding-top:8px;border-top:1px solid var(--border2);';
+      const mkRange=(lbl,unit,minKey,maxKey)=>{
+        const w=document.createElement('div'); w.style.cssText='display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);';
+        const mkI=(val,key)=>{ const i=document.createElement('input'); i.type='number'; i.step='0.1'; i.value=(val===''||val==null?'':val); i.placeholder='—'; i.style.cssText='width:52px;background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:3px 4px;font-size:12px;text-align:center;'; i.addEventListener('change',()=>{ const p={}; p[key]=i.value; if(RA.setMixCfg) RA.setMixCfg(m,p); }); return i; };
+        w.appendChild(document.createTextNode(lbl+' '));
+        w.appendChild(mkI(cfg[minKey],minKey));
+        w.appendChild(document.createTextNode('–'));
+        w.appendChild(mkI(cfg[maxKey],maxKey));
+        w.appendChild(document.createTextNode(' '+unit));
+        return w;
+      };
+      sub.appendChild(mkRange('Slump','cm','slumpMin','slumpMax'));
+      sub.appendChild(mkRange('Spand.','cm','spandMin','spandMax'));
+      sub.appendChild(mkRange('T.CLS','°C','tclsMin','tclsMax'));
+      gear.onclick=()=>{ sub.style.display = (sub.style.display==='none'?'flex':'none'); };
+      row.appendChild(sub);
+      mixWrap.appendChild(row);
+    });
+  }
+  // elenco imprese esecutrici
+  const impWrap=document.getElementById('ra-imp-list');
+  if(impWrap && RA.getImprese){
+    const imprese=RA.getImprese();
+    impWrap.innerHTML = imprese.length ? '' : '<div style="color:var(--muted);font-size:11px;">Nessuna impresa.</div>';
+    imprese.forEach(m=>{
+      raItemRow(impWrap, m,
+        ()=>raRename('l\'impresa', m, RA.renameImpresa),
+        ()=>{ if(confirm('Rimuovere l\'impresa "'+m+'"?')){ RA.removeImpresa(m); renderRegAdmin(); } });
+    });
+  }
+  // elenco WBS
+  const wbsWrap=document.getElementById('ra-wbs-list');
+  if(wbsWrap && RA.getWbs){
+    const wbs=RA.getWbs();
+    wbsWrap.innerHTML = wbs.length ? '' : '<div style="color:var(--muted);font-size:11px;">Nessuna WBS.</div>';
+    wbs.forEach(m=>{
+      raItemRow(wbsWrap, m,
+        ()=>raRename('la WBS', m, RA.renameWbs),
+        ()=>{ if(confirm('Rimuovere la WBS "'+m+'"?')){ RA.removeWbs(m); renderRegAdmin(); } });
     });
   }
   // formato verbale
@@ -25328,6 +25519,55 @@ function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/
     window.RegAdmin.addMix(v); inp.value=''; renderRegAdmin();
   });
   if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); if(addBtn)addBtn.click(); } });
+  const bulkBtn=document.getElementById('ra-mix-bulk-add'), bulkTa=document.getElementById('ra-mix-bulk');
+  if(bulkBtn) bulkBtn.addEventListener('click',()=>{
+    if(!window.RegAdmin||!window.RegAdmin.addMixes) return;
+    const list=(bulkTa.value||'').split(/[\r\n\t;,]+/).map(s=>s.trim()).filter(Boolean);
+    if(!list.length) return;
+    const res=window.RegAdmin.addMixes(list);
+    bulkTa.value=''; renderRegAdmin();
+    if(typeof showStatus==='function') showStatus('✅ Aggiunte '+res.added+' miscele','success');
+  });
+})();
+
+// aggiunta / rimozione / import imprese esecutrici
+(function(){
+  const addBtn=document.getElementById('ra-imp-add'), inp=document.getElementById('ra-imp-input');
+  if(addBtn) addBtn.addEventListener('click',()=>{
+    if(!window.RegAdmin||!window.RegAdmin.addImpresa) return;
+    const v=(inp.value||'').trim(); if(!v) return;
+    window.RegAdmin.addImpresa(v); inp.value=''; renderRegAdmin();
+  });
+  if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); if(addBtn)addBtn.click(); } });
+  const bulkBtn=document.getElementById('ra-imp-bulk-add'), bulkTa=document.getElementById('ra-imp-bulk');
+  if(bulkBtn) bulkBtn.addEventListener('click',()=>{
+    if(!window.RegAdmin||!window.RegAdmin.addImprese) return;
+    const list=(bulkTa.value||'').split(/[\r\n\t;]+/).map(s=>s.trim()).filter(Boolean);
+    if(!list.length) return;
+    const res=window.RegAdmin.addImprese(list);
+    bulkTa.value=''; renderRegAdmin();
+    if(typeof showStatus==='function') showStatus('✅ Aggiunte '+res.added+' imprese','success');
+  });
+})();
+
+// aggiunta / rimozione / import WBS
+(function(){
+  const addBtn=document.getElementById('ra-wbs-add'), inp=document.getElementById('ra-wbs-input');
+  if(addBtn) addBtn.addEventListener('click',()=>{
+    if(!window.RegAdmin||!window.RegAdmin.addWbs) return;
+    const v=(inp.value||'').trim(); if(!v) return;
+    window.RegAdmin.addWbs(v); inp.value=''; renderRegAdmin();
+  });
+  if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); if(addBtn)addBtn.click(); } });
+  const bulkBtn=document.getElementById('ra-wbs-bulk-add'), bulkTa=document.getElementById('ra-wbs-bulk');
+  if(bulkBtn) bulkBtn.addEventListener('click',()=>{
+    if(!window.RegAdmin||!window.RegAdmin.addWbsList) return;
+    const list=(bulkTa.value||'').split(/[\r\n\t;,]+/).map(s=>s.trim()).filter(Boolean);
+    if(!list.length) return;
+    const res=window.RegAdmin.addWbsList(list);
+    bulkTa.value=''; renderRegAdmin();
+    if(typeof showStatus==='function') showStatus('✅ Aggiunte '+res.added+' WBS','success');
+  });
 })();
 
 // salvataggio formato verbale
@@ -25342,18 +25582,6 @@ function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/
     if(typeof showStatus==='function') showStatus('✅ Formato verbale salvato','success');
   });
 })();
-
-document.getElementById('btn-change-pwd').addEventListener('click', () => {
-  const newPwd = document.getElementById('new-admin-pwd').value;
-  if (!newPwd || newPwd.length < 4) { showStatus('Password troppo corta (min 4 caratteri)', 'error'); return; }
-  const users = getUsers();
-  const admin = users.find(u => u.role === 'admin' && u.username === 'Daniele Ferrara');
-  if (admin) { admin.password = newPwd; saveUsers(users); showStatus('✅ Password aggiornata su GitHub', 'success'); }
-  document.getElementById('new-admin-pwd').value = '';
-  addLog('Password admin aggiornata');
-  renderAdminLog();
-  alert('✓ Password admin aggiornata con successo');
-});
 
 document.getElementById('btn-reset-all').addEventListener('click', async () => {
   const nonAdmin = getUsers().filter(u => u.role !== 'admin');
@@ -31046,8 +31274,9 @@ setTool("erase");
     {k:'massa', label:'Massa volumica', unit:'kg/m³'}
   ];
 
-  let db={labs:DEFAULT_LABS.slice(), mixes:DEFAULT_MIXES.slice(), entries:[], labUsers:{}, cfg:{mid:'-CZ-',width:5}};
+  let db={labs:DEFAULT_LABS.slice(), mixes:DEFAULT_MIXES.slice(), entries:[], labUsers:{}, imprese:[], wbs:[], mixCfg:{}, cfg:{mid:'-CZ-',width:5}};
   let verbaleManual=false;   // true se l'utente ha scritto a mano il verbale
+  let cubettiManual=false;   // true se l'utente ha scelto i cubetti a mano
   let curLab=db.labs[0];
   let editId=null;
 
@@ -31065,6 +31294,9 @@ setTool("erase");
           db.mixes=Array.isArray(d.mixes)&&d.mixes.length?d.mixes:DEFAULT_MIXES.slice();
           db.entries=Array.isArray(d.entries)?d.entries:[];
           db.labUsers=(d.labUsers&&typeof d.labUsers==='object')?d.labUsers:{};
+          db.imprese=Array.isArray(d.imprese)?d.imprese:[];
+          db.wbs=Array.isArray(d.wbs)?d.wbs:[];
+          db.mixCfg=(d.mixCfg&&typeof d.mixCfg==='object')?d.mixCfg:{};
           db.cfg=d.cfg&&typeof d.cfg==='object'?d.cfg:{mid:'-CZ-',width:5};
           if(db.cfg.mid==null){ db.cfg.mid='-CZ-'; }
           if(!db.cfg.width)db.cfg.width=5;
@@ -31175,8 +31407,8 @@ setTool("erase");
       const sig=merged.map(e=>e.id+':'+(e.updated_at||'')).sort().join('|')+'#'+cfgSig;
       if(sig!==lastSig){
         lastSig=sig; db.entries=merged; save();
-        renderLabs(); refreshMix(); renderTable(); if(!editId) renderForm();
-      } else if(cfgChanged){ save(); renderLabs(); refreshMix(); if(!editId) renderForm(); }
+        renderLabs(); refreshCombos(); renderTable(); if(!editId) renderForm();
+      } else if(cfgChanged){ save(); renderLabs(); refreshCombos(); renderTable(); if(!editId) renderForm(); }
       setStatus('ok');
     }catch(e){ console.warn('cloudSync',e); setStatus('offline'); }
   }
@@ -31191,13 +31423,16 @@ setTool("erase");
   /* ---------- CONFIG condivisa (laboratori, miscele, formato, utenti→lab) ---------- */
   let lastCfgSig='';
   function currentConfig(){
-    return { labs:db.labs, mixes:db.mixes, mid:midPart(), width:db.cfg.width||5, labUsers:db.labUsers||{} };
+    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), width:db.cfg.width||5, labUsers:db.labUsers||{} };
   }
   function applyConfig(c){
     if(!c||typeof c!=='object')return false;
     let changed=false;
     if(Array.isArray(c.labs)&&c.labs.length){ if(JSON.stringify(c.labs)!==JSON.stringify(db.labs)){db.labs=c.labs.slice();changed=true;} }
     if(Array.isArray(c.mixes)){ if(JSON.stringify(c.mixes)!==JSON.stringify(db.mixes)){db.mixes=c.mixes.slice();changed=true;} }
+    if(Array.isArray(c.imprese)){ if(JSON.stringify(c.imprese)!==JSON.stringify(db.imprese||[])){db.imprese=c.imprese.slice();changed=true;} }
+    if(Array.isArray(c.wbs)){ if(JSON.stringify(c.wbs)!==JSON.stringify(db.wbs||[])){db.wbs=c.wbs.slice();changed=true;} }
+    if(c.mixCfg&&typeof c.mixCfg==='object'){ if(JSON.stringify(c.mixCfg)!==JSON.stringify(db.mixCfg||{})){db.mixCfg=c.mixCfg;changed=true;} }
     if(c.mid!=null && c.mid!==db.cfg.mid){ db.cfg.mid=c.mid; changed=true; }
     if(c.width && c.width!==db.cfg.width){ db.cfg.width=c.width; changed=true; }
     if(c.labUsers&&typeof c.labUsers==='object'){ if(JSON.stringify(c.labUsers)!==JSON.stringify(db.labUsers||{})){db.labUsers=c.labUsers;changed=true;} }
@@ -31221,8 +31456,11 @@ setTool("erase");
   function isLabUser(){ const r=role(); return r==='laboratorio'||r==='lab'; }
   function isManager(){ return role()==='admin'; }
   function myLab(){
-    const u=(currentUser&&currentUser.username)||'';
-    return (db.labUsers&&db.labUsers[u]) || '';
+    const u=((currentUser&&currentUser.username)||'').toLowerCase().trim();
+    if(!u||!db.labUsers) return '';
+    if(db.labUsers[u]!==undefined) return db.labUsers[u];
+    for(const k in db.labUsers){ if(String(k).toLowerCase().trim()===u) return db.labUsers[k]; }
+    return '';
   }
 
   /* ---------- BRIDGE per il pannello amministratore ---------- */
@@ -31233,12 +31471,58 @@ setTool("erase");
     getFormat:()=>({mid:midPart(),width:db.cfg.width||5}),
     addLab:(name)=>{ name=(name||'').trim(); if(name&&!db.labs.includes(name)){db.labs.push(name);pushConfig();refreshAll();} return db.labs.slice(); },
     removeLab:(name)=>{ db.labs=db.labs.filter(l=>l!==name); if(!db.labs.length)db.labs=DEFAULT_LABS.slice(); if(!db.labs.includes(curLab))curLab=db.labs[0]; pushConfig(); refreshAll(); return db.labs.slice(); },
+    renameLab:(oldName,newName)=>{
+      oldName=(oldName||''); newName=(newName||'').trim();
+      if(!newName||oldName===newName) return {ok:false, labs:db.labs.slice()};
+      if(db.labs.includes(newName)) return {ok:false, reason:'exists', labs:db.labs.slice()};
+      const i=db.labs.indexOf(oldName); if(i<0) return {ok:false, labs:db.labs.slice()};
+      db.labs[i]=newName;
+      if(db.labUsers){ Object.keys(db.labUsers).forEach(u=>{ if(db.labUsers[u]===oldName) db.labUsers[u]=newName; }); }
+      const changed=[];
+      db.entries.forEach(e=>{ if(e.lab===oldName){ e.lab=newName; e.updated_at=new Date().toISOString(); changed.push(e); } });
+      if(curLab===oldName) curLab=newName;
+      pushConfig(); save();
+      if(changed.length && cloudOn()){ try{ sbRegUpsertMany(changed); }catch(_){ changed.forEach(e=>e._pending=true); save(); } }
+      refreshAll();
+      return {ok:true, moved:changed.length, labs:db.labs.slice()};
+    },
     addMix:(name)=>{ name=(name||'').trim(); if(name&&!db.mixes.includes(name)){db.mixes.push(name);pushConfig();refreshAll();} return db.mixes.slice(); },
+    addMixes:(list)=>{ let added=0; (list||[]).forEach(n=>{ n=(n||'').trim(); if(n&&!db.mixes.includes(n)){db.mixes.push(n);added++;} }); if(added){pushConfig();refreshAll();} return {added, mixes:db.mixes.slice()}; },
     removeMix:(name)=>{ db.mixes=db.mixes.filter(m=>m!==name); pushConfig(); refreshAll(); return db.mixes.slice(); },
+    getImprese:()=>(db.imprese||[]).slice(),
+    addImpresa:(name)=>{ name=(name||'').trim(); db.imprese=db.imprese||[]; if(name&&!db.imprese.includes(name)){db.imprese.push(name);pushConfig();refreshAll();} return db.imprese.slice(); },
+    addImprese:(list)=>{ db.imprese=db.imprese||[]; let added=0; (list||[]).forEach(n=>{ n=(n||'').trim(); if(n&&!db.imprese.includes(n)){db.imprese.push(n);added++;} }); if(added){pushConfig();refreshAll();} return {added, imprese:db.imprese.slice()}; },
+    removeImpresa:(name)=>{ db.imprese=(db.imprese||[]).filter(x=>x!==name); pushConfig(); refreshAll(); return db.imprese.slice(); },
+    getWbs:()=>(db.wbs||[]).slice(),
+    addWbs:(name)=>{ name=(name||'').trim(); db.wbs=db.wbs||[]; if(name&&!db.wbs.includes(name)){db.wbs.push(name);pushConfig();refreshAll();} return db.wbs.slice(); },
+    addWbsList:(list)=>{ db.wbs=db.wbs||[]; let added=0; (list||[]).forEach(n=>{ n=(n||'').trim(); if(n&&!db.wbs.includes(n)){db.wbs.push(n);added++;} }); if(added){pushConfig();refreshAll();} return {added, wbs:db.wbs.slice()}; },
+    removeWbs:(name)=>{ db.wbs=(db.wbs||[]).filter(x=>x!==name); pushConfig(); refreshAll(); return db.wbs.slice(); },
+    renameMix:(o,n)=>renameListItem('mixes','mix',o,n),
+    renameImpresa:(o,n)=>renameListItem('imprese','impresa',o,n),
+    renameWbs:(o,n)=>renameListItem('wbs','wbs',o,n),
+    getMixCfg:(mix)=>mixCfgOf(mix),
+    setMixCfg:(mix,patch)=>{ if(!mix)return; db.mixCfg=db.mixCfg||{}; const merged=Object.assign({}, db.mixCfg[mix]||{});
+      ['sett','g1','g2'].forEach(k=>{ if(patch[k]!==undefined) merged[k]=Math.max(0,parseInt(patch[k],10)||0); });
+      ['slumpMin','slumpMax','spandMin','spandMax','tclsMin','tclsMax'].forEach(k=>{ if(patch[k]!==undefined){ const v=String(patch[k]).trim().replace(',','.'); merged[k]=(v===''||isNaN(parseFloat(v)))?'':parseFloat(v); } });
+      db.mixCfg[mix]=merged; pushConfig(); refreshAll(); return merged; },
     setUserLab:(username,lab)=>{ if(!username)return; db.labUsers=db.labUsers||{}; if(lab)db.labUsers[username]=lab; else delete db.labUsers[username]; pushConfig(); return Object.assign({},db.labUsers); },
     setFormat:(mid,width)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),width:db.cfg.width}; }
   };
-  function refreshAll(){ try{ renderLabs(); refreshMix(); renderForm(); renderTable(); }catch(e){} }
+  // rinomina una voce di un elenco (mixes/imprese/wbs) aggiornando anche i prelievi già salvati
+  function renameListItem(listName, prop, oldVal, newVal){
+    oldVal=(oldVal||''); newVal=(newVal||'').trim();
+    if(!newVal||oldVal===newVal) return {ok:false};
+    const arr=db[listName]||(db[listName]=[]);
+    if(arr.includes(newVal)) return {ok:false, reason:'exists'};
+    const i=arr.indexOf(oldVal); if(i>=0) arr[i]=newVal;
+    const changed=[];
+    db.entries.forEach(e=>{ if((e[prop]||'')===oldVal){ e[prop]=newVal; e.updated_at=new Date().toISOString(); changed.push(e); } });
+    pushConfig(); save();
+    if(changed.length && cloudOn()){ try{ sbRegUpsertMany(changed); }catch(_){ changed.forEach(e=>e._pending=true); save(); } }
+    refreshAll();
+    return {ok:true, moved:changed.length};
+  }
+  function refreshAll(){ try{ renderLabs(); refreshCombos(); renderForm(); renderTable(); }catch(e){} }
 
   /* ---------- verbale intelligente (WBS come parte iniziale) ---------- */
   function pad(n,w){ n=String(n); while(n.length<w)n='0'+n; return n; }
@@ -31277,12 +31561,18 @@ setTool("erase");
     // LABORATORIO: bloccato sul proprio laboratorio, nessuna gestione visibile
     if(isLabUser()){
       const assigned=myLab();
-      if(assigned && db.labs.includes(assigned)) curLab=assigned;
+      if(assigned) curLab=assigned;                       // usa SEMPRE il laboratorio assegnato
       else if(!db.labs.includes(curLab)) curLab=db.labs[0];
       const tag=document.createElement('div');
       tag.className='reg-lab active'; tag.style.cursor='default';
       tag.textContent='🧪 '+(curLab||'Laboratorio');
       bar.appendChild(tag);
+      if(!assigned){
+        const w=document.createElement('div');
+        w.style.cssText='font-size:11px;color:var(--muted);align-self:center;margin-left:8px;';
+        w.textContent='(assegnazione laboratorio in caricamento…)';
+        bar.appendChild(w);
+      }
       return;
     }
     db.labs.forEach(lab=>{
@@ -31346,22 +31636,205 @@ setTool("erase");
   }
 
   /* ---------- UI: mix ---------- */
+  /* ---------- combo: menù a tendina + "Altro" (scrivi a mano) ---------- */
+  // valori usati più di recente per un certo campo (per compilazione più rapida)
+  function recentValues(prop, n){
+    const arr=db.entries.slice().sort((a,b)=>String(b.updated_at||b.at||'').localeCompare(String(a.updated_at||a.at||'')));
+    const seen=[], set={};
+    for(const e of arr){ const v=(e[prop]||'').trim(); if(v && !set[v]){ set[v]=1; seen.push(v); if(seen.length>=(n||6)) break; } }
+    return seen;
+  }
+  function fillCombo(selId, values, recent){
+    const s=$(selId); if(!s)return;
+    values=values||[];
+    let html='<option value="">— seleziona —</option>';
+    if(recent && recent.length){
+      const rec=recent.filter(v=>values.indexOf(v)>=0);
+      const rest=values.filter(v=>rec.indexOf(v)<0);
+      html+='<optgroup label="⏱ Usati di recente">'+rec.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('')+'</optgroup>';
+      if(rest.length) html+='<optgroup label="Tutti">'+rest.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('')+'</optgroup>';
+    } else {
+      html+=values.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');
+    }
+    html+='<option value="__altro__">➕ Altro (scrivi a mano)</option>';
+    s.innerHTML=html;
+  }
+  function comboVal(selId, otherId){
+    const s=$(selId); if(!s) return '';
+    if(s.value==='__altro__'){ const o=$(otherId); return o?(o.value||'').trim():''; }
+    return (s.value||'').trim();
+  }
+  function comboOtherToggle(selId, otherId, focus){
+    const s=$(selId), o=$(otherId); if(!s||!o)return;
+    const on=(s.value==='__altro__');
+    o.style.display=on?'':'none';
+    if(on&&focus) o.focus(); else if(!on) o.value='';
+  }
+  function setCombo(selId, otherId, val){
+    const s=$(selId), o=$(otherId); if(!s)return;
+    val=(val==null?'':String(val)).trim();
+    if(!val){ s.value=''; if(o){o.style.display='none';o.value='';} return; }
+    const inList=Array.from(s.options).some(op=>op.value===val && op.value!=='__altro__' && op.value!=='');
+    if(inList){ s.value=val; if(o){o.style.display='none';o.value='';} }
+    else { s.value='__altro__'; if(o){o.style.display='';o.value=val;} }
+  }
+  function distinctWbs(){ const set={}; (db.wbs||[]).forEach(w=>{ w=(w||'').trim(); if(w)set[w]=1; }); db.entries.forEach(e=>{ const w=(e.wbs||'').trim(); if(w)set[w]=1; }); return Object.keys(set).sort(); }
   function refreshMix(sel){
-    const m=$('reg-mix'); if(!m)return;
-    const keep=sel!=null?sel:m.value;
-    m.innerHTML='<option value="">— seleziona —</option>'+db.mixes.map(x=>'<option>'+esc(x)+'</option>').join('');
-    if(keep&&db.mixes.includes(keep))m.value=keep;
+    const cur = (sel!=null) ? sel : comboVal('reg-mix','reg-mix-other');
+    fillCombo('reg-mix', db.mixes.slice(), recentValues('mix',6));
+    setCombo('reg-mix','reg-mix-other', cur);
+  }
+  function refreshWbs(sel){
+    const cur = (sel!=null) ? sel : comboVal('reg-wbs','reg-wbs-other');
+    fillCombo('reg-wbs', distinctWbs(), recentValues('wbs',6));
+    setCombo('reg-wbs','reg-wbs-other', cur);
+  }
+  function refreshImprese(sel){
+    const cur = (sel!=null) ? sel : comboVal('reg-impresa','reg-impresa-other');
+    fillCombo('reg-impresa', (db.imprese||[]).slice(), recentValues('impresa',6));
+    setCombo('reg-impresa','reg-impresa-other', cur);
+  }
+  function refreshCombos(){ refreshWbs(); refreshMix(); refreshImprese(); refreshDdtList(); updateGuide(); }
+
+  /* ---------- guida prelievi (cubetti automatici, settimanale, m³ per WBS/Mix) ---------- */
+  function mixCfgOf(mix){
+    const c=(db.mixCfg||{})[mix]||{};
+    const r=(k)=>(c[k]!=null?c[k]:'');
+    return {sett:(c.sett||0), g1:(c.g1||4), g2:(c.g2||4),
+      slumpMin:r('slumpMin'), slumpMax:r('slumpMax'),
+      spandMin:r('spandMin'), spandMax:r('spandMax'),
+      tclsMin:r('tclsMin'), tclsMax:r('tclsMax')};
+  }
+  function num(x){ const n=parseFloat(String(x==null?'':x).replace(',','.')); return isNaN(n)?0:n; }
+  function mondayOf(iso){ // iso 'YYYY-MM-DD' -> 'YYYY-MM-DD' del lunedì della settimana
+    if(!iso) return '';
+    const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return '';
+    const wd=(d.getDay()+6)%7; // 0=lun ... 6=dom
+    d.setDate(d.getDate()-wd);
+    return d.toISOString().slice(0,10);
+  }
+  function entriesToday(wbs,mix){ const t=($('reg-data')?$('reg-data').value:'')||todayISO(); return db.entries.filter(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId); }
+  function mcToday(wbs,mix){ return entriesToday(wbs,mix).reduce((s,e)=>s+num(e.mc),0); }
+  function countToday(wbs,mix){ return entriesToday(wbs,mix).length; }
+  function ariaDoneToday(mix){
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO();
+    return db.entries.some(e=>(e.lab||'')===curLab && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId && e.tests && e.tests.aria && e.tests.aria.on);
+  }
+  function weeklyDone(wbs,mix){
+    const cfg=mixCfgOf(mix); if(!cfg.sett) return false;
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const wk=mondayOf(t);
+    return db.entries.some(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && e.id!==editId && mondayOf(e.data||'')===wk && parseInt(e.cubetti,10)===cfg.sett);
+  }
+  function suggestSampling(wbs,mix){
+    const cfg=mixCfgOf(mix); const cnt=countToday(wbs,mix); const wDone=weeklyDone(wbs,mix);
+    if(cfg.sett>0 && !wDone && cnt===0) return {n:cfg.sett, tipo:'settimanale', weeklyPending:true};
+    if(cnt===0) return {n:cfg.g1, tipo:'1° del giorno', weeklyPending:(cfg.sett>0 && !wDone)};
+    return {n:cfg.g2, tipo:(cnt+1)+'° del giorno', weeklyPending:(cfg.sett>0 && !wDone)};
+  }
+  // riepilogo m³/prelievi/aria per ogni mix della WBS, oggi (solo questo laboratorio)
+  function guideMixesToday(wbs){
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO();
+    const map={};
+    db.entries.forEach(e=>{ if((e.lab||'')===curLab && (e.wbs||'')===wbs && (e.data||'')===t && e.id!==editId){ const m=e.mix||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0,aria:false}; map[m].mc+=num(e.mc); map[m].cnt++; } });
+    Object.keys(map).forEach(m=>{ map[m].aria=ariaDoneToday(m); });  // aria: per mix/giorno, qualsiasi WBS
+    return map;
+  }
+  function updateGuide(){
+    const box=$('reg-guide'); if(!box) return;
+    const wbs=curWbs(); const mix=comboVal('reg-mix','reg-mix-other');
+    if(!wbs || curLab==='__ALL__'){ box.style.display='none'; box.innerHTML=''; return; }
+    box.style.display='';
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO();
+    let html='<div class="reg-guide-t">📊 '+esc(curLab)+' · WBS <b>'+esc(wbs)+'</b> — oggi ('+esc(t)+')</div>';
+    const mm=guideMixesToday(wbs);
+    const keys=Object.keys(mm);
+    if(keys.length){
+      html+='<div class="reg-guide-list">'+keys.sort().map(m=>{
+        const wk = (mixCfgOf(m).sett>0) ? (weeklyDone(wbs,m)?'<span class="reg-guide-ok">settim. ✓</span>':'<span class="reg-guide-warn">settim. ⚠</span>') : '';
+        const ar = mm[m].aria ? '<span class="reg-guide-ok">aria ✓</span>' : '<span class="reg-guide-warn">aria ⚠</span>';
+        return '<div>'+esc(m)+': <b>'+mm[m].mc+' m³</b> · '+mm[m].cnt+' prel. '+wk+' '+ar+'</div>';
+      }).join('')+'</div>';
+    } else {
+      html+='<div class="reg-guide-empty">Nessun prelievo oggi per questa WBS.</div>';
+    }
+    if(mix){
+      const s=suggestSampling(wbs,mix);
+      const mcT=mcToday(wbs,mix);
+      const ariaOk=ariaDoneToday(mix);
+      html+='<div class="reg-guide-suggest">➡ <b>'+esc(mix)+'</b>: sarà il <b>'+esc(s.tipo)+'</b> → <b>'+s.n+' cubetti</b> · m³ oggi: <b>'+mcT+'</b>'
+        + (s.weeklyPending?' <span class="reg-guide-warn">· settimanale DA FARE</span>':'')
+        + (!ariaOk?' <span class="reg-guide-warn">· contenuto d\'aria DA FARE oggi</span>':'')
+        + '</div>';
+      if(!editId && !cubettiManual && s.n>0){ setCubetti(String(s.n)); }
+    }
+    box.innerHTML=html;
+    checkRanges();
+  }
+  // controllo che slump/spandimento/temp CLS rientrino negli intervalli del mix
+  function checkRanges(){
+    const box=$('reg-range-warn'); if(!box) return;
+    const mix=comboVal('reg-mix','reg-mix-other');
+    const cfg=mixCfgOf(mix);
+    const issues=[];
+    const has=(x)=> x!=='' && x!=null && !isNaN(parseFloat(x));
+    const chk=(val,mn,mx,label,unit)=>{
+      val=String(val==null?'':val).trim(); if(val==='') return;
+      const v=num(val); if(isNaN(v)) return;
+      if(!has(mn)&&!has(mx)) return;
+      if((has(mn)&&v<parseFloat(mn))||(has(mx)&&v>parseFloat(mx))){
+        issues.push(label+' <b>'+esc(val)+'</b> fuori intervallo ('+(has(mn)?mn:'–')+'–'+(has(mx)?mx:'–')+' '+unit+')');
+        return true;
+      }
+    };
+    const mark=(id,bad)=>{ const el=$(id); if(el) el.style.borderColor = bad?'var(--red)':''; };
+    const slumpOn=$('reg-chk-slump')&&$('reg-chk-slump').checked;
+    const b1= slumpOn ? chk($('reg-val-slump')?$('reg-val-slump').value:'', cfg.slumpMin, cfg.slumpMax,'Slump','cm') : false;
+    mark('reg-val-slump', !!b1);
+    const spandOn=$('reg-chk-spand')&&$('reg-chk-spand').checked;
+    const b2= spandOn ? chk($('reg-val-spand')?$('reg-val-spand').value:'', cfg.spandMin, cfg.spandMax,'Spandimento','cm') : false;
+    mark('reg-val-spand', !!b2);
+    const b3= chk($('reg-temp-cls')?$('reg-temp-cls').value:'', cfg.tclsMin, cfg.tclsMax,'Temp. CLS','°C');
+    mark('reg-temp-cls', !!b3);
+    box.innerHTML = issues.length ? ('⚠ '+issues.join(' · ')) : '';
+    box.style.display = issues.length ? '' : 'none';
+  }
+  // DDT: suggerimenti dai DDT già inseriti + avviso se già presente
+  function distinctDdt(){ const set={}; db.entries.forEach(e=>{ const d=(e.ddt||'').trim(); if(d)set[d]=1; }); return Object.keys(set).sort(); }
+  function refreshDdtList(){ const dl=$('reg-ddt-list'); if(!dl)return; dl.innerHTML=distinctDdt().map(d=>'<option value="'+esc(d)+'"></option>').join(''); }
+  function updateDdtHint(){
+    const h=$('reg-ddt-hint'); if(!h)return;
+    const v=($('reg-ddt')?$('reg-ddt').value:'').trim();
+    if(!v){ h.innerHTML=''; return; }
+    const matches=db.entries.filter(e=>String(e.ddt||'').trim().toLowerCase()===v.toLowerCase() && e.id!==editId);
+    h.innerHTML = matches.length ? '<span style="color:var(--accent);">↺ DDT già inserito ('+matches.length+' '+(matches.length===1?'riga':'righe')+')</span>' : '';
   }
 
   /* ---------- UI: form ---------- */
   function prelChecked(){ const c=$('reg-prel-done'); return !!(c&&c.checked); }
+  // cubetti: pulsanti 4/6/8 + Altro (numero manuale)
+  function setCubetti(val){
+    val=(val==null?'':String(val)).trim();
+    if($('reg-cubetti')) $('reg-cubetti').value=val;
+    const chips=$('reg-cubetti-chips'); const man=$('reg-cubetti-manual');
+    const presets=['4','6','8'];
+    const isPreset=presets.includes(val);
+    if(chips){ chips.querySelectorAll('.reg-chip').forEach(b=>{
+      const v=b.getAttribute('data-v');
+      const on = (v===val) || (v==='__altro' && val!=='' && !isPreset);
+      b.classList.toggle('on', on);
+    }); }
+    if(man){
+      if(val!=='' && !isPreset){ man.style.display=''; if(man.value!==val) man.value=val; }
+      else { man.style.display='none'; if(isPreset) man.value=''; }
+    }
+  }
   function setPrel(on){
     const c=$('reg-prel-done'); if(c)c.checked=!!on;
     const t=c?c.closest('.reg-prel-toggle'):null; if(t)t.classList.toggle('on',!!on);
     const nw=$('reg-numwrap'); if(nw)nw.style.display=on?'':'none';
     const pv=$('reg-verbpreview'); if(pv)pv.style.display=on?'':'none';
   }
-  function curWbs(){ return ($('reg-wbs')?$('reg-wbs').value:'')||''; }
+  function curWbs(){ return comboVal('reg-wbs','reg-wbs-other'); }
   function currentNum(){ const v=parseInt(($('reg-num')?$('reg-num').value:''),10); return isNaN(v)?null:v; }
   // compone il verbale completo (WBS + parte centrale + numero) e aggiorna anteprima + campo nascosto
   function composeVerbale(){
@@ -31412,23 +31885,29 @@ setTool("erase");
     return d.getFullYear()+'-'+m+'-'+day;
   }
   function clearForm(){
-    ['reg-data','reg-ddt','reg-impresa','reg-wbs','reg-opera','reg-parte','reg-mc','reg-verbale','reg-cubetti','reg-note','reg-temp-amb','reg-temp-cls'].forEach(id=>{ if($(id))$(id).value=''; });
+    ['reg-data','reg-ddt','reg-opera','reg-parte','reg-mc','reg-verbale','reg-cubetti','reg-note','reg-temp-amb','reg-temp-cls'].forEach(id=>{ if($(id))$(id).value=''; });
     if($('reg-num'))$('reg-num').value='';
+    setCubetti(''); cubettiManual=false;
+    setCombo('reg-wbs','reg-wbs-other',''); setCombo('reg-impresa','reg-impresa-other','');
     refreshMix(''); setTests(null); editId=null;
     setPrel(false); verbaleManual=false;
     if($('reg-data')) $('reg-data').value=todayISO();   // data di oggi, modificabile
-    composeVerbale();
+    composeVerbale(); updateDdtHint(); updateGuide();
     $('reg-cancel-edit').style.display='none';
-    $('reg-save').textContent='＋ Salva registrazione';
+    $('reg-save').textContent='＋ Salva riga';
     renderForm();
   }
   function loadIntoForm(e){
     editId=e.id; curLab=e.lab;
-    $('reg-data').value=e.data||''; $('reg-ddt').value=e.ddt||''; $('reg-impresa').value=e.impresa||'';
-    $('reg-wbs').value=e.wbs||''; $('reg-opera').value=e.opera||''; $('reg-parte').value=e.parte||'';
-    $('reg-mc').value=e.mc||''; $('reg-verbale').value=e.verbale||''; $('reg-cubetti').value=e.cubetti||''; $('reg-note').value=e.note||'';
+    $('reg-data').value=e.data||''; $('reg-ddt').value=e.ddt||'';
+    updateDdtHint();
+    $('reg-opera').value=e.opera||''; $('reg-parte').value=e.parte||'';
+    $('reg-mc').value=e.mc||''; $('reg-verbale').value=e.verbale||''; $('reg-note').value=e.note||'';
+    refreshWbs(); setCombo('reg-wbs','reg-wbs-other', e.wbs||'');
+    refreshImprese(); setCombo('reg-impresa','reg-impresa-other', e.impresa||'');
     if($('reg-temp-amb')) $('reg-temp-amb').value=e.tempAmb||'';
     if($('reg-temp-cls')) $('reg-temp-cls').value=e.tempCls||'';
+    setCubetti(e.cubetti||''); cubettiManual=true;
     refreshMix(e.mix||''); setTests(e.tests);
     // prelievo: usa il flag salvato, oppure deducilo dalla presenza del verbale (righe vecchie)
     const prel=(e.prelievo!=null)?!!e.prelievo:!!(e.verbale&&String(e.verbale).trim());
@@ -31437,7 +31916,7 @@ setTool("erase");
     composeVerbale();
     $('reg-cancel-edit').style.display='';
     $('reg-save').textContent='✓ Salva modifiche';
-    renderLabs(); renderForm();
+    renderLabs(); renderForm(); updateGuide();
     $('tab-registro').scrollIntoView({behavior:'smooth',block:'start'});
   }
   function saveEntry(){
@@ -31449,11 +31928,11 @@ setTool("erase");
       lab: curLab,
       data: $('reg-data').value||'',
       ddt: ($('reg-ddt').value||'').trim(),
-      impresa: ($('reg-impresa').value||'').trim(),
-      wbs: ($('reg-wbs').value||'').trim(),
+      impresa: comboVal('reg-impresa','reg-impresa-other'),
+      wbs: comboVal('reg-wbs','reg-wbs-other'),
       opera: ($('reg-opera').value||'').trim(),
       parte: ($('reg-parte').value||'').trim(),
-      mix: $('reg-mix').value||'',
+      mix: comboVal('reg-mix','reg-mix-other'),
       mc: ($('reg-mc').value||'').trim(),
       tests: readTests(),
       prelievo: prel,
@@ -31467,7 +31946,12 @@ setTool("erase");
       at: new Date().toLocaleString('it-IT')
     };
     if(!entry.data && !entry.ddt && !entry.impresa && !entry.verbale){ toast('Inserisci almeno data, DDT o impresa.'); return; }
-    if(entry.mix && !db.mixes.includes(entry.mix)) db.mixes.push(entry.mix);
+    // se sono state scritte a mano una miscela/impresa nuove, le aggiungo agli elenchi condivisi
+    let cfgGrew=false;
+    if(entry.mix && !db.mixes.includes(entry.mix)){ db.mixes.push(entry.mix); cfgGrew=true; }
+    db.imprese=db.imprese||[];
+    if(entry.impresa && !db.imprese.includes(entry.impresa)){ db.imprese.push(entry.impresa); cfgGrew=true; }
+    if(cfgGrew) pushConfig();
     if(editId){
       const i=db.entries.findIndex(x=>x.id===editId);
       if(i>=0)db.entries[i]=entry;
@@ -31495,47 +31979,82 @@ setTool("erase");
   function currentRows(){
     return (curLab==='__ALL__')?db.entries.slice():db.entries.filter(e=>e.lab===curLab);
   }
+  /* ---------- colonne configurabili + riordinabili ---------- */
+  const COLORDER_KEY='mq_reg_colorder_v1';
+  const COLS=[
+    {key:'data',    label:'Data',     get:e=>({v:e.data})},
+    {key:'ddt',     label:'DDT',      get:e=>({v:e.ddt})},
+    {key:'impresa', label:'Impresa',  get:e=>({v:e.impresa})},
+    {key:'wbs',     label:'WBS',      get:e=>({v:e.wbs})},
+    {key:'opera',   label:'Opera',    get:e=>({v:e.opera})},
+    {key:'parte',   label:'Parte',    get:e=>({v:e.parte})},
+    {key:'mix',     label:'Mix',      get:e=>({v:e.mix})},
+    {key:'mc',      label:'m³',       get:e=>({v:e.mc})},
+    {key:'tempAmb', label:'T.amb °C', get:e=>({v:e.tempAmb})},
+    {key:'tempCls', label:'T.CLS °C', get:e=>({v:e.tempCls})},
+    {key:'slump',   label:'Slump',    get:e=>({v:tval(e,'slump')})},
+    {key:'spand',   label:'Spand.',   get:e=>({v:tval(e,'spand')})},
+    {key:'aria',    label:'Aria%',    get:e=>({v:tval(e,'aria')})},
+    {key:'ac',      label:'A/C',      get:e=>({v:tval(e,'ac')})},
+    {key:'essud',   label:'Essud.',   get:e=>({v:tval(e,'essud')})},
+    {key:'massa',   label:'M.vol.',   get:e=>({v:tval(e,'massa')})},
+    {key:'verbale', label:'Verbale',  get:e=>({html:e.prelievo?('<b>'+esc(e.verbale||'sì')+'</b>'):'<span style="color:var(--muted)">—</span>'})},
+    {key:'ripetuto',label:'Rip.',     get:e=>({html:(e.ripetuto?'<span class="reg-badge">RIP.</span>':''), empty:!e.ripetuto})},
+    {key:'cubetti', label:'Cubetti',  get:e=>({v:e.cubetti})},
+    {key:'note',    label:'Note',     get:e=>{const n=e.note||'';return {html:(n?('<span title="'+esc(n)+'">'+esc(n.slice(0,40))+(n.length>40?'…':'')+'</span>'):''), empty:!n};}},
+    {key:'by',      label:'Compilato da', get:e=>({v:e.by})}
+  ];
+  function loadColOrder(){
+    try{
+      const a=JSON.parse(localStorage.getItem(COLORDER_KEY)||'null');
+      if(Array.isArray(a)){
+        const byKey={}; COLS.forEach(c=>byKey[c.key]=c);
+        const ordered=[]; a.forEach(k=>{ if(byKey[k]){ordered.push(byKey[k]); delete byKey[k];} });
+        Object.keys(byKey).forEach(k=>ordered.push(byKey[k]));
+        COLS.length=0; ordered.forEach(c=>COLS.push(c));
+      }
+    }catch(_){}
+  }
+  function saveColOrder(){ try{ localStorage.setItem(COLORDER_KEY, JSON.stringify(COLS.map(c=>c.key))); }catch(_){} }
+  function resetColOrder(){ try{ localStorage.removeItem(COLORDER_KEY); }catch(_){} location.reload(); }
+  function cellHtml(label, r){
+    const empty = (r.empty!=null) ? r.empty : (r.html!=null ? false : (r.v==null||r.v===''));
+    const inner = (r.html!=null) ? r.html : esc(r.v);
+    return '<td data-label="'+esc(label)+'"'+(empty?' data-empty="1"':'')+'>'+inner+'</td>';
+  }
+  let _dragKey=null;
+  function renderThead(){
+    const tr=$('reg-thead-row'); if(!tr)return;
+    tr.innerHTML=COLS.map(c=>'<th draggable="true" data-key="'+c.key+'" class="reg-th" title="Trascina per spostare la colonna">'+esc(c.label)+'</th>').join('')+'<th></th>';
+    tr.querySelectorAll('th[data-key]').forEach(th=>{
+      th.addEventListener('dragstart',ev=>{ _dragKey=th.dataset.key; th.classList.add('drag'); try{ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',_dragKey);}catch(_){}});
+      th.addEventListener('dragend',()=>{ th.classList.remove('drag'); tr.querySelectorAll('th').forEach(x=>x.classList.remove('over')); });
+      th.addEventListener('dragover',ev=>{ ev.preventDefault(); th.classList.add('over'); });
+      th.addEventListener('dragleave',()=>th.classList.remove('over'));
+      th.addEventListener('drop',ev=>{ ev.preventDefault(); th.classList.remove('over');
+        const target=th.dataset.key; if(!_dragKey||_dragKey===target)return;
+        const from=COLS.findIndex(c=>c.key===_dragKey), to=COLS.findIndex(c=>c.key===target);
+        if(from<0||to<0)return;
+        const moved=COLS.splice(from,1)[0]; COLS.splice(to,0,moved);
+        saveColOrder(); renderThead(); renderTable();
+      });
+    });
+  }
   function renderTable(){
     const rows=currentRows();
     const tb=$('reg-tbody'); if(!tb)return;
+    renderThead();
     $('reg-count').innerHTML=(curLab==='__ALL__'?'Database completo: ':(esc(curLab)+': '))+'<b>'+rows.length+'</b> registrazioni';
     if(!rows.length){
-      tb.innerHTML='<tr><td colspan="19" class="reg-empty">Nessuna registrazione. Compila il modulo qui sopra e premi «Salva registrazione».</td></tr>';
+      tb.innerHTML='<tr><td colspan="'+(COLS.length+1)+'" class="reg-empty">Nessuna registrazione. Compila il modulo qui sopra e premi «Salva riga».</td></tr>';
       return;
     }
     tb.innerHTML=rows.map(e=>{
-      const cell=(label,val,opts)=>{
-        opts=opts||{};
-        const empty = opts.html!=null ? false : (val==null||val==='');
-        const inner = opts.html!=null ? opts.html : esc(val);
-        return '<td data-label="'+esc(label)+'"'+(empty?' data-empty="1"':'')+(opts.attr||'')+'>'+inner+'</td>';
-      };
-      const verbHtml=e.prelievo?('<b>'+esc(e.verbale||'sì')+'</b>'):'<span style="color:var(--muted)">—</span>';
-      const note=e.note||'';
-      return '<tr class="'+(e.ripetuto?'rip':'')+'">'+
-        cell('Data', e.data)+
-        cell('DDT', e.ddt)+
-        cell('Impresa', e.impresa)+
-        cell('WBS', e.wbs)+
-        cell('Opera', e.opera)+
-        cell('Parte', e.parte)+
-        cell('Mix', e.mix)+
-        cell('m³', e.mc)+
-        cell('T.amb °C', e.tempAmb)+
-        cell('T.CLS °C', e.tempCls)+
-        cell('Slump', tval(e,'slump'))+
-        cell('Spand.', tval(e,'spand'))+
-        cell('Aria%', tval(e,'aria'))+
-        cell('A/C', tval(e,'ac'))+
-        cell('Essud.', tval(e,'essud'))+
-        cell('M.vol.', tval(e,'massa'))+
-        cell('Verbale', null, {html:verbHtml})+
-        cell('Ripetuto', e.ripetuto?'x':'', {html:(e.ripetuto?'<span class="reg-badge">RIP.</span>':''), attr:(e.ripetuto?'':' data-empty="1"')})+
-        cell('Cubetti', e.cubetti)+
-        cell('Note', note, {html:(note?('<span title="'+esc(note)+'">'+esc(note.slice(0,40))+(note.length>40?'…':'')+'</span>'):''), attr:(note?'':' data-empty="1"')})+
-        '<td class="reg-actions-cell" style="white-space:nowrap;"><button class="reg-del" data-edit="'+esc(e.id)+'" style="border-color:var(--border2);color:var(--muted);margin-right:4px;">✎<span class="reg-btn-txt"> Modifica</span></button>'+
-        '<button class="reg-del" data-del="'+esc(e.id)+'">✕<span class="reg-btn-txt"> Elimina</span></button></td>'+
-      '</tr>';
+      let tds='';
+      COLS.forEach(c=>{ tds+=cellHtml(c.label, c.get(e)); });
+      tds+='<td class="reg-actions-cell" style="white-space:nowrap;"><button class="reg-del" data-edit="'+esc(e.id)+'" style="border-color:var(--border2);color:var(--muted);margin-right:4px;">✎<span class="reg-btn-txt"> Modifica</span></button>'+
+        '<button class="reg-del" data-del="'+esc(e.id)+'">✕<span class="reg-btn-txt"> Elimina</span></button></td>';
+      return '<tr class="'+(e.ripetuto?'rip':'')+'">'+tds+'</tr>';
     }).join('');
     tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
       const e=db.entries.find(x=>x.id===b.dataset.del); if(!e)return;
@@ -31611,7 +32130,7 @@ setTool("erase");
       // ricalcola flag ripetuto sull'intero database
       const seen={};
       db.entries.forEach(e=>{ const k=String(e.verbale||'').trim().toLowerCase(); if(!k)return; if(seen[k])e.ripetuto=true; else seen[k]=true; });
-      save(); renderLabs(); refreshMix(); renderForm(); renderTable();
+      save(); renderLabs(); refreshCombos(); renderForm(); renderTable();
       if(cloudOn()){ try{ await sbRegUpsertMany(db.entries); lastSig=''; }catch(err){ console.warn('import cloud',err); db.entries.forEach(e=>e._pending=true); save(); } }
       toast('Database aggiornato: '+added+' aggiunte, '+updated+' aggiornate.');
     }catch(err){
@@ -31632,9 +32151,17 @@ setTool("erase");
   function init(){
     if(!$('tab-registro'))return;
     load();
+    loadColOrder();
+    // impedisce al browser di riproporre/salvare i valori ("Salva DDT" ecc.): nome casuale + autocomplete off
+    ['reg-ddt','reg-opera','reg-parte','reg-note','reg-wbs-other','reg-impresa-other','reg-mix-other','reg-cubetti-manual'].forEach(id=>{
+      const el=$(id); if(!el)return;
+      el.setAttribute('autocomplete','off'); el.setAttribute('autocorrect','off');
+      el.setAttribute('autocapitalize','off'); el.setAttribute('spellcheck','false');
+      el.setAttribute('name','f_'+Math.random().toString(36).slice(2,9));
+    });
     renderTestsInputs();
     renderLabs();
-    refreshMix();
+    refreshCombos();
     renderForm();
     if($('reg-data') && !$('reg-data').value) $('reg-data').value=todayISO();   // data odierna al primo avvio
     composeVerbale();
@@ -31659,8 +32186,17 @@ setTool("erase");
       else { if($('reg-num'))$('reg-num').value=''; composeVerbale(); }
       updateVerbHint();
     });
-    // quando cambia la WBS, aggiorna numero suggerito e anteprima
-    $('reg-wbs').addEventListener('input',()=>{ suggestNumber(); });
+    // menù a tendina con "Altro": mostra il campo manuale quando serve
+    if($('reg-wbs')) $('reg-wbs').addEventListener('change',()=>{ comboOtherToggle('reg-wbs','reg-wbs-other',true); suggestNumber(); updateGuide(); });
+    if($('reg-wbs-other')) $('reg-wbs-other').addEventListener('input',()=>{ suggestNumber(); updateGuide(); });
+    if($('reg-mix')) $('reg-mix').addEventListener('change',()=>{ comboOtherToggle('reg-mix','reg-mix-other',true); updateGuide(); });
+    if($('reg-mix-other')) $('reg-mix-other').addEventListener('input',()=>{ updateGuide(); });
+    if($('reg-impresa')) $('reg-impresa').addEventListener('change',()=>{ comboOtherToggle('reg-impresa','reg-impresa-other',true); });
+    if($('reg-data')) $('reg-data').addEventListener('change',()=>{ updateGuide(); suggestNumber(); });
+    // controllo intervalli: slump / spandimento / temperatura CLS
+    ['reg-val-slump','reg-val-spand','reg-temp-cls'].forEach(id=>{ if($(id)) $(id).addEventListener('input',checkRanges); });
+    ['reg-chk-slump','reg-chk-spand'].forEach(id=>{ if($(id)) $(id).addEventListener('change',checkRanges); });
+    if($('reg-ddt')) $('reg-ddt').addEventListener('input',updateDdtHint);
     // numero prelievo: se lo tocca l'utente, non lo sovrascrivo più
     if($('reg-num')) $('reg-num').addEventListener('input',()=>{ verbaleManual=true; composeVerbale(); });
     if($('reg-num-inc')) $('reg-num-inc').onclick=()=>{ const n=currentNum()||0; if($('reg-num'))$('reg-num').value=n+1; verbaleManual=true; composeVerbale(); };
@@ -31679,6 +32215,19 @@ setTool("erase");
     }
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
+    if($('reg-colreset')) $('reg-colreset').onclick=(ev)=>{ ev.preventDefault(); resetColOrder(); };
+    // cubetti: pulsanti 4/6/8 + Altro (numero manuale)
+    const cbChips=$('reg-cubetti-chips'), cbMan=$('reg-cubetti-manual');
+    const cbHi=(which)=>{ if(cbChips) cbChips.querySelectorAll('.reg-chip').forEach(x=>x.classList.toggle('on', x.getAttribute('data-v')===which)); };
+    if(cbChips) cbChips.querySelectorAll('.reg-chip').forEach(b=>{
+      b.onclick=()=>{
+        cubettiManual=true;
+        const v=b.getAttribute('data-v');
+        if(v==='__altro'){ if(cbMan){ cbMan.style.display=''; cbMan.focus(); if($('reg-cubetti'))$('reg-cubetti').value=cbMan.value||''; } cbHi('__altro'); }
+        else { if(cbMan){ cbMan.style.display='none'; cbMan.value=''; } if($('reg-cubetti'))$('reg-cubetti').value=v; cbHi(v); }
+      };
+    });
+    if(cbMan) cbMan.addEventListener('input',()=>{ cubettiManual=true; if($('reg-cubetti'))$('reg-cubetti').value=cbMan.value||''; cbHi('__altro'); });
 
     // ── Sincronizzazione cloud (Supabase) ──
     const topbar=document.querySelector('#tab-registro .reg-topbar');
