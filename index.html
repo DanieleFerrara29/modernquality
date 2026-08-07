@@ -8216,17 +8216,17 @@ var __async = (__this, __arguments, generator) => {
     function utf8CheckExtraBytes(self2, buf, p) {
       if ((buf[0] & 192) !== 128) {
         self2.lastNeed = 0;
-        return "�";
+        return " ";
       }
       if (self2.lastNeed > 1 && buf.length > 1) {
         if ((buf[1] & 192) !== 128) {
           self2.lastNeed = 1;
-          return "�";
+          return " ";
         }
         if (self2.lastNeed > 2 && buf.length > 2) {
           if ((buf[2] & 192) !== 128) {
             self2.lastNeed = 2;
-            return "�";
+            return " ";
           }
         }
       }
@@ -8252,7 +8252,7 @@ var __async = (__this, __arguments, generator) => {
     }
     function utf8End(buf) {
       var r = buf && buf.length ? this.write(buf) : "";
-      if (this.lastNeed) return r + "�";
+      if (this.lastNeed) return r + " ";
       return r;
     }
     function utf16Text(buf, i) {
@@ -24752,14 +24752,10 @@ async function doLogin(){
   const password=document.getElementById('login-pass').value||'';
   const errEl=document.getElementById('login-err');
   if(!username||!password){errEl.textContent='Compila username e password.';errEl.classList.add('show');return;}
-  // Admin locale — funziona sempre anche senza Supabase
-  const defAdmin={username:'Daniele Ferrara',password:'ICMFOREVER',role:'admin',active:true};
-  const localMatch=[defAdmin].find(u=>u.username.toLowerCase()===username.toLowerCase()&&u.password===password);
-  if(localMatch){sendTelegram('\u2705 Admin: '+localMatch.username).catch(()=>{});loginAs(localMatch);return;}
-  // Utenti Supabase
+  // Tutti gli accessi sono gestiti dal database (nessun accesso scritto nel codice)
   let users=[];
   try{users=await sbGetUsers();}catch(e){console.warn('Supabase:',e);}
-  const all=[...users]; if(!all.find(u=>u.username==='Daniele Ferrara')) all.push(defAdmin);
+  const all=[...users];
   const user=all.find(u=>u.username.toLowerCase()===username.toLowerCase()&&u.password===password);
   if(!user){errEl.textContent='Username o password errati.';errEl.classList.add('show');return;}
   if(!user.active){errEl.textContent='Account disabilitato.';errEl.classList.add('show');return;}
