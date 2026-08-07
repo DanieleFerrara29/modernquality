@@ -2345,6 +2345,8 @@ tr.new-row{animation:rowIn .2s ease both;}
           </div>
         </div>
         <div class="reg-f"><label>Metri cubi (m³)</label><input type="number" step="0.01" id="reg-mc"/></div>
+        <div class="reg-f"><label>Temperatura ambiente (°C)</label><input type="number" step="0.1" id="reg-temp-amb" placeholder="es. 22"/></div>
+        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="number" step="0.1" id="reg-temp-cls" placeholder="es. 18"/></div>
       </section>
 
       <section class="reg-sec reg-tests">
@@ -2397,7 +2399,7 @@ tr.new-row{animation:rowIn .2s ease both;}
         <thead>
           <tr>
             <th>Data</th><th>DDT</th><th>Impresa</th><th>WBS</th><th>Opera</th><th>Parte</th>
-            <th>Mix</th><th>m³</th><th>Slump</th><th>Spand.</th><th>Aria%</th><th>A/C</th>
+            <th>Mix</th><th>m³</th><th>T.amb °C</th><th>T.CLS °C</th><th>Slump</th><th>Spand.</th><th>Aria%</th><th>A/C</th>
             <th>Essud.</th><th>M.vol.</th><th>Verbale</th><th>Rip.</th><th>Cubetti</th><th>Note</th><th></th>
           </tr>
         </thead>
@@ -31082,7 +31084,8 @@ setTool("erase");
       id:e.id, lab:e.lab||'', data:e.data||'', ddt:e.ddt||'', impresa:e.impresa||'',
       wbs:e.wbs||'', opera:e.opera||'', parte:e.parte||'', mix:e.mix||'', mc:e.mc||'',
       tests:e.tests||{}, prelievo:!!e.prelievo, verbale:e.verbale||'', ripetuto:!!e.ripetuto,
-      cubetti:e.cubetti||'', note:e.note||'', inserito_da:e.by||'', inserito_il:e.at||'',
+      cubetti:e.cubetti||'', note:e.note||'', temp_amb:e.tempAmb||'', temp_cls:e.tempCls||'',
+      inserito_da:e.by||'', inserito_il:e.at||'',
       updated_at:e.updated_at||new Date().toISOString()
     };
   }
@@ -31091,7 +31094,7 @@ setTool("erase");
       id:String(r.id), lab:r.lab||'', data:r.data||'', ddt:r.ddt||'', impresa:r.impresa||'',
       wbs:r.wbs||'', opera:r.opera||'', parte:r.parte||'', mix:r.mix||'', mc:r.mc||'',
       tests:(r.tests&&typeof r.tests==='object')?r.tests:{}, prelievo:(r.prelievo!=null?!!r.prelievo:!!(r.verbale&&String(r.verbale).trim())), verbale:r.verbale||'', ripetuto:!!r.ripetuto,
-      cubetti:r.cubetti||'', note:r.note||'', by:r.inserito_da||'', at:r.inserito_il||'',
+      cubetti:r.cubetti||'', note:r.note||'', tempAmb:r.temp_amb||'', tempCls:r.temp_cls||'', by:r.inserito_da||'', at:r.inserito_il||'',
       updated_at:r.updated_at||''
     };
   }
@@ -31409,7 +31412,7 @@ setTool("erase");
     return d.getFullYear()+'-'+m+'-'+day;
   }
   function clearForm(){
-    ['reg-data','reg-ddt','reg-impresa','reg-wbs','reg-opera','reg-parte','reg-mc','reg-verbale','reg-cubetti','reg-note'].forEach(id=>{ if($(id))$(id).value=''; });
+    ['reg-data','reg-ddt','reg-impresa','reg-wbs','reg-opera','reg-parte','reg-mc','reg-verbale','reg-cubetti','reg-note','reg-temp-amb','reg-temp-cls'].forEach(id=>{ if($(id))$(id).value=''; });
     if($('reg-num'))$('reg-num').value='';
     refreshMix(''); setTests(null); editId=null;
     setPrel(false); verbaleManual=false;
@@ -31424,6 +31427,8 @@ setTool("erase");
     $('reg-data').value=e.data||''; $('reg-ddt').value=e.ddt||''; $('reg-impresa').value=e.impresa||'';
     $('reg-wbs').value=e.wbs||''; $('reg-opera').value=e.opera||''; $('reg-parte').value=e.parte||'';
     $('reg-mc').value=e.mc||''; $('reg-verbale').value=e.verbale||''; $('reg-cubetti').value=e.cubetti||''; $('reg-note').value=e.note||'';
+    if($('reg-temp-amb')) $('reg-temp-amb').value=e.tempAmb||'';
+    if($('reg-temp-cls')) $('reg-temp-cls').value=e.tempCls||'';
     refreshMix(e.mix||''); setTests(e.tests);
     // prelievo: usa il flag salvato, oppure deducilo dalla presenza del verbale (righe vecchie)
     const prel=(e.prelievo!=null)?!!e.prelievo:!!(e.verbale&&String(e.verbale).trim());
@@ -31456,6 +31461,8 @@ setTool("erase");
       ripetuto: prel && isDup(verbale, editId),
       cubetti: ($('reg-cubetti').value||'').trim(),
       note: ($('reg-note').value||'').trim(),
+      tempAmb: ($('reg-temp-amb')?$('reg-temp-amb').value:'').trim(),
+      tempCls: ($('reg-temp-cls')?$('reg-temp-cls').value:'').trim(),
       by: (currentUser&&currentUser.username)||'',
       at: new Date().toLocaleString('it-IT')
     };
@@ -31514,6 +31521,8 @@ setTool("erase");
         cell('Parte', e.parte)+
         cell('Mix', e.mix)+
         cell('m³', e.mc)+
+        cell('T.amb °C', e.tempAmb)+
+        cell('T.CLS °C', e.tempCls)+
         cell('Slump', tval(e,'slump'))+
         cell('Spand.', tval(e,'spand'))+
         cell('Aria%', tval(e,'aria'))+
@@ -31542,10 +31551,12 @@ setTool("erase");
 
   /* ---------- Excel export ---------- */
   const HEAD=['ID','Laboratorio','Data','DDT','Impresa Esecutrice','WBS','Opera',"Parte d'Opera",'Mix','m³',
+    'Temp. ambiente [°C]','Temp. CLS [°C]',
     'Slump [cm]','Spandimento [cm]','Aria [%]','Rapporto A/C','Acqua essudata','Massa volumica [kg/m³]',
     'Prelievo eseguito','Verbale di prelievo','Ripetuto','N° cubetti','Note','Inserito da','Data inserimento'];
   function rowArr(e){
     return [e.id,e.lab,e.data,e.ddt,e.impresa,e.wbs,e.opera,e.parte,e.mix,e.mc,
+      e.tempAmb||'',e.tempCls||'',
       tval(e,'slump'),tval(e,'spand'),tval(e,'aria'),tval(e,'ac'),tval(e,'essud'),tval(e,'massa'),
       (e.prelievo?'SÌ':'NO'),e.verbale,(e.ripetuto?'SÌ':''),e.cubetti,e.note,e.by,e.at];
   }
@@ -31586,7 +31597,9 @@ setTool("erase");
           verbale:String(g('Verbale di prelievo','Verbale')),
           ripetuto:truthy(g('Ripetuto')),
           cubetti:String(g('N° cubetti','N cubetti','Cubetti')),
-          note:String(g('Note')), by:String(g('Inserito da')), at:String(g('Data inserimento'))
+          note:String(g('Note')), by:String(g('Inserito da')), at:String(g('Data inserimento')),
+          tempAmb:String(g('Temp. ambiente [°C]','Temp ambiente','Temperatura ambiente')),
+          tempCls:String(g('Temp. CLS [°C]','Temp CLS','Temperatura CLS'))
         };
         e.prelievo = (g('Prelievo eseguito','Prelievo')!=='') ? truthy(g('Prelievo eseguito','Prelievo')) : !!(e.verbale && e.verbale.trim());
         if(!e.prelievo){ e.verbale=''; e.ripetuto=false; }
