@@ -101,9 +101,9 @@ input,td,th,span,div,button,label,select,textarea{font-feature-settings:'zero' 0
 .btn-login:hover{background:linear-gradient(135deg,#f08930,#d1540e);transform:translateY(-2px);box-shadow:0 6px 20px rgba(224,120,32,.4);}
 .btn-login:active{transform:translateY(0);}
 .login-creator{margin-top:28px;padding-top:18px;border-top:1px solid var(--border);text-align:center;}
-.login-creator .cr-role{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
-.login-creator .cr-name{font-size:11px;font-weight:600;color:var(--text);}
-.login-creator .cr-phone{font-size:11px;color:var(--muted);margin-top:2px;}
+.login-creator .cr-role{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.login-creator .cr-name{font-size:20px;font-weight:700;color:var(--text);}
+.login-creator .cr-phone{font-size:15px;color:var(--muted);margin-top:5px;}
 
 /* ══════════════════════════════════════════════
    HEADER
@@ -565,7 +565,7 @@ tr.new-row{animation:rowIn .2s ease both;}
     </div>
     <div class="login-creator">
       <div class="cr-role">Sviluppato da</div>
-      <div class="cr-name">Ferrara Daniele</div>
+      <div class="cr-name">Ing. Daniele Ferrara</div>
       <div class="cr-phone">📞 329 159 4220</div>
     </div>
   </div>
@@ -638,6 +638,13 @@ tr.new-row{animation:rowIn .2s ease both;}
           <button class="btn btn-blue" id="btn-add-user" style="width:100%;">+ Aggiungi utente</button>
         </div>
         <div id="add-user-err" style="font-size:11px;color:var(--red);display:none;"></div>
+        <details style="margin-top:12px;">
+          <summary style="cursor:pointer;font-size:11px;color:var(--orange);">⬆ Importa utenti da Excel (incolla)</summary>
+          <div style="font-size:11px;color:var(--muted);margin:6px 0;">Una riga per utente, con le colonne separate da TAB (come si incolla da Excel) o da <b>;</b> :<br><b>Nome · Cognome · Password · Ruolo · Laboratorio</b><br>Ruolo: <i>utente</i>, <i>laboratorio</i> o <i>admin</i> (se vuoto = utente). Il Laboratorio serve solo per il ruolo laboratorio.</div>
+          <textarea id="bulk-users" rows="5" placeholder="Mario;Rossi;password1;laboratorio;Lab 1&#10;Anna;Bianchi;password2;utente&#10;Luca;Verdi;password3;admin" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;box-sizing:border-box;"></textarea>
+          <button class="btn btn-blue btn-sm" id="btn-bulk-users" style="margin-top:6px;">Importa utenti</button>
+          <div id="bulk-users-msg" style="font-size:11px;margin-top:6px;"></div>
+        </details>
       </div>
 
       <!-- Gestione Registro CLS: laboratori + miscele + formato verbale -->
@@ -653,6 +660,12 @@ tr.new-row{animation:rowIn .2s ease both;}
             <button class="btn btn-blue btn-sm" id="ra-lab-add">+ Aggiungi</button>
           </div>
           <div id="ra-lab-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+          <details style="margin-top:10px;">
+            <summary style="cursor:pointer;font-size:11px;color:var(--accent);">⬆ Importa laboratori da Excel (incolla)</summary>
+            <div style="font-size:11px;color:var(--muted);margin:6px 0;">Un laboratorio per riga.</div>
+            <textarea id="ra-lab-bulk" rows="4" placeholder="Laboratorio 1&#10;Laboratorio 2&#10;AGC&#10;..." style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;box-sizing:border-box;"></textarea>
+            <button class="btn btn-blue btn-sm" id="ra-lab-bulk-add" style="margin-top:6px;">Importa elenco</button>
+          </details>
         </div>
         <div>
           <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Miscele di CLS</label>
@@ -2211,6 +2224,17 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-title{font-size:15px;font-weight:600;color:var(--text);margin-right:auto;display:flex;align-items:center;gap:8px;}
 #tab-registro .reg-title small{font-size:11px;color:var(--muted);font-weight:400;}
 #tab-registro .reg-labbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+#tab-registro .reg-report{border:1px solid var(--border2);border-radius:12px;margin-bottom:16px;overflow:hidden;}
+#tab-registro .reg-report-head{background:var(--surface);padding:12px 16px;cursor:pointer;font-weight:700;color:var(--text);}
+#tab-registro .reg-report-body{padding:14px 16px;}
+#tab-registro .reg-report-controls{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--muted);}
+#tab-registro .reg-report-controls select{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:5px 8px;font-size:13px;margin-left:4px;}
+#tab-registro .rep-bars{display:flex;flex-direction:column;gap:6px;}
+#tab-registro .rep-row{display:flex;align-items:center;gap:8px;font-size:12px;}
+#tab-registro .rep-lbl{width:120px;color:var(--muted);flex-shrink:0;}
+#tab-registro .rep-bar{flex:1;height:16px;background:var(--bg);border-radius:4px;overflow:hidden;min-width:40px;}
+#tab-registro .rep-fill{display:block;height:100%;background:var(--accent);}
+#tab-registro .rep-val{width:84px;text-align:right;color:var(--text);font-weight:600;flex-shrink:0;}
 #tab-registro .reg-lab{background:var(--surface);border:1px solid var(--border2);color:var(--muted);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:500;transition:.12s;}
 #tab-registro .reg-lab:hover{color:var(--text);border-color:var(--accent);}
 #tab-registro .reg-lab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
@@ -2248,6 +2272,7 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-guide-warn{color:var(--red);font-size:11px;font-weight:700;}
 #tab-registro .reg-rangewarn{background:rgba(224,90,90,.10);border:1px solid var(--red);border-radius:14px;padding:12px 16px;margin-bottom:16px;color:var(--text);font-size:13px;}
 #tab-registro .reg-rangewarn b{color:var(--red);}
+#tab-registro .reg-fieldwarn{color:var(--red);font-size:12px;font-weight:700;margin-top:6px;}
 #tab-registro .reg-f input:focus,#tab-registro .reg-f select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15);}
 #tab-registro .reg-mixrow{display:flex;gap:8px;}
 #tab-registro .reg-mixrow select{flex:1;}
@@ -2369,6 +2394,21 @@ tr.new-row{animation:rowIn .2s ease both;}
     <!-- Barra laboratori -->
     <div class="reg-labbar" id="reg-labbar"></div>
 
+    <!-- Report metri cubi (solo admin) -->
+    <div class="reg-report" id="reg-report" style="display:none;">
+      <div class="reg-report-head" id="reg-report-toggle">📊 Report metri cubi <span style="font-size:11px;color:var(--muted);font-weight:400;">— clicca per aprire/chiudere</span></div>
+      <div class="reg-report-body" id="reg-report-body" style="display:none;">
+        <div class="reg-report-controls">
+          <label>Periodo <select id="rep-period"><option value="day">Giorno</option><option value="week">Settimana</option><option value="month" selected>Mese</option></select></label>
+          <label>Laboratorio <select id="rep-lab"></select></label>
+          <label>WBS <select id="rep-wbs"></select></label>
+          <label>Mix <select id="rep-mix"></select></label>
+        </div>
+        <div id="rep-total" style="font-size:13px;margin-bottom:12px;"></div>
+        <div id="rep-chart"></div>
+      </div>
+    </div>
+
     <!-- (le impostazioni del verbale sono ora accanto al campo del verbale, nel modulo) -->
 
     <!-- Form nuovo prelievo — stile modulo -->
@@ -2410,7 +2450,7 @@ tr.new-row{animation:rowIn .2s ease both;}
         </div>
         <div class="reg-f"><label>Metri cubi (m³)</label><input type="number" step="0.01" id="reg-mc" autocomplete="off"/></div>
         <div class="reg-f"><label>Temperatura ambiente (°C)</label><input type="number" step="0.1" id="reg-temp-amb" placeholder="es. 22" autocomplete="off"/></div>
-        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="number" step="0.1" id="reg-temp-cls" placeholder="es. 18" autocomplete="off"/></div>
+        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="number" step="0.1" id="reg-temp-cls" placeholder="es. 18" autocomplete="off"/><div class="reg-fieldwarn" id="reg-tcls-hint"></div></div>
       </section>
 
       <div class="reg-guide" id="reg-guide" style="display:none;"></div>
@@ -2420,6 +2460,7 @@ tr.new-row{animation:rowIn .2s ease both;}
         <div class="reg-sec-t">3 · Prove eseguite</div>
         <div class="reg-sec-hint">Spunta quelle effettuate e inserisci il valore.</div>
         <div class="reg-tests-grid" id="reg-tests-grid"></div>
+        <div class="reg-fieldwarn" id="reg-tests-hint"></div>
       </section>
 
       <section class="reg-sec reg-verbblock">
@@ -2465,6 +2506,7 @@ tr.new-row{animation:rowIn .2s ease both;}
     <!-- Tabella + strumenti database -->
     <div class="reg-toolbar">
       <span class="reg-count" id="reg-count">0 prelievi</span>
+      <span class="reg-dbsize" id="reg-dbsize" title="Spazio usato del database su Supabase (limite 500 MB nel piano gratuito)" style="display:none;font-size:11px;color:var(--muted);"></span>
       <button class="reg-btn excel" id="reg-exp-lab">⬇ Esporta laboratorio</button>
       <button class="reg-btn excel" id="reg-exp-all">⬇ Scarica database (tutti)</button>
       <button class="reg-btn ghost" id="reg-imp-btn">⬆ Carica / aggiorna da Excel</button>
@@ -25357,6 +25399,37 @@ document.getElementById('btn-add-user').addEventListener('click', async () => {
   showStatus('✅ Utente aggiunto!', 'success');
 });
 
+// Importa utenti in blocco (incolla da Excel)
+document.getElementById('btn-bulk-users').addEventListener('click', async () => {
+  const ta=document.getElementById('bulk-users'), msg=document.getElementById('bulk-users-msg');
+  const lines=(ta.value||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){ msg.style.color='var(--red)'; msg.textContent='Incolla almeno una riga.'; return; }
+  const btn=document.getElementById('btn-bulk-users'); btn.disabled=true; btn.textContent='⏳ Importazione...';
+  const existing=getUsers().map(u=>(u.username||'').toLowerCase());
+  const roleMap={'utente':'user','user':'user','laboratorio':'laboratorio','lab':'laboratorio','admin':'admin'};
+  let added=0, skipped=0; const errors=[];
+  for(const line of lines){
+    const c=line.split(/\t|;/).map(s=>s.trim());
+    const nome=c[0]||'', cognome=c[1]||'', password=c[2]||'';
+    const username=(nome+' '+cognome).trim().replace(/\s+/g,' ');
+    const role=roleMap[(c[3]||'').toLowerCase()]||'user';
+    const lab=c[4]||'';
+    if(!username||!password){ skipped++; errors.push('riga saltata (manca nome/cognome/password): '+line.slice(0,30)); continue; }
+    if(existing.includes(username.toLowerCase())){ skipped++; errors.push(username+' già esistente'); continue; }
+    const ok=await sbSaveUser({ username, password, role, active:true, last_login:'—' });
+    if(!ok){ errors.push('errore salvataggio '+username); continue; }
+    if(role==='laboratorio' && lab && window.RegAdmin){ window.RegAdmin.setUserLab(username, lab); }
+    existing.push(username.toLowerCase()); added++;
+    addLog('Importato utente: '+username+' ('+role+')');
+  }
+  const users=await sbGetUsers(); _usersCache=users;
+  renderAdminUsers(); renderAdminLog(); renderRegAdmin();
+  btn.disabled=false; btn.textContent='Importa utenti';
+  msg.style.color = added ? 'var(--green)' : 'var(--red)';
+  msg.innerHTML = '✅ Importati '+added+' utenti'+(skipped?(' · '+skipped+' saltati'):'')+(errors.length?('<br><span style="color:var(--muted)">'+errors.slice(0,5).join(' · ')+'</span>'):'');
+  if(added) ta.value='';
+});
+
 // ════════════════════════════════════════════════════
 // REGISTRO CLS — gestione laboratori, miscele, formato (solo admin)
 // ════════════════════════════════════════════════════
@@ -25508,6 +25581,15 @@ function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/
     window.RegAdmin.addLab(v); inp.value=''; renderRegAdmin();
   });
   if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); if(addBtn)addBtn.click(); } });
+  const bulkBtn=document.getElementById('ra-lab-bulk-add'), bulkTa=document.getElementById('ra-lab-bulk');
+  if(bulkBtn) bulkBtn.addEventListener('click',()=>{
+    if(!window.RegAdmin||!window.RegAdmin.addLabs) return;
+    const list=(bulkTa.value||'').split(/[\r\n\t;]+/).map(s=>s.trim()).filter(Boolean);
+    if(!list.length) return;
+    const res=window.RegAdmin.addLabs(list);
+    bulkTa.value=''; renderRegAdmin();
+    if(typeof showStatus==='function') showStatus('✅ Aggiunti '+res.added+' laboratori','success');
+  });
 })();
 
 // aggiunta / rimozione miscele
@@ -31408,8 +31490,10 @@ setTool("erase");
       if(sig!==lastSig){
         lastSig=sig; db.entries=merged; save();
         renderLabs(); refreshCombos(); renderTable(); if(!editId) renderForm();
-      } else if(cfgChanged){ save(); renderLabs(); refreshCombos(); renderTable(); if(!editId) renderForm(); }
+        updateReportVisibility(); reportRefreshIfOpen();
+      } else if(cfgChanged){ save(); renderLabs(); refreshCombos(); renderTable(); if(!editId) renderForm(); reportRefreshIfOpen(); }
       setStatus('ok');
+      if(Date.now()-_dbSizeAt>60000){ _dbSizeAt=Date.now(); updateDbSize(); }
     }catch(e){ console.warn('cloudSync',e); setStatus('offline'); }
   }
 
@@ -31418,6 +31502,22 @@ setTool("erase");
     if(state==='ok'){ el.textContent='☁ Sincronizzato'; el.style.color='var(--green)'; el.style.borderColor='var(--green)'; }
     else if(state==='offline'){ el.textContent='⚠ Offline — dati locali'; el.style.color='var(--red)'; el.style.borderColor='var(--red)'; }
     else { el.textContent='● Solo locale'; el.style.color='var(--muted)'; el.style.borderColor='var(--border2)'; }
+  }
+  // indicatore spazio database (MB usati / 500, con MB liberi)
+  let _dbSizeAt=0;
+  async function updateDbSize(){
+    const el=$('reg-dbsize'); if(!el) return;
+    if(!cloudOn()){ el.style.display='none'; return; }
+    try{
+      const r=await sbRpc('db_size_mb',{});
+      let mb = (typeof r==='number') ? r : (Array.isArray(r) ? (typeof r[0]==='number'?r[0]:(r[0]&&r[0].db_size_mb)) : (r&&r.db_size_mb));
+      mb=parseFloat(mb); if(isNaN(mb)){ el.style.display='none'; return; }
+      const LIMIT=500, rem=Math.max(0,LIMIT-mb), pct=Math.min(100,Math.round(mb/LIMIT*100));
+      const color = pct<70?'var(--green)':(pct<90?'var(--accent)':'var(--red)');
+      el.style.display='';
+      el.innerHTML='💾 <b style="color:var(--text);">'+mb.toFixed(1)+'</b>/'+LIMIT+' MB · liberi <b style="color:'+color+';">'+rem.toFixed(0)+' MB</b> '
+        +'<span style="display:inline-block;width:56px;height:6px;background:var(--border2);border-radius:3px;vertical-align:middle;overflow:hidden;"><span style="display:block;height:100%;width:'+pct+'%;background:'+color+';"></span></span>';
+    }catch(e){ el.style.display='none'; }
   }
 
   /* ---------- CONFIG condivisa (laboratori, miscele, formato, utenti→lab) ---------- */
@@ -31470,6 +31570,7 @@ setTool("erase");
     getLabUsers:()=>Object.assign({},db.labUsers||{}),
     getFormat:()=>({mid:midPart(),width:db.cfg.width||5}),
     addLab:(name)=>{ name=(name||'').trim(); if(name&&!db.labs.includes(name)){db.labs.push(name);pushConfig();refreshAll();} return db.labs.slice(); },
+    addLabs:(list)=>{ let added=0; (list||[]).forEach(n=>{ n=(n||'').trim(); if(n&&!db.labs.includes(n)){db.labs.push(n);added++;} }); if(added){pushConfig();refreshAll();} return {added, labs:db.labs.slice()}; },
     removeLab:(name)=>{ db.labs=db.labs.filter(l=>l!==name); if(!db.labs.length)db.labs=DEFAULT_LABS.slice(); if(!db.labs.includes(curLab))curLab=db.labs[0]; pushConfig(); refreshAll(); return db.labs.slice(); },
     renameLab:(oldName,newName)=>{
       oldName=(oldName||''); newName=(newName||'').trim();
@@ -31696,6 +31797,51 @@ setTool("erase");
   }
   function refreshCombos(){ refreshWbs(); refreshMix(); refreshImprese(); refreshDdtList(); updateGuide(); }
 
+  /* ---------- REPORT metri cubi (solo admin) ---------- */
+  const MESI=['','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+  function repLabel(key, period){
+    if(period==='month'){ const p=key.split('-'); return (MESI[parseInt(p[1],10)]||p[1])+' '+p[0]; }
+    if(period==='week'){ const d=new Date(key+'T00:00:00'); if(isNaN(d))return key; return 'Sett. '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
+    const p=key.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
+  }
+  function fillReportFilters(){
+    const setOpts=(id,vals,allLabel)=>{ const s=$(id); if(!s)return; const cur=s.value; s.innerHTML='<option value="">'+allLabel+'</option>'+vals.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join(''); if(cur)s.value=cur; };
+    setOpts('rep-lab', db.labs.slice(), 'Tutti i laboratori');
+    setOpts('rep-wbs', distinctWbs(), 'Tutte le WBS');
+    const mixSet={}; db.entries.forEach(e=>{ const m=(e.mix||'').trim(); if(m)mixSet[m]=1; }); db.mixes.forEach(m=>mixSet[m]=1);
+    setOpts('rep-mix', Object.keys(mixSet).sort(), 'Tutti i mix');
+  }
+  function renderReport(){
+    const chart=$('rep-chart'), tot=$('rep-total'); if(!chart)return;
+    const period=$('rep-period')?$('rep-period').value:'month';
+    const fLab=$('rep-lab')?$('rep-lab').value:'', fWbs=$('rep-wbs')?$('rep-wbs').value:'', fMix=$('rep-mix')?$('rep-mix').value:'';
+    const map={}; let total=0;
+    db.entries.forEach(e=>{
+      if(fLab && (e.lab||'')!==fLab) return;
+      if(fWbs && (e.wbs||'')!==fWbs) return;
+      if(fMix && (e.mix||'')!==fMix) return;
+      const d=(e.data||''); if(!d) return;
+      const key = period==='day' ? d : (period==='week' ? mondayOf(d) : d.slice(0,7));
+      if(!key) return;
+      const q=num(e.mc); map[key]=(map[key]||0)+q; total+=q;
+    });
+    const keys=Object.keys(map).sort();
+    const N = period==='day'?60 : (period==='week'?26 : 24);
+    const shown = keys.slice(-N);
+    if(tot) tot.innerHTML = keys.length ? ('Totale (filtri applicati): <b style="color:var(--accent);">'+total+' m³</b> su '+keys.length+' '+(period==='day'?'giorni':(period==='week'?'settimane':'mesi'))) : '<span style="color:var(--muted);">Nessun dato per i filtri scelti.</span>';
+    if(!shown.length){ chart.innerHTML=''; return; }
+    const max=Math.max.apply(null, shown.map(k=>map[k]).concat([1]));
+    chart.innerHTML='<div class="rep-bars">'+shown.map(k=>{
+      const v=map[k], w=Math.max(2,Math.round(v/max*100));
+      return '<div class="rep-row"><span class="rep-lbl">'+esc(repLabel(k,period))+'</span><span class="rep-bar"><span class="rep-fill" style="width:'+w+'%;"></span></span><span class="rep-val">'+v+' m³</span></div>';
+    }).join('')+'</div>';
+  }
+  function updateReportVisibility(){
+    const r=$('reg-report'); if(!r)return;
+    r.style.display = isManager() ? '' : 'none';
+  }
+  function reportRefreshIfOpen(){ const b=$('reg-report-body'); if(b && b.style.display!=='none'){ fillReportFilters(); renderReport(); } }
+
   /* ---------- guida prelievi (cubetti automatici, settimanale, m³ per WBS/Mix) ---------- */
   function mixCfgOf(mix){
     const c=(db.mixCfg||{})[mix]||{};
@@ -31715,6 +31861,10 @@ setTool("erase");
   }
   function entriesToday(wbs,mix){ const t=($('reg-data')?$('reg-data').value:'')||todayISO(); return db.entries.filter(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId); }
   function mcToday(wbs,mix){ return entriesToday(wbs,mix).reduce((s,e)=>s+num(e.mc),0); }
+  function mcMonth(wbs,mix){
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const ym=String(t).slice(0,7);
+    return db.entries.filter(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && String(e.data||'').slice(0,7)===ym && e.id!==editId).reduce((s,e)=>s+num(e.mc),0);
+  }
   function countToday(wbs,mix){ return entriesToday(wbs,mix).length; }
   function ariaDoneToday(mix){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
@@ -31760,9 +31910,13 @@ setTool("erase");
     if(mix){
       const s=suggestSampling(wbs,mix);
       const mcT=mcToday(wbs,mix);
+      const mcM=mcMonth(wbs,mix);
+      const cur=num($('reg-mc')?$('reg-mc').value:'');
       const ariaOk=ariaDoneToday(mix);
-      html+='<div class="reg-guide-suggest">➡ <b>'+esc(mix)+'</b>: sarà il <b>'+esc(s.tipo)+'</b> → <b>'+s.n+' cubetti</b> · m³ oggi: <b>'+mcT+'</b>'
-        + (s.weeklyPending?' <span class="reg-guide-warn">· settimanale DA FARE</span>':'')
+      html+='<div class="reg-guide-suggest">➡ <b>'+esc(mix)+'</b>: sarà il <b>'+esc(s.tipo)+'</b> → <b>'+s.n+' cubetti</b>'
+        + '<br>m³ registrati — oggi: <b>'+mcT+'</b> · mese: <b>'+mcM+'</b>'
+        + (cur>0 ? ('<br><span style="color:var(--accent);">+ questo prelievo '+cur+' m³ → oggi <b>'+(mcT+cur)+'</b> · mese <b>'+(mcM+cur)+'</b></span>') : '')
+        + (s.weeklyPending?'<br><span class="reg-guide-warn">· settimanale DA FARE</span>':'')
         + (!ariaOk?' <span class="reg-guide-warn">· contenuto d\'aria DA FARE oggi</span>':'')
         + '</div>';
       if(!editId && !cubettiManual && s.n>0){ setCubetti(String(s.n)); }
@@ -31789,12 +31943,15 @@ setTool("erase");
     const mark=(id,bad)=>{ const el=$(id); if(el) el.style.borderColor = bad?'var(--red)':''; };
     const slumpOn=$('reg-chk-slump')&&$('reg-chk-slump').checked;
     const b1= slumpOn ? chk($('reg-val-slump')?$('reg-val-slump').value:'', cfg.slumpMin, cfg.slumpMax,'Slump','cm') : false;
-    mark('reg-val-slump', !!b1);
+    mark('reg-val-slump', !!b1); const iss1=b1?issues[issues.length-1]:'';
     const spandOn=$('reg-chk-spand')&&$('reg-chk-spand').checked;
     const b2= spandOn ? chk($('reg-val-spand')?$('reg-val-spand').value:'', cfg.spandMin, cfg.spandMax,'Spandimento','cm') : false;
-    mark('reg-val-spand', !!b2);
+    mark('reg-val-spand', !!b2); const iss2=b2?issues[issues.length-1]:'';
     const b3= chk($('reg-temp-cls')?$('reg-temp-cls').value:'', cfg.tclsMin, cfg.tclsMax,'Temp. CLS','°C');
     mark('reg-temp-cls', !!b3);
+    // avvisi in linea, subito sotto i campi interessati
+    const th=$('reg-tests-hint'); if(th){ const parts=[iss1,iss2].filter(Boolean); th.innerHTML=parts.length?('⚠ '+parts.join(' · ')):''; th.style.display=parts.length?'':'none'; }
+    const tc=$('reg-tcls-hint'); if(tc){ tc.innerHTML=b3?('⚠ '+issues[issues.length-1]):''; tc.style.display=b3?'':'none'; }
     box.innerHTML = issues.length ? ('⚠ '+issues.join(' · ')) : '';
     box.style.display = issues.length ? '' : 'none';
   }
@@ -31805,8 +31962,13 @@ setTool("erase");
     const h=$('reg-ddt-hint'); if(!h)return;
     const v=($('reg-ddt')?$('reg-ddt').value:'').trim();
     if(!v){ h.innerHTML=''; return; }
-    const matches=db.entries.filter(e=>String(e.ddt||'').trim().toLowerCase()===v.toLowerCase() && e.id!==editId);
-    h.innerHTML = matches.length ? '<span style="color:var(--accent);">↺ DDT già inserito ('+matches.length+' '+(matches.length===1?'riga':'righe')+')</span>' : '';
+    let matches=db.entries.filter(e=>String(e.ddt||'').trim().toLowerCase()===v.toLowerCase() && e.id!==editId);
+    if(curLab && curLab!=='__ALL__') matches=matches.filter(e=>(e.lab||'')===curLab);
+    if(!matches.length){ h.innerHTML=''; return; }
+    let mcTot=0; const perMix={};
+    matches.forEach(e=>{ const q=num(e.mc); mcTot+=q; const m=(e.mix||'').trim()||'(senza mix)'; perMix[m]=(perMix[m]||0)+q; });
+    const mixStr=Object.keys(perMix).map(m=>esc(m)+' '+perMix[m]+' m³').join(' · ');
+    h.innerHTML='<span style="color:var(--accent);">↺ DDT già inserito · '+mixStr+' · totale <b>'+mcTot+' m³</b> ('+matches.length+' '+(matches.length===1?'riga':'righe')+')</span>';
   }
 
   /* ---------- UI: form ---------- */
@@ -32193,6 +32355,16 @@ setTool("erase");
     if($('reg-mix-other')) $('reg-mix-other').addEventListener('input',()=>{ updateGuide(); });
     if($('reg-impresa')) $('reg-impresa').addEventListener('change',()=>{ comboOtherToggle('reg-impresa','reg-impresa-other',true); });
     if($('reg-data')) $('reg-data').addEventListener('change',()=>{ updateGuide(); suggestNumber(); });
+    if($('reg-mc')) $('reg-mc').addEventListener('input',updateGuide);
+    // report metri cubi (solo admin)
+    updateReportVisibility();
+    if($('reg-report-toggle')) $('reg-report-toggle').onclick=()=>{
+      const b=$('reg-report-body'); if(!b)return;
+      const open = b.style.display==='none';
+      b.style.display = open?'':'none';
+      if(open){ fillReportFilters(); renderReport(); }
+    };
+    ['rep-period','rep-lab','rep-wbs','rep-mix'].forEach(id=>{ if($(id)) $(id).addEventListener('change',renderReport); });
     // controllo intervalli: slump / spandimento / temperatura CLS
     ['reg-val-slump','reg-val-spand','reg-temp-cls'].forEach(id=>{ if($(id)) $(id).addEventListener('input',checkRanges); });
     ['reg-chk-slump','reg-chk-spand'].forEach(id=>{ if($(id)) $(id).addEventListener('change',checkRanges); });
