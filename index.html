@@ -649,6 +649,11 @@ tr.new-row{animation:rowIn .2s ease both;}
 
       <!-- Gestione Registro CLS: laboratori + miscele + formato verbale -->
       <div class="admin-section-title" style="margin-top:26px;">🧪 Registro CLS — Laboratori e Miscele</div>
+      <div style="margin:8px 0 14px;padding:12px 14px;background:rgba(var(--accent-rgb),.08);border:1px solid var(--orange);border-radius:8px;">
+        <div style="font-size:12px;color:var(--text);margin-bottom:8px;">Se aggiungi le voci da un dispositivo e su un altro (es. telefono) non le vedi, premi qui per <b>salvarle sul cloud</b> e renderle disponibili ovunque.</div>
+        <button class="btn btn-sm" id="ra-sync-cloud" style="background:var(--orange);color:#fff;border:none;">☁ Salva configurazione sul cloud</button>
+        <span id="ra-sync-msg" style="font-size:11px;margin-left:10px;"></span>
+      </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">
         Questi elenchi sono condivisi con tutte le postazioni. I laboratori li vedono solo per <b>scegliere</b>, non possono modificarli.
       </div>
@@ -25652,6 +25657,23 @@ function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/
   });
 })();
 
+// salva configurazione sul cloud (per propagare a tutti i dispositivi)
+(function(){
+  const b=document.getElementById('ra-sync-cloud'), msg=document.getElementById('ra-sync-msg');
+  if(!b) return;
+  b.addEventListener('click', async ()=>{
+    if(!window.RegAdmin || !window.RegAdmin.syncConfig){ return; }
+    b.disabled=true; const old=b.textContent; b.textContent='⏳ Salvataggio...'; if(msg){msg.style.color='var(--muted)';msg.textContent='';}
+    try{
+      await window.RegAdmin.syncConfig();
+      if(msg){ msg.style.color='var(--green)'; msg.textContent='✅ Configurazione salvata sul cloud. Ora ricarica gli altri dispositivi.'; }
+    }catch(e){
+      if(msg){ msg.style.color='var(--red)'; msg.textContent='❌ Errore: il database non accetta la scrittura. Lancia setup_supabase_completo.sql su Supabase e riprova.'; }
+    }
+    b.disabled=false; b.textContent=old;
+  });
+})();
+
 // salvataggio formato verbale
 (function(){
   const b=document.getElementById('ra-fmt-save');
@@ -31607,7 +31629,8 @@ setTool("erase");
       ['slumpMin','slumpMax','spandMin','spandMax','tclsMin','tclsMax'].forEach(k=>{ if(patch[k]!==undefined){ const v=String(patch[k]).trim().replace(',','.'); merged[k]=(v===''||isNaN(parseFloat(v)))?'':parseFloat(v); } });
       db.mixCfg[mix]=merged; pushConfig(); refreshAll(); return merged; },
     setUserLab:(username,lab)=>{ if(!username)return; db.labUsers=db.labUsers||{}; if(lab)db.labUsers[username]=lab; else delete db.labUsers[username]; pushConfig(); return Object.assign({},db.labUsers); },
-    setFormat:(mid,width)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),width:db.cfg.width}; }
+    setFormat:(mid,width)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),width:db.cfg.width}; },
+    syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); }
   };
   // rinomina una voce di un elenco (mixes/imprese/wbs) aggiornando anche i prelievi già salvati
   function renameListItem(listName, prop, oldVal, newVal){
