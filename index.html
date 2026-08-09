@@ -31900,7 +31900,7 @@ setTool("erase");
   }
   function suggestSampling(wbs,mix){
     const cfg=mixCfgOf(mix); const cnt=countToday(wbs,mix); const wDone=weeklyDone(wbs,mix);
-    if(cfg.sett>0 && !wDone && cnt===0) return {n:cfg.sett, tipo:'settimanale', weeklyPending:true};
+    if(cfg.sett>0 && !wDone && cnt===0) return {n:cfg.sett, tipo:'settimanale (vale come 1° del giorno)', weeklyPending:true};
     if(cnt===0) return {n:cfg.g1, tipo:'1° del giorno', weeklyPending:(cfg.sett>0 && !wDone)};
     return {n:cfg.g2, tipo:(cnt+1)+'° del giorno', weeklyPending:(cfg.sett>0 && !wDone)};
   }
@@ -32448,7 +32448,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 2.1';
+  window.APP_VERSION = 'Versione 2.2';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
