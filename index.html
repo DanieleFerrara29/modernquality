@@ -737,7 +737,9 @@ tr.new-row{animation:rowIn .2s ease both;}
 
       <!-- Reset totale -->
       <div style="margin-top:28px;padding-top:16px;border-top:1px solid var(--border);">
+        <button class="btn btn-red btn-sm" id="btn-clear-prelievi" style="margin-right:8px;">🗑 Svuota database prelievi</button>
         <button class="btn btn-red btn-sm" id="btn-reset-all">⚠ Reset completo (elimina tutti gli utenti)</button>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;">«Svuota database prelievi» elimina <b>tutte le registrazioni</b> (i prelievi) da tutti i laboratori. Non tocca utenti, laboratori, mix, WBS, imprese. Operazione non annullabile: esporta prima l'Excel come backup.</div>
       </div>
 
       <!-- Telegram -->
@@ -25687,6 +25689,24 @@ function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/
   });
 })();
 
+document.getElementById('btn-clear-prelievi').addEventListener('click', async () => {
+  const btn=document.getElementById('btn-clear-prelievi');
+  if(!window.RegAdmin || !window.RegAdmin.clearAllEntries) return;
+  if(!confirm('Vuoi eliminare TUTTE le registrazioni (prelievi) di tutti i laboratori?\n\nUtenti, laboratori, mix, WBS e imprese NON verranno toccati.\nL\'operazione NON è annullabile.')) return;
+  const word = prompt('Conferma definitiva: scrivi ELIMINA (in maiuscolo) per procedere.');
+  if((word||'').trim().toUpperCase() !== 'ELIMINA'){ showStatus('Operazione annullata.', 'error'); return; }
+  btn.disabled=true; const old=btn.textContent; btn.textContent='⏳ Eliminazione...';
+  try{
+    await window.RegAdmin.clearAllEntries();
+    addLog('Database prelievi svuotato');
+    renderAdminLog();
+    showStatus('✅ Database prelievi svuotato.', 'success');
+  }catch(e){
+    showStatus('❌ Errore: '+((e&&e.message)?e.message:e), 'error');
+  }
+  btn.disabled=false; btn.textContent=old;
+});
+
 document.getElementById('btn-reset-all').addEventListener('click', async () => {
   const nonAdmin = getUsers().filter(u => u.role !== 'admin');
   for(const u of nonAdmin) await sbDeleteUser(u.username);
@@ -31630,7 +31650,8 @@ setTool("erase");
       db.mixCfg[mix]=merged; pushConfig(); refreshAll(); return merged; },
     setUserLab:(username,lab)=>{ if(!username)return; db.labUsers=db.labUsers||{}; if(lab)db.labUsers[username]=lab; else delete db.labUsers[username]; pushConfig(); return Object.assign({},db.labUsers); },
     setFormat:(mid,width)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),width:db.cfg.width}; },
-    syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); }
+    syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); },
+    clearAllEntries: async ()=>{ if(cloudOn()){ await sbFetch('registro?id=not.is.null',{method:'DELETE',headers:{'Prefer':'return=minimal'}}); } db.entries=[]; save(); refreshAll(); return true; }
   };
   // rinomina una voce di un elenco (mixes/imprese/wbs) aggiornando anche i prelievi già salvati
   function renameListItem(listName, prop, oldVal, newVal){
@@ -31939,6 +31960,7 @@ setTool("erase");
       html+='<div class="reg-guide-suggest">➡ <b>'+esc(mix)+'</b>: sarà il <b>'+esc(s.tipo)+'</b> → <b>'+s.n+' cubetti</b>'
         + '<br>m³ registrati — oggi: <b>'+mcT+'</b> · mese: <b>'+mcM+'</b>'
         + (cur>0 ? ('<br><span style="color:var(--accent);">+ questo prelievo '+cur+' m³ → oggi <b>'+(mcT+cur)+'</b> · mese <b>'+(mcM+cur)+'</b></span>') : '')
+        + ((mcT+cur)>=100 ? '<br><span class="reg-guide-warn">⚠ superati 100 m³ oggi per questo mix</span>' : ((mcT+cur)>=90 ? '<br><span class="reg-guide-warn">⚠ vicino ai 100 m³ oggi</span>' : ''))
         + (s.weeklyPending?'<br><span class="reg-guide-warn">· settimanale DA FARE</span>':'')
         + (!ariaOk?' <span class="reg-guide-warn">· contenuto d\'aria DA FARE oggi</span>':'')
         + '</div>';
@@ -32448,7 +32470,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 2.2';
+  window.APP_VERSION = 'Versione 2.3';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
