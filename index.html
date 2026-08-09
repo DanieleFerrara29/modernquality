@@ -24793,9 +24793,9 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 
 async function sbFetch(path,opts={}){
   const r=await fetch(SB_URL+'/rest/v1/'+path,{
+    ...opts,
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,
-      'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
-    ...opts
+      'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})}
   });
   if(!r.ok){const e=await r.text();throw new Error('Supabase: '+e);}
   const txt=await r.text();
@@ -32448,7 +32448,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 2.0';
+  window.APP_VERSION = 'Versione 2.1';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
