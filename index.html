@@ -25668,7 +25668,7 @@ function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/
       await window.RegAdmin.syncConfig();
       if(msg){ msg.style.color='var(--green)'; msg.textContent='✅ Configurazione salvata sul cloud. Ora ricarica gli altri dispositivi.'; }
     }catch(e){
-      if(msg){ msg.style.color='var(--red)'; msg.textContent='❌ Errore: il database non accetta la scrittura. Lancia setup_supabase_completo.sql su Supabase e riprova.'; }
+      if(msg){ msg.style.color='var(--red)'; msg.textContent='❌ '+((e && e.message) ? e.message : String(e)); }
     }
     b.disabled=false; b.textContent=old;
   });
