@@ -31985,7 +31985,7 @@ setTool("erase");
         return true;
       }
     };
-    const mark=(id,bad)=>{ const el=$(id); if(el) el.style.borderColor = bad?'var(--red)':''; };
+    const mark=(id,bad)=>{ const el=$(id); if(!el)return; if(bad){ el.style.borderColor='var(--red)'; el.style.boxShadow='0 0 0 2px rgba(224,90,90,.35)'; el.style.background='rgba(224,90,90,.10)'; } else { el.style.borderColor=''; el.style.boxShadow=''; el.style.background=''; } };
     const slumpOn=$('reg-chk-slump')&&$('reg-chk-slump').checked;
     const b1= slumpOn ? chk($('reg-val-slump')?$('reg-val-slump').value:'', cfg.slumpMin, cfg.slumpMax,'Slump','cm') : false;
     mark('reg-val-slump', !!b1); const iss1=b1?issues[issues.length-1]:'';
@@ -32470,7 +32470,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 2.3';
+  window.APP_VERSION = 'Versione 2.4';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
