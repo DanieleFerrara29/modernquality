@@ -11,6 +11,7 @@
 <title>Modern Quality</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Dancing+Script:wght@400;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -2327,7 +2328,11 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
 #tab-registro table.reg-table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap;}
 #tab-registro table.reg-table th{background:var(--header-bg);color:var(--muted);text-align:left;padding:9px 10px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;position:sticky;top:0;border-bottom:2px solid var(--accent);}
-#tab-registro table.reg-table th.reg-th{cursor:grab;user-select:none;white-space:nowrap;}
+#tab-registro table.reg-table th.reg-th{cursor:pointer;user-select:none;white-space:nowrap;}
+#tab-registro .reg-sort-ar{color:var(--accent);font-size:10px;margin-left:4px;}
+#tab-registro table.reg-table th.reg-fth{padding:2px 4px;background:var(--surface);}
+#tab-registro .reg-col-filter{width:100%;min-width:52px;box-sizing:border-box;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:3px 5px;font-size:11px;font-weight:400;}
+#tab-registro .reg-col-filter::placeholder{color:var(--muted);opacity:.6;}
 #tab-registro table.reg-table th.reg-th:hover{color:var(--text);}
 #tab-registro table.reg-table th.reg-th.drag{opacity:.35;}
 #tab-registro table.reg-table th.reg-th.over{border-left:3px solid var(--accent);color:var(--accent);}
@@ -2406,10 +2411,9 @@ tr.new-row{animation:rowIn .2s ease both;}
       <div class="reg-report-head" id="reg-report-toggle">📊 Report metri cubi <span style="font-size:11px;color:var(--muted);font-weight:400;">— clicca per aprire/chiudere</span></div>
       <div class="reg-report-body" id="reg-report-body" style="display:none;">
         <div class="reg-report-controls">
-          <label>Periodo <select id="rep-period"><option value="day">Giorno</option><option value="week">Settimana</option><option value="month" selected>Mese</option></select></label>
-          <label>Laboratorio <select id="rep-lab"></select></label>
-          <label>WBS <select id="rep-wbs"></select></label>
-          <label>Mix <select id="rep-mix"></select></label>
+          <label>Mese <select id="rep-mese"></select></label>
+          <label>Anno <select id="rep-anno"></select></label>
+          <span id="rep-scope" style="align-self:center;color:var(--muted);"></span>
         </div>
         <div id="rep-total" style="font-size:13px;margin-bottom:12px;"></div>
         <div id="rep-chart"></div>
@@ -2514,17 +2518,17 @@ tr.new-row{animation:rowIn .2s ease both;}
     <div class="reg-toolbar">
       <span class="reg-count" id="reg-count">0 prelievi</span>
       <span class="reg-dbsize" id="reg-dbsize" title="Spazio usato del database su Supabase (limite 500 MB nel piano gratuito)" style="display:none;font-size:11px;color:var(--muted);"></span>
-      <button class="reg-btn excel" id="reg-exp-lab">⬇ Esporta laboratorio</button>
-      <button class="reg-btn excel" id="reg-exp-all">⬇ Scarica database (tutti)</button>
+      <button class="reg-btn excel" id="reg-exp-go">⬇ Esporta in Excel</button>
       <button class="reg-btn ghost" id="reg-imp-btn">⬆ Carica / aggiorna da Excel</button>
       <input type="file" id="reg-imp-file" accept=".xlsx,.xls" style="display:none;" autocomplete="off"/>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin:2px 2px 8px;">↔ Trascina le intestazioni della tabella per riordinare le colonne. <a href="#" id="reg-colreset" style="color:var(--accent);text-decoration:none;">Ripristina ordine</a></div>
+    <div style="font-size:11px;color:var(--muted);margin:2px 2px 8px;">↔ Trascina le intestazioni per spostare le colonne · clic per ordinare · usa le tendine sotto le intestazioni per filtrare (come Excel). <a href="#" id="reg-colreset" style="color:var(--accent);text-decoration:none;">Ripristina ordine</a> · <a href="#" id="reg-f-clear" style="color:var(--accent);text-decoration:none;font-weight:700;">✕ Togli tutti i filtri</a></div>
 
     <div class="reg-tablewrap">
       <table class="reg-table">
         <thead>
           <tr id="reg-thead-row"></tr>
+          <tr id="reg-filter-row"></tr>
         </thead>
         <tbody id="reg-tbody"></tbody>
       </table>
@@ -24835,6 +24839,7 @@ async function sbUpdateUser(username,patch){
     const body={};
     if(patch.active!==undefined) body.active=patch.active;
     if(patch.password) body.password=patch.password;
+    if(patch.role) body.role=patch.role;
     if(patch.last_login) body.last_login=patch.last_login;
     if(Object.keys(body).length)
       await sbFetch('utenti?username=eq.'+encodeURIComponent(username),
@@ -25293,21 +25298,27 @@ async function renderAdminUsers() {
       const np = prompt('Password (lascia invariata per confermarla):', u.password||'');
       if(np===null) return;
       const newPass = np;
+      const roleIn = prompt('Ruolo: utente / laboratorio / admin  (lascia com\'è per non cambiarlo):', u.role||'user');
+      if(roleIn===null) return;
+      const roleMap={'utente':'user','user':'user','laboratorio':'laboratorio','lab':'laboratorio','admin':'admin'};
+      const newRole = roleMap[(roleIn||'').trim().toLowerCase()] || u.role || 'user';
       const nameChanged = newName.toLowerCase() !== oldName.toLowerCase();
       if(nameChanged && getUsers().find(x => (x.username||'').toLowerCase() === newName.toLowerCase())) { alert('Esiste già un utente con questo nome.'); return; }
-      if(!nameChanged && newPass===(u.password||'')){ return; }  // niente da cambiare
-      const okNew = await sbSaveUser({ username:newName, password:newPass, role:u.role, active:u.active, last_login:u.last_login||'—' });
-      if(!okNew){ alert('Errore durante il salvataggio. Riprova.'); return; }
       if(nameChanged){
-        // sposta l'eventuale assegnazione laboratorio ed elimina il vecchio nome
+        // il nome è la chiave: crea il nuovo, sposta il laboratorio, elimina il vecchio
+        const okNew = await sbSaveUser({ username:newName, password:newPass, role:newRole, active:u.active, last_login:u.last_login||'—' });
+        if(!okNew){ alert('Errore durante il salvataggio. Riprova.'); return; }
         if(window.RegAdmin && window.RegAdmin.getLabUsers){
           const map = window.RegAdmin.getLabUsers();
           if(map && map[oldName]){ window.RegAdmin.setUserLab(newName, map[oldName]); window.RegAdmin.setUserLab(oldName, ''); }
         }
         await sbDeleteUser(oldName);
+      } else {
+        // stesso nome: aggiorna password e/o ruolo (PATCH) — questa era la parte che dava errore
+        await sbUpdateUser(oldName, { password:newPass, role:newRole });
       }
       const users = await sbGetUsers(); _usersCache = users;
-      addLog(nameChanged ? ('Utente aggiornato: '+oldName+' → '+newName) : ('Password aggiornata: '+newName));
+      addLog(nameChanged ? ('Utente aggiornato: '+oldName+' → '+newName) : ('Utente aggiornato: '+newName+' (password/ruolo)'));
       if(currentUser && currentUser.username === oldName){ currentUser.username = newName; currentUser.password = newPass; }  // aggiorna la sessione
       renderAdminUsers(); renderRegAdmin();
       showStatus('✅ Utente aggiornato', 'success');
@@ -31597,6 +31608,14 @@ setTool("erase");
   function role(){ try{ return (currentUser&&(currentUser.role||'').toLowerCase().trim())||''; }catch(e){ return ''; } }
   function isLabUser(){ const r=role(); return r==='laboratorio'||r==='lab'; }
   function isManager(){ return role()==='admin'; }
+  // ristretto = NON admin e legato a un laboratorio (per ruolo o per assegnazione): vede solo il suo
+  function isRestricted(){ return !isManager() && (isLabUser() || !!myLab()); }
+  // il pulsante esporta ciò che è selezionato nella barra in alto; l'etichetta lo dice
+  function refreshExportSelect(){
+    const b=$('reg-exp-go'); if(!b) return;
+    const all=(curLab==='__ALL__');
+    b.textContent = '⬇ Esporta '+(all?'tutti (congiunti)':curLab);
+  }
   function myLab(){
     const u=((currentUser&&currentUser.username)||'').toLowerCase().trim();
     if(!u||!db.labUsers) return '';
@@ -31651,7 +31670,8 @@ setTool("erase");
     setUserLab:(username,lab)=>{ if(!username)return; db.labUsers=db.labUsers||{}; if(lab)db.labUsers[username]=lab; else delete db.labUsers[username]; pushConfig(); return Object.assign({},db.labUsers); },
     setFormat:(mid,width)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),width:db.cfg.width}; },
     syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); },
-    clearAllEntries: async ()=>{ if(cloudOn()){ await sbFetch('registro?id=not.is.null',{method:'DELETE',headers:{'Prefer':'return=minimal'}}); } db.entries=[]; save(); refreshAll(); return true; }
+    clearAllEntries: async ()=>{ if(cloudOn()){ await sbFetch('registro?id=not.is.null',{method:'DELETE',headers:{'Prefer':'return=minimal'}}); } db.entries=[]; save(); refreshAll(); return true; },
+    exportRegistro: (lab)=>{ const all=(!lab||lab==='__ALL__'); const rows=all?db.entries.slice():db.entries.filter(e=>(e.lab||'')===lab); if(!rows.length){ toast('Nessun dato da esportare per '+(all?'il database':lab)+'.'); return; } const tag=(all?'CONGIUNTI':String(lab)).replace(/[^\w]+/g,'_'); exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx'); }
   };
   // rinomina una voce di un elenco (mixes/imprese/wbs) aggiornando anche i prelievi già salvati
   function renameListItem(listName, prop, oldVal, newVal){
@@ -31703,8 +31723,8 @@ setTool("erase");
   function renderLabs(){
     const bar=$('reg-labbar'); if(!bar)return;
     bar.innerHTML='';
-    // LABORATORIO: bloccato sul proprio laboratorio, nessuna gestione visibile
-    if(isLabUser()){
+    // LABORATORIO / utente assegnato: bloccato sul proprio laboratorio, nessuna gestione visibile
+    if(isRestricted()){
       const assigned=myLab();
       if(assigned) curLab=assigned;                       // usa SEMPRE il laboratorio assegnato
       else if(!db.labs.includes(curLab)) curLab=db.labs[0];
@@ -31724,14 +31744,14 @@ setTool("erase");
       const b=document.createElement('button');
       b.className='reg-lab'+(lab===curLab&&curLab!=='__ALL__'?' active':'');
       b.textContent=lab;
-      b.onclick=()=>{ curLab=lab; editId=null; renderLabs(); renderForm(); renderTable(); };
+      b.onclick=()=>{ curLab=lab; editId=null; renderLabs(); renderForm(); renderTable(); reportRefreshIfOpen(); };
       bar.appendChild(b);
     });
     // Vista "Tutti" (database completo) — utile per admin/report
     const all=document.createElement('button');
     all.className='reg-lab all'+(curLab==='__ALL__'?' active':'');
     all.textContent='▦ Tutti';
-    all.onclick=()=>{ curLab='__ALL__'; editId=null; renderLabs(); renderForm(); renderTable(); };
+    all.onclick=()=>{ curLab='__ALL__'; editId=null; renderLabs(); renderForm(); renderTable(); reportRefreshIfOpen(); };
     bar.appendChild(all);
     // La creazione dei laboratori è nel pannello amministratore (＋ solo per admin, come promemoria)
     if(isManager()){
@@ -31842,42 +31862,45 @@ setTool("erase");
   function refreshCombos(){ refreshWbs(); refreshMix(); refreshImprese(); refreshDdtList(); updateGuide(); }
 
   /* ---------- REPORT metri cubi (solo admin) ---------- */
-  const MESI=['','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-  function repLabel(key, period){
-    if(period==='month'){ const p=key.split('-'); return (MESI[parseInt(p[1],10)]||p[1])+' '+p[0]; }
-    if(period==='week'){ const d=new Date(key+'T00:00:00'); if(isNaN(d))return key; return 'Sett. '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
-    const p=key.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
-  }
+  const MESI=['','Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
   function fillReportFilters(){
-    const setOpts=(id,vals,allLabel)=>{ const s=$(id); if(!s)return; const cur=s.value; s.innerHTML='<option value="">'+allLabel+'</option>'+vals.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join(''); if(cur)s.value=cur; };
-    setOpts('rep-lab', db.labs.slice(), 'Tutti i laboratori');
-    setOpts('rep-wbs', distinctWbs(), 'Tutte le WBS');
-    const mixSet={}; db.entries.forEach(e=>{ const m=(e.mix||'').trim(); if(m)mixSet[m]=1; }); db.mixes.forEach(m=>mixSet[m]=1);
-    setOpts('rep-mix', Object.keys(mixSet).sort(), 'Tutti i mix');
+    const mSel=$('rep-mese'), aSel=$('rep-anno'); if(!mSel||!aSel) return;
+    // anni presenti nei dati (+ anno corrente)
+    const years={}; db.entries.forEach(e=>{ const y=String(e.data||'').slice(0,4); if(/^\d{4}$/.test(y)) years[y]=1; });
+    const nowY=String(new Date().getFullYear()); years[nowY]=1;
+    const yList=Object.keys(years).sort().reverse();
+    if(!mSel.value){ // prima volta: imposta mese/anno correnti
+      mSel.innerHTML=MESI.slice(1).map((n,i)=>'<option value="'+(i+1)+'">'+n+'</option>').join('');
+      mSel.value=String(new Date().getMonth()+1);
+    }
+    const curA=aSel.value;
+    aSel.innerHTML=yList.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
+    aSel.value = curA && years[curA] ? curA : nowY;
   }
   function renderReport(){
-    const chart=$('rep-chart'), tot=$('rep-total'); if(!chart)return;
-    const period=$('rep-period')?$('rep-period').value:'month';
-    const fLab=$('rep-lab')?$('rep-lab').value:'', fWbs=$('rep-wbs')?$('rep-wbs').value:'', fMix=$('rep-mix')?$('rep-mix').value:'';
+    const chart=$('rep-chart'), tot=$('rep-total'), scope=$('rep-scope'); if(!chart)return;
+    const mm=parseInt(($('rep-mese')?$('rep-mese').value:'')||(new Date().getMonth()+1),10);
+    const yy=($('rep-anno')?$('rep-anno').value:'')||String(new Date().getFullYear());
+    const ym = yy+'-'+String(mm).padStart(2,'0');
+    const allLabs = (curLab==='__ALL__');
+    if(scope) scope.textContent = allLabs ? '· tutti i laboratori (totale)' : ('· laboratorio '+curLab);
+    // somma m³ per mix nel mese/anno scelto, rispettando il laboratorio selezionato in alto
     const map={}; let total=0;
     db.entries.forEach(e=>{
-      if(fLab && (e.lab||'')!==fLab) return;
-      if(fWbs && (e.wbs||'')!==fWbs) return;
-      if(fMix && (e.mix||'')!==fMix) return;
-      const d=(e.data||''); if(!d) return;
-      const key = period==='day' ? d : (period==='week' ? mondayOf(d) : d.slice(0,7));
-      if(!key) return;
-      const q=num(e.mc); map[key]=(map[key]||0)+q; total+=q;
+      if(!allLabs && (e.lab||'')!==curLab) return;
+      if(String(e.data||'').slice(0,7)!==ym) return;
+      const mix=(e.mix||'(senza mix)'); const q=num(e.mc);
+      map[mix]=(map[mix]||0)+q; total+=q;
     });
-    const keys=Object.keys(map).sort();
-    const N = period==='day'?60 : (period==='week'?26 : 24);
-    const shown = keys.slice(-N);
-    if(tot) tot.innerHTML = keys.length ? ('Totale (filtri applicati): <b style="color:var(--accent);">'+total+' m³</b> su '+keys.length+' '+(period==='day'?'giorni':(period==='week'?'settimane':'mesi'))) : '<span style="color:var(--muted);">Nessun dato per i filtri scelti.</span>';
-    if(!shown.length){ chart.innerHTML=''; return; }
-    const max=Math.max.apply(null, shown.map(k=>map[k]).concat([1]));
-    chart.innerHTML='<div class="rep-bars">'+shown.map(k=>{
+    const keys=Object.keys(map).sort((a,b)=>map[b]-map[a]); // dal maggiore
+    if(tot) tot.innerHTML = keys.length
+      ? ('Totale '+MESI[mm]+' '+yy+' '+(allLabs?'(tutti i laboratori)':'('+esc(curLab)+')')+': <b style="color:var(--accent);">'+total+' m³</b> · '+keys.length+' mix')
+      : '<span style="color:var(--muted);">Nessun m³ registrato in '+MESI[mm]+' '+yy+' '+(allLabs?'':'per '+esc(curLab))+'.</span>';
+    if(!keys.length){ chart.innerHTML=''; return; }
+    const max=Math.max.apply(null, keys.map(k=>map[k]).concat([1]));
+    chart.innerHTML='<div class="rep-bars">'+keys.map(k=>{
       const v=map[k], w=Math.max(2,Math.round(v/max*100));
-      return '<div class="rep-row"><span class="rep-lbl">'+esc(repLabel(k,period))+'</span><span class="rep-bar"><span class="rep-fill" style="width:'+w+'%;"></span></span><span class="rep-val">'+v+' m³</span></div>';
+      return '<div class="rep-row"><span class="rep-lbl" title="'+esc(k)+'">'+esc(k)+'</span><span class="rep-bar"><span class="rep-fill" style="width:'+w+'%;"></span></span><span class="rep-val">'+v+' m³</span></div>';
     }).join('')+'</div>';
   }
   function updateReportVisibility(){
@@ -31905,9 +31928,9 @@ setTool("erase");
   }
   function entriesToday(wbs,mix){ const t=($('reg-data')?$('reg-data').value:'')||todayISO(); return db.entries.filter(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId); }
   function mcToday(wbs,mix){ return entriesToday(wbs,mix).reduce((s,e)=>s+num(e.mc),0); }
-  function mcMonth(wbs,mix){
+  function mcMonth(mix){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const ym=String(t).slice(0,7);
-    return db.entries.filter(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && String(e.data||'').slice(0,7)===ym && e.id!==editId).reduce((s,e)=>s+num(e.mc),0);
+    return db.entries.filter(e=>(e.lab||'')===curLab && (e.mix||'')===mix && String(e.data||'').slice(0,7)===ym && e.id!==editId).reduce((s,e)=>s+num(e.mc),0);
   }
   function countToday(wbs,mix){ return entriesToday(wbs,mix).length; }
   function ariaDoneToday(mix){
@@ -31954,17 +31977,19 @@ setTool("erase");
     if(mix){
       const s=suggestSampling(wbs,mix);
       const mcT=mcToday(wbs,mix);
-      const mcM=mcMonth(wbs,mix);
+      const mcM=mcMonth(mix);
       const cur=num($('reg-mc')?$('reg-mc').value:'');
       const ariaOk=ariaDoneToday(mix);
+      const hasWeekly=mixCfgOf(mix).sett>0;
+      const weeklyOk=hasWeekly && weeklyDone(wbs,mix);
       html+='<div class="reg-guide-suggest">➡ <b>'+esc(mix)+'</b>: sarà il <b>'+esc(s.tipo)+'</b> → <b>'+s.n+' cubetti</b>'
-        + '<br>m³ registrati — oggi: <b>'+mcT+'</b> · mese: <b>'+mcM+'</b>'
+        + '<br>m³ oggi (questa WBS): <b>'+mcT+'</b> · mese (mix, tutte le WBS): <b>'+mcM+'</b>'
         + (cur>0 ? ('<br><span style="color:var(--accent);">+ questo prelievo '+cur+' m³ → oggi <b>'+(mcT+cur)+'</b> · mese <b>'+(mcM+cur)+'</b></span>') : '')
         + ((mcT+cur)>=100 ? '<br><span class="reg-guide-warn">⚠ superati 100 m³ oggi per questo mix</span>' : ((mcT+cur)>=90 ? '<br><span class="reg-guide-warn">⚠ vicino ai 100 m³ oggi</span>' : ''))
-        + (s.weeklyPending?'<br><span class="reg-guide-warn">· settimanale DA FARE</span>':'')
-        + (!ariaOk?' <span class="reg-guide-warn">· contenuto d\'aria DA FARE oggi</span>':'')
+        + (weeklyOk ? '<br><span class="reg-guide-ok">✓ prelievo settimanale già eseguito questa settimana</span>' : (s.weeklyPending?'<br><span class="reg-guide-warn">⚠ prelievo settimanale DA FARE</span>':''))
+        + (!ariaOk?'<br><span class="reg-guide-warn">⚠ contenuto d\'aria DA FARE oggi</span>':'')
         + '</div>';
-      if(!editId && !cubettiManual && s.n>0){ setCubetti(String(s.n)); }
+      if(!editId && !cubettiManual && prelChecked() && s.n>0){ setCubetti(String(s.n)); }
     }
     box.innerHTML=html;
     checkRanges();
@@ -32041,6 +32066,13 @@ setTool("erase");
     const nw=$('reg-numwrap'); if(nw)nw.style.display=on?'':'none';
     const pv=$('reg-verbpreview'); if(pv)pv.style.display=on?'':'none';
   }
+  // se non c'è prelievo → niente cubetti: campo disattivato e vuoto
+  function setCubettiEnabled(on){
+    const chips=$('reg-cubetti-chips'), man=$('reg-cubetti-manual');
+    if(chips){ chips.style.opacity=on?'':'0.4'; chips.style.pointerEvents=on?'':'none'; }
+    if(man){ man.disabled=!on; }
+    if(!on) setCubetti('');
+  }
   function curWbs(){ return comboVal('reg-wbs','reg-wbs-other'); }
   function currentNum(){ const v=parseInt(($('reg-num')?$('reg-num').value:''),10); return isNaN(v)?null:v; }
   // compone il verbale completo (WBS + parte centrale + numero) e aggiorna anteprima + campo nascosto
@@ -32097,7 +32129,7 @@ setTool("erase");
     setCubetti(''); cubettiManual=false;
     setCombo('reg-wbs','reg-wbs-other',''); setCombo('reg-impresa','reg-impresa-other','');
     refreshMix(''); setTests(null); editId=null;
-    setPrel(false); verbaleManual=false;
+    setPrel(false); verbaleManual=false; setCubettiEnabled(false);
     if($('reg-data')) $('reg-data').value=todayISO();   // data di oggi, modificabile
     composeVerbale(); updateDdtHint(); updateGuide();
     $('reg-cancel-edit').style.display='none';
@@ -32118,7 +32150,7 @@ setTool("erase");
     refreshMix(e.mix||''); setTests(e.tests);
     // prelievo: usa il flag salvato, oppure deducilo dalla presenza del verbale (righe vecchie)
     const prel=(e.prelievo!=null)?!!e.prelievo:!!(e.verbale&&String(e.verbale).trim());
-    setPrel(prel); verbaleManual=true;
+    setPrel(prel); verbaleManual=true; setCubettiEnabled(prel);
     if($('reg-num')) $('reg-num').value = prel ? (numOf(e.verbale)||'') : '';
     composeVerbale();
     $('reg-cancel-edit').style.display='';
@@ -32145,7 +32177,7 @@ setTool("erase");
       prelievo: prel,
       verbale: verbale,
       ripetuto: prel && isDup(verbale, editId),
-      cubetti: ($('reg-cubetti').value||'').trim(),
+      cubetti: prel ? ($('reg-cubetti').value||'').trim() : '',
       note: ($('reg-note').value||'').trim(),
       tempAmb: ($('reg-temp-amb')?$('reg-temp-amb').value:'').trim(),
       tempCls: ($('reg-temp-cls')?$('reg-temp-cls').value:'').trim(),
@@ -32189,7 +32221,7 @@ setTool("erase");
   /* ---------- colonne configurabili + riordinabili ---------- */
   const COLORDER_KEY='mq_reg_colorder_v1';
   const COLS=[
-    {key:'data',    label:'Data',     get:e=>({v:e.data})},
+    {key:'data',    label:'Data',     get:e=>({v:fmtIt(e.data)})},
     {key:'ddt',     label:'DDT',      get:e=>({v:e.ddt})},
     {key:'impresa', label:'Impresa',  get:e=>({v:e.impresa})},
     {key:'wbs',     label:'WBS',      get:e=>({v:e.wbs})},
@@ -32230,12 +32262,56 @@ setTool("erase");
     return '<td data-label="'+esc(label)+'"'+(empty?' data-empty="1"':'')+'>'+inner+'</td>';
   }
   let _dragKey=null;
+  const colFilters={};
+  function colText(c,e){
+    const r=c.get(e);
+    if(r && r.v!=null) return String(r.v);
+    if(c.key==='verbale') return String(e.verbale||'');
+    if(c.key==='ripetuto') return e.ripetuto?'rip':'';
+    if(c.key==='note') return String(e.note||'');
+    return '';
+  }
+  function distinctColValues(c){
+    const set={};
+    currentRows().forEach(e=>{ const v=colText(c,e); if(v!=='') set[v]=1; });
+    return Object.keys(set).sort((a,b)=>String(a).localeCompare(String(b),'it',{numeric:true}));
+  }
+  function renderFilterRow(){
+    const fr=$('reg-filter-row'); if(!fr)return;
+    fr.innerHTML=COLS.map(c=>{
+      const vals=distinctColValues(c);
+      const opts=['<option value="__ALL__">(tutti)</option>'].concat(vals.map(v=>'<option value="'+esc(v)+'"'+(colFilters[c.key]===v?' selected':'')+'>'+esc(v)+'</option>'));
+      return '<th class="reg-fth"><select class="reg-col-filter" data-fkey="'+c.key+'">'+opts.join('')+'</select></th>';
+    }).join('')+'<th class="reg-fth"></th>';
+    fr.querySelectorAll('select[data-fkey]').forEach(sel=>{
+      sel.addEventListener('change',()=>{ const k=sel.dataset.fkey; const v=sel.value; if(v && v!=='__ALL__')colFilters[k]=v; else delete colFilters[k]; renderBody(); });
+    });
+  }
+  let sortKey='data', sortDir=1, _suppressSortClick=false;
+  function sortRows(rows){
+    const c=COLS.find(x=>x.key===sortKey); if(!c) return rows;
+    const isDate=(sortKey==='data');
+    return rows.slice().sort((a,b)=>{
+      let va,vb;
+      if(isDate){ va=a.data||''; vb=b.data||''; }   // ISO: ordina cronologicamente
+      else { va=colText(c,a); vb=colText(c,b); }
+      const na=parseFloat(String(va).replace(',','.')), nb=parseFloat(String(vb).replace(',','.'));
+      let cmp;
+      if(!isDate && String(va).trim()!=='' && String(vb).trim()!=='' && !isNaN(na) && !isNaN(nb)) cmp=na-nb;
+      else cmp=String(va).localeCompare(String(vb),'it',{numeric:true});
+      return cmp*sortDir;
+    });
+  }
   function renderThead(){
     const tr=$('reg-thead-row'); if(!tr)return;
-    tr.innerHTML=COLS.map(c=>'<th draggable="true" data-key="'+c.key+'" class="reg-th" title="Trascina per spostare la colonna">'+esc(c.label)+'</th>').join('')+'<th></th>';
+    tr.innerHTML=COLS.map(c=>{
+      const ar=(sortKey===c.key)?('<span class="reg-sort-ar">'+(sortDir>0?'▲':'▼')+'</span>'):'';
+      return '<th draggable="true" data-key="'+c.key+'" class="reg-th" title="Clic per ordinare · trascina per spostare">'+esc(c.label)+ar+'</th>';
+    }).join('')+'<th></th>';
     tr.querySelectorAll('th[data-key]').forEach(th=>{
+      th.addEventListener('click',()=>{ if(_suppressSortClick)return; const k=th.dataset.key; if(sortKey===k)sortDir=-sortDir; else {sortKey=k;sortDir=1;} renderThead(); renderBody(); });
       th.addEventListener('dragstart',ev=>{ _dragKey=th.dataset.key; th.classList.add('drag'); try{ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',_dragKey);}catch(_){}});
-      th.addEventListener('dragend',()=>{ th.classList.remove('drag'); tr.querySelectorAll('th').forEach(x=>x.classList.remove('over')); });
+      th.addEventListener('dragend',()=>{ th.classList.remove('drag'); tr.querySelectorAll('th').forEach(x=>x.classList.remove('over')); _suppressSortClick=true; setTimeout(()=>{_suppressSortClick=false;},80); });
       th.addEventListener('dragover',ev=>{ ev.preventDefault(); th.classList.add('over'); });
       th.addEventListener('dragleave',()=>th.classList.remove('over'));
       th.addEventListener('drop',ev=>{ ev.preventDefault(); th.classList.remove('over');
@@ -32243,17 +32319,32 @@ setTool("erase");
         const from=COLS.findIndex(c=>c.key===_dragKey), to=COLS.findIndex(c=>c.key===target);
         if(from<0||to<0)return;
         const moved=COLS.splice(from,1)[0]; COLS.splice(to,0,moved);
-        saveColOrder(); renderThead(); renderTable();
+        saveColOrder(); renderThead(); renderBody();
       });
     });
+    renderFilterRow();
+  }
+  function applyFilters(rows){
+    const keys=Object.keys(colFilters).filter(k=>colFilters[k]);
+    if(!keys.length) return rows;
+    return rows.filter(e=> keys.every(k=>{
+      const c=COLS.find(x=>x.key===k); if(!c) return true;
+      return colText(c,e)===colFilters[k];
+    }));
   }
   function renderTable(){
-    const rows=currentRows();
-    const tb=$('reg-tbody'); if(!tb)return;
     renderThead();
-    $('reg-count').innerHTML=(curLab==='__ALL__'?'Database completo: ':(esc(curLab)+': '))+'<b>'+rows.length+'</b> registrazioni';
+    renderBody();
+    refreshExportSelect();
+  }
+  function renderBody(){
+    const allRows=currentRows();
+    const rows=sortRows(applyFilters(allRows));
+    const tb=$('reg-tbody'); if(!tb)return;
+    const filtered=(rows.length!==allRows.length);
+    $('reg-count').innerHTML=(curLab==='__ALL__'?'Database completo: ':(esc(curLab)+': '))+'<b>'+rows.length+'</b> registrazioni'+(filtered?(' <span style="color:var(--muted);">(filtrate su '+allRows.length+')</span>'):'');
     if(!rows.length){
-      tb.innerHTML='<tr><td colspan="'+(COLS.length+1)+'" class="reg-empty">Nessuna registrazione. Compila il modulo qui sopra e premi «Salva riga».</td></tr>';
+      tb.innerHTML='<tr><td colspan="'+(COLS.length+1)+'" class="reg-empty">'+(allRows.length?'Nessuna riga per i filtri scelti.':'Nessuna registrazione. Compila il modulo qui sopra e premi «Salva riga».')+'</td></tr>';
       return;
     }
     tb.innerHTML=rows.map(e=>{
@@ -32276,21 +32367,74 @@ setTool("erase");
   }
 
   /* ---------- Excel export ---------- */
-  const HEAD=['ID','Laboratorio','Data','DDT','Impresa Esecutrice','WBS','Opera',"Parte d'Opera",'Mix','m³',
-    'Temp. ambiente [°C]','Temp. CLS [°C]',
-    'Slump [cm]','Spandimento [cm]','Aria [%]','Rapporto A/C','Acqua essudata','Massa volumica [kg/m³]',
-    'Prelievo eseguito','Verbale di prelievo','Ripetuto','N° cubetti','Note','Inserito da','Data inserimento'];
-  function rowArr(e){
-    return [e.id,e.lab,e.data,e.ddt,e.impresa,e.wbs,e.opera,e.parte,e.mix,e.mc,
-      e.tempAmb||'',e.tempCls||'',
-      tval(e,'slump'),tval(e,'spand'),tval(e,'aria'),tval(e,'ac'),tval(e,'essud'),tval(e,'massa'),
-      (e.prelievo?'SÌ':'NO'),e.verbale,(e.ripetuto?'SÌ':''),e.cubetti,e.note,e.by,e.at];
-  }
-  function exportRows(rows,fname){
+  // data ISO (AAAA-MM-GG) → GG/MM/AAAA
+  function fmtIt(iso){ if(!iso) return ''; const m=String(iso).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? (m[3]+'/'+m[2]+'/'+m[1]) : String(iso); }
+  // ordine colonne richiesto per l'esportazione
+  const EXPORT_COLS=[
+    {h:'Inserito da',            w:18, get:e=>e.by||''},
+    {h:'Data inserimento',       w:18, get:e=>e.at||''},
+    {h:'Laboratorio',            w:14, get:e=>e.lab||''},
+    {h:'Data',                   w:12, get:e=>fmtIt(e.data)},
+    {h:'DDT',                    w:12, get:e=>e.ddt||''},
+    {h:'Impresa Esecutrice',     w:18, get:e=>e.impresa||''},
+    {h:'WBS',                    w:10, get:e=>e.wbs||''},
+    {h:'Opera',                  w:16, get:e=>e.opera||''},
+    {h:"Parte d'Opera",          w:16, get:e=>e.parte||''},
+    {h:'Mix',                    w:22, get:e=>e.mix||''},
+    {h:'m³',                     w:8,  get:e=>e.mc||''},
+    {h:'Slump [cm]',             w:11, get:e=>tval(e,'slump')},
+    {h:'Spandimento [cm]',       w:14, get:e=>tval(e,'spand')},
+    {h:'Aria [%]',               w:9,  get:e=>tval(e,'aria')},
+    {h:'Rapporto A/C',           w:12, get:e=>tval(e,'ac')},
+    {h:'Acqua essudata',         w:13, get:e=>tval(e,'essud')},
+    {h:'Massa volumica [kg/m³]', w:18, get:e=>tval(e,'massa')},
+    {h:'Temp. ambiente [°C]',    w:16, get:e=>e.tempAmb||''},
+    {h:'Temp. CLS [°C]',         w:14, get:e=>e.tempCls||''},
+    {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
+    {h:'N° cubetti',             w:10, get:e=>e.cubetti||''},
+    {h:'Note',                   w:24, get:e=>e.note||''}
+  ];
+  const HEAD=EXPORT_COLS.map(c=>c.h);
+  function rowArr(e){ return EXPORT_COLS.map(c=>c.get(e)); }
+
+  async function exportRows(rows,fname){
     if(!rows.length){ toast('Nessun dato da esportare.'); return; }
+    // se ExcelJS è disponibile → tabella colorata; altrimenti Excel semplice
+    if(typeof ExcelJS!=='undefined'){
+      try{
+        const wb=new ExcelJS.Workbook();
+        const ws=wb.addWorksheet('Registro Prelievi',{views:[{state:'frozen',ySplit:1}]});
+        ws.columns=EXPORT_COLS.map(c=>({header:c.h,key:c.h,width:c.w}));
+        const bd={style:'thin',color:{argb:'FFD9D2C7'}};
+        const border={top:bd,left:bd,bottom:bd,right:bd};
+        const hr=ws.getRow(1); hr.height=24;
+        hr.eachCell(cell=>{
+          cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE07820'}};
+          cell.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
+          cell.alignment={vertical:'middle',horizontal:'center',wrapText:true};
+          cell.border=border;
+        });
+        rows.forEach((e,i)=>{
+          const r=ws.addRow(EXPORT_COLS.map(c=>c.get(e)));
+          r.eachCell({includeEmpty:true},cell=>{
+            cell.border=border;
+            cell.alignment={vertical:'middle',horizontal:'left'};
+            if(i%2===1) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF3F1EC'}};
+          });
+        });
+        ws.autoFilter={from:{row:1,column:1},to:{row:1,column:EXPORT_COLS.length}};
+        const buf=await wb.xlsx.writeBuffer();
+        const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
+        setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+        toast('Excel esportato: '+fname);
+        return;
+      }catch(err){ console.warn('ExcelJS export fallita, uso SheetJS',err); }
+    }
+    // fallback semplice
     const aoa=[HEAD].concat(rows.map(rowArr));
     const ws=XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols']=HEAD.map(h=>({wch:Math.max(9,Math.min(28,h.length+3))}));
+    ws['!cols']=EXPORT_COLS.map(c=>({wch:c.w}));
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Registro Prelievi');
     XLSX.writeFile(wb,fname);
@@ -32309,8 +32453,9 @@ setTool("erase");
       let added=0, updated=0;
       rows.forEach(r=>{
         const g=(...keys)=>{ for(const k of keys){ if(r[k]!==undefined&&r[k]!=='') return r[k]; } return ''; };
+        const idFromFile=String(g('ID (tecnico)','ID')||'');
         const e={
-          id: String(g('ID')||('e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6))),
+          id: idFromFile || ('e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
           lab: String(g('Laboratorio')||curLab||db.labs[0]||'Laboratorio 1'),
           data:String(g('Data')), ddt:String(g('DDT')), impresa:String(g('Impresa Esecutrice','Impresa')),
           wbs:String(g('WBS')), opera:String(g('Opera')), parte:String(g("Parte d'Opera",'Parte')),
@@ -32331,8 +32476,10 @@ setTool("erase");
         if(!e.prelievo){ e.verbale=''; e.ripetuto=false; }
         if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
         if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
-        const i=db.entries.findIndex(x=>x.id===e.id);
-        if(i>=0){ db.entries[i]=e; updated++; } else { db.entries.push(e); added++; }
+        let i=-1;
+        if(idFromFile) i=db.entries.findIndex(x=>x.id===e.id);
+        if(i<0 && e.verbale && e.verbale.trim()) i=db.entries.findIndex(x=>(x.verbale||'').trim()===e.verbale.trim());
+        if(i>=0){ e.id=db.entries[i].id; db.entries[i]=e; updated++; } else { db.entries.push(e); added++; }
       });
       // ricalcola flag ripetuto sull'intero database
       const seen={};
@@ -32389,7 +32536,8 @@ setTool("erase");
     $('reg-prel-done').addEventListener('change',()=>{
       const on=prelChecked();
       setPrel(on);
-      if(on){ verbaleManual=false; suggestNumber(); if($('reg-num'))$('reg-num').focus(); }
+      setCubettiEnabled(on);
+      if(on){ verbaleManual=false; cubettiManual=false; suggestNumber(); updateGuide(); if($('reg-num'))$('reg-num').focus(); }
       else { if($('reg-num'))$('reg-num').value=''; composeVerbale(); }
       updateVerbHint();
     });
@@ -32409,7 +32557,7 @@ setTool("erase");
       b.style.display = open?'':'none';
       if(open){ fillReportFilters(); renderReport(); }
     };
-    ['rep-period','rep-lab','rep-wbs','rep-mix'].forEach(id=>{ if($(id)) $(id).addEventListener('change',renderReport); });
+    ['rep-mese','rep-anno'].forEach(id=>{ if($(id)) $(id).addEventListener('change',renderReport); });
     // controllo intervalli: slump / spandimento / temperatura CLS
     ['reg-val-slump','reg-val-spand','reg-temp-cls'].forEach(id=>{ if($(id)) $(id).addEventListener('input',checkRanges); });
     ['reg-chk-slump','reg-chk-spand'].forEach(id=>{ if($(id)) $(id).addEventListener('change',checkRanges); });
@@ -32418,19 +32566,19 @@ setTool("erase");
     if($('reg-num')) $('reg-num').addEventListener('input',()=>{ verbaleManual=true; composeVerbale(); });
     if($('reg-num-inc')) $('reg-num-inc').onclick=()=>{ const n=currentNum()||0; if($('reg-num'))$('reg-num').value=n+1; verbaleManual=true; composeVerbale(); };
     if($('reg-num-dec')) $('reg-num-dec').onclick=()=>{ const n=currentNum()||0; if($('reg-num'))$('reg-num').value=Math.max(1,n-1); verbaleManual=true; composeVerbale(); };
-    $('reg-exp-lab').onclick=()=>{
-      const rows=currentRows();
-      const tag=(curLab==='__ALL__'?'TUTTI':curLab).replace(/[^\w]+/g,'_');
+    if($('reg-exp-go')) $('reg-exp-go').onclick=()=>{
+      const all=(curLab==='__ALL__');
+      const rows= all ? db.entries.slice() : db.entries.filter(e=>(e.lab||'')===curLab);
+      if(!rows.length){ toast('Nessun dato da esportare.'); return; }
+      const tag=(all?'CONGIUNTI':curLab).replace(/[^\w]+/g,'_');
       exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
     };
-    $('reg-exp-all').onclick=()=>{
-      exportRows(db.entries.slice(),'Registro_DATABASE_'+new Date().toISOString().slice(0,10)+'.xlsx');
-    };
-    // export/import database: solo per chi gestisce (nascosto ai laboratori)
-    if(isLabUser()){
-      ['reg-exp-all','reg-imp-btn'].forEach(id=>{ if($(id))$(id).style.display='none'; });
+    // import: solo admin
+    if(!isManager()){
+      if($('reg-imp-btn')) $('reg-imp-btn').style.display='none';
     }
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
+    if($('reg-f-clear')) $('reg-f-clear').onclick=(ev)=>{ ev.preventDefault(); Object.keys(colFilters).forEach(k=>delete colFilters[k]); renderThead(); renderBody(); };
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
     if($('reg-colreset')) $('reg-colreset').onclick=(ev)=>{ ev.preventDefault(); resetColOrder(); };
     // cubetti: pulsanti 4/6/8 + Altro (numero manuale)
@@ -32470,7 +32618,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 2.4';
+  window.APP_VERSION = 'Versione 3.6';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
