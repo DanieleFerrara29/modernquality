@@ -2330,6 +2330,67 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro table.reg-table th{background:var(--header-bg);color:var(--muted);text-align:left;padding:9px 10px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;position:sticky;top:0;border-bottom:2px solid var(--accent);}
 #tab-registro table.reg-table th.reg-th{cursor:pointer;user-select:none;white-space:nowrap;}
 #tab-registro .reg-sort-ar{color:var(--accent);font-size:10px;margin-left:4px;}
+/* pannello filtri a selezione multipla (stile Excel) */
+.reg-fbtn{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:3px 6px;font-size:11px;font-weight:400;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.reg-fbtn.on{border-color:var(--accent);color:var(--accent);font-weight:700;}
+.reg-fpanel{position:absolute;z-index:9999;background:var(--surface);border:1px solid var(--border2);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.55);min-width:190px;max-width:280px;padding:8px;font-size:13px;color:var(--text);}
+.reg-fpanel-h{font-weight:700;font-size:12px;color:var(--accent);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
+.reg-fpanel-s{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:6px 8px;font-size:13px;margin-bottom:6px;}
+.reg-fpanel-a{display:flex;gap:6px;margin-bottom:6px;}
+.reg-fpanel-a button{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--muted);border-radius:6px;padding:4px 6px;font-size:11px;cursor:pointer;}
+.reg-fpanel-a button:hover{color:var(--text);border-color:var(--accent);}
+.reg-fpanel-l{max-height:230px;overflow:auto;display:flex;flex-direction:column;gap:2px;margin-bottom:8px;}
+.reg-fpanel-l label{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;line-height:1.25;}
+.reg-fpanel-l label:hover{background:rgba(var(--accent-rgb),.10);}
+.reg-fpanel-l input{width:16px;height:16px;flex-shrink:0;accent-color:var(--accent);}
+.reg-fpanel-f{display:flex;gap:6px;}
+.reg-fpanel-f button{flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;}
+.reg-fw{color:var(--muted);font-size:11px;opacity:.85;}
+#tab-registro .reg-guide-when{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px;}
+#tab-registro .reg-guide-when span{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;font-size:12.5px;border:1px solid var(--border2);}
+#tab-registro .reg-when-day{background:rgba(var(--accent-rgb),.12);border-color:var(--accent)!important;color:var(--text);}
+#tab-registro .reg-when-week{background:rgba(125,133,144,.12);color:var(--text);}
+#tab-registro .reg-guide-when i{font-style:normal;color:var(--muted);font-size:11.5px;}
+#tab-registro .reg-guide-when b{color:var(--accent);}
+/* prospetto settimanale */
+#tab-registro .reg-wnav{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;}
+#tab-registro .reg-wlabel{font-weight:700;color:var(--accent);font-size:14px;padding:0 6px;}
+#tab-registro .wrep-lab{font-weight:700;font-size:13px;color:var(--text);margin:14px 0 6px;padding-left:2px;}
+#tab-registro .wrep-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border2);border-radius:10px;}
+#tab-registro table.wrep{width:100%;border-collapse:collapse;font-size:12px;min-width:640px;}
+#tab-registro table.wrep th,#tab-registro table.wrep td{border:1px solid var(--border);padding:7px 8px;text-align:center;vertical-align:middle;}
+#tab-registro table.wrep thead th{background:var(--surface);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;}
+#tab-registro table.wrep thead th small{display:block;color:var(--muted);font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;}
+#tab-registro table.wrep td.wrep-mix{text-align:left;font-weight:600;color:var(--text);white-space:nowrap;position:sticky;left:0;background:var(--bg);z-index:1;}
+#tab-registro table.wrep thead th:first-child{position:sticky;left:0;background:var(--surface);z-index:2;text-align:left;}
+#tab-registro table.wrep td.wrep-empty{color:var(--muted);opacity:.45;}
+#tab-registro table.wrep .wrep-p{color:var(--text);font-weight:700;}
+#tab-registro table.wrep .wrep-c{color:var(--accent);font-size:11px;}
+#tab-registro table.wrep .wrep-mc{display:block;font-weight:700;font-size:14px;color:var(--text);line-height:1.2;}
+#tab-registro table.wrep .wrep-pc{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.35;}
+#tab-registro table.wrep .wrep-pc b{color:var(--text);font-size:12.5px;}
+#tab-registro table.wrep .wrep-c b{color:var(--accent);}
+#tab-registro table.wrep .wrep-a{display:block;margin-top:3px;}
+#tab-registro table.wrep td{min-width:96px;}
+#tab-registro table.wrep td.wrep-tot .wrep-mc{color:var(--accent);}
+
+#tab-registro table.wrep .wrep-noprel{color:var(--muted);font-weight:600;}
+#tab-registro table.wrep .wrep-a{font-size:11px;}
+#tab-registro table.wrep td.wrep-tot,#tab-registro table.wrep th.wrep-tot{background:rgba(var(--accent-rgb),.10);font-weight:700;}
+#tab-registro table.wrep tr.wrep-sum td{background:var(--surface);font-weight:700;}
+#tab-registro table.wrep tr.wrep-sum td:first-child{background:var(--surface);}
+#tab-registro .wrep-none{color:var(--muted);font-size:12px;padding:10px 2px;}
+#tab-registro .wrep-legend{color:var(--muted);font-size:11px;margin-top:8px;}
+@media (max-width:640px){
+  #tab-registro .reg-wnav{gap:6px;}
+  #tab-registro .reg-wnav .reg-btn{flex:1 1 46%;font-size:12px;}
+  #tab-registro .reg-wlabel{flex:1 1 100%;text-align:center;order:-1;font-size:15px;}
+  #tab-registro table.wrep{font-size:11.5px;min-width:600px;}
+}
+#tab-registro .reg-when-week b{color:var(--text);}
+@media (max-width:640px){#tab-registro .reg-guide-when{flex-direction:column;gap:6px;} #tab-registro .reg-guide-when span{justify-content:flex-start;}}
+.reg-fpanel-f button.sec{background:var(--bg);border:1px solid var(--border2);color:var(--muted);font-weight:400;}
+@media (max-width:640px){ .reg-fpanel{min-width:min(88vw,300px);max-width:92vw;} .reg-fpanel-l{max-height:46vh;} .reg-fpanel-l label{padding:9px 6px;font-size:15px;} }
 #tab-registro table.reg-table th.reg-fth{padding:2px 4px;background:var(--surface);}
 #tab-registro .reg-col-filter{width:100%;min-width:52px;box-sizing:border-box;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:3px 5px;font-size:11px;font-weight:400;}
 #tab-registro .reg-col-filter::placeholder{color:var(--muted);opacity:.6;}
@@ -2393,7 +2454,58 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro table.reg-table td.reg-actions-cell .reg-del{padding:9px 16px;font-size:14px;}
   #tab-registro .reg-empty{padding:24px 10px;}
   #tab-registro .reg-toast{left:12px;right:12px;transform:none;text-align:center;bottom:14px;}
+  /* strumenti mobile: ordina + filtri */
+  #tab-registro .reg-mtools{display:flex;}
+  #tab-registro .reg-mtools-sel{flex:1;min-width:0;}
 }
+/* ===== Strumenti mobile (nascosti su desktop) ===== */
+#tab-registro .reg-mtools{display:none;flex-direction:column;gap:8px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;}
+#tab-registro .reg-mtools-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+#tab-registro .reg-mtools-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);flex:0 0 46px;font-weight:700;}
+#tab-registro .reg-mtools-sel{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:9px 10px;font-size:15px;}
+#tab-registro .reg-mtools-btn{background:var(--bg);border:1px solid var(--border2);color:var(--accent);border-radius:8px;padding:9px 13px;font-size:15px;cursor:pointer;font-weight:700;}
+/* ===== Rifiniture estetiche registro ===== */
+#tab-registro .reg-guide{background:linear-gradient(180deg,rgba(var(--accent-rgb),.07),rgba(var(--accent-rgb),.02));border:1px solid rgba(var(--accent-rgb),.35);border-radius:14px;padding:14px 16px;margin-bottom:14px;line-height:1.5;}
+#tab-registro .reg-guide-ok{color:var(--green);font-weight:700;}
+#tab-registro .reg-guide-warn{color:var(--red);font-weight:700;}
+#tab-registro .reg-report{box-shadow:0 1px 0 rgba(0,0,0,.15);}
+#tab-registro .reg-report-head{transition:background .15s;}
+#tab-registro .reg-report-head:hover{background:rgba(var(--accent-rgb),.10);}
+#tab-registro .rep-lbl{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#tab-registro .rep-fill{transition:width .3s ease;border-radius:4px;}
+#tab-registro .reg-col-filter{transition:border-color .15s;}
+#tab-registro .reg-col-filter:focus{outline:none;border-color:var(--accent);}
+#tab-registro .reg-btn{transition:filter .15s, transform .05s;}
+#tab-registro .reg-btn:active{transform:translateY(1px);}
+#tab-registro table.reg-table tbody tr{transition:background .12s;}
+#tab-registro table.reg-table tbody tr:hover{background:rgba(var(--accent-rgb),.05);}
+@media (max-width:640px){
+  #tab-registro .rep-lbl{max-width:110px;}
+  #tab-registro .reg-report-body{padding:12px;}
+  /* report: controlli a tutta larghezza, leggibili col pollice */
+  #tab-registro .reg-report-controls{flex-direction:column;align-items:stretch;gap:10px;}
+  #tab-registro .reg-report-controls label{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  #tab-registro .reg-report-controls select{flex:1;min-width:0;font-size:16px;padding:10px;margin-left:0;}
+  #tab-registro .reg-report-head{padding:14px 14px;font-size:15px;}
+  /* barra strumenti: esporta ben visibile, indicatore spazio su riga propria */
+  #tab-registro .reg-toolbar{flex-wrap:wrap;}
+  #tab-registro .reg-dbsize{flex:1 1 100%;order:3;margin-top:2px;}
+  #tab-registro .reg-toolbar .reg-btn.excel{flex:1 1 100%;}
+  /* guida prelievi: più compatta ma leggibile */
+  #tab-registro .reg-guide{padding:12px 13px;font-size:13px;border-radius:12px;}
+  #tab-registro .reg-guide-suggest{font-size:13.5px;}
+  /* chip cubetti più grandi da toccare */
+  #tab-registro .reg-chip{min-width:56px;min-height:46px;font-size:16px;}
+}
+/* intestazioni tabella sempre visibili scorrendo (solo desktop) */
+@media (min-width:641px){
+  #tab-registro .reg-tablewrap{max-height:70vh;overflow:auto;}
+  #tab-registro table.reg-table thead th{position:sticky;top:0;z-index:3;background:var(--surface);}
+  #tab-registro table.reg-table thead tr:nth-child(2) th{top:34px;z-index:2;}
+}
+/* messa a fuoco coerente e accessibile */
+#tab-registro input:focus,#tab-registro select:focus,#tab-registro textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.18);}
+#tab-registro .reg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 </style>
 
 <div class="tab-panel" id="tab-registro">
@@ -2417,6 +2529,20 @@ tr.new-row{animation:rowIn .2s ease both;}
         </div>
         <div id="rep-total" style="font-size:13px;margin-bottom:12px;"></div>
         <div id="rep-chart"></div>
+      </div>
+    </div>
+
+    <!-- Prospetto settimanale: prelievi, cubetti e contenuto d'aria (per laboratorio) -->
+    <div class="reg-report" id="reg-wreport">
+      <div class="reg-report-head" id="reg-wreport-toggle">🗓 Prospetto settimanale — prelievi, cubetti e aria <span style="font-size:11px;color:var(--muted);font-weight:400;">— clicca per aprire/chiudere</span></div>
+      <div class="reg-report-body" id="reg-wreport-body" style="display:none;">
+        <div class="reg-wnav">
+          <button class="reg-btn ghost" id="wrep-prev">◀ Settimana prec.</button>
+          <span id="wrep-label" class="reg-wlabel"></span>
+          <button class="reg-btn ghost" id="wrep-next">Settimana succ. ▶</button>
+          <button class="reg-btn ghost" id="wrep-today">Questa settimana</button>
+        </div>
+        <div id="wrep-body"></div>
       </div>
     </div>
 
@@ -2465,7 +2591,7 @@ tr.new-row{animation:rowIn .2s ease both;}
       </section>
 
       <div class="reg-guide" id="reg-guide" style="display:none;"></div>
-      <div class="reg-rangewarn" id="reg-range-warn" style="display:none;"></div>
+      <div class="reg-rangewarn" id="reg-range-warn" style="display:none !important;"></div>
 
       <section class="reg-sec reg-tests">
         <div class="reg-sec-t">3 · Prove eseguite</div>
@@ -2523,6 +2649,22 @@ tr.new-row{animation:rowIn .2s ease both;}
       <input type="file" id="reg-imp-file" accept=".xlsx,.xls" style="display:none;" autocomplete="off"/>
     </div>
     <div style="font-size:11px;color:var(--muted);margin:2px 2px 8px;">↔ Trascina le intestazioni per spostare le colonne · clic per ordinare · usa le tendine sotto le intestazioni per filtrare (come Excel). <a href="#" id="reg-colreset" style="color:var(--accent);text-decoration:none;">Ripristina ordine</a> · <a href="#" id="reg-f-clear" style="color:var(--accent);text-decoration:none;font-weight:700;">✕ Togli tutti i filtri</a></div>
+
+    <!-- Strumenti compatti per smartphone (ordina + filtri) -->
+    <div class="reg-mtools" id="reg-mtools">
+      <div class="reg-mtools-row">
+        <span class="reg-mtools-lbl">Ordina</span>
+        <select id="reg-msort" class="reg-mtools-sel"></select>
+        <button id="reg-msort-dir" class="reg-mtools-btn" title="Crescente/Decrescente">▲</button>
+      </div>
+      <div class="reg-mtools-row">
+        <span class="reg-mtools-lbl">Filtra</span>
+        <select id="reg-mf-mix" class="reg-mtools-sel"></select>
+        <select id="reg-mf-wbs" class="reg-mtools-sel"></select>
+        <select id="reg-mf-data" class="reg-mtools-sel"></select>
+        <button id="reg-mf-clear" class="reg-mtools-btn" title="Togli filtri">✕</button>
+      </div>
+    </div>
 
     <div class="reg-tablewrap">
       <table class="reg-table">
@@ -31905,9 +32047,67 @@ setTool("erase");
   }
   function updateReportVisibility(){
     const r=$('reg-report'); if(!r)return;
-    r.style.display = isManager() ? '' : 'none';
+    r.style.display = '';   // visibile a tutti: il laboratorio vede solo i propri dati
   }
-  function reportRefreshIfOpen(){ const b=$('reg-report-body'); if(b && b.style.display!=='none'){ fillReportFilters(); renderReport(); } }
+  function reportRefreshIfOpen(){ const b=$('reg-report-body'); if(b && b.style.display!=='none'){ fillReportFilters(); renderReport(); } renderWeekReport(); }
+
+  /* ---------- PROSPETTO SETTIMANALE: prelievi, cubetti, aria ---------- */
+  let wrepMonday='';
+  function wrepDays(){
+    const out=[]; const d=new Date(wrepMonday+'T00:00:00');
+    for(let i=0;i<7;i++){ const x=new Date(d.getTime()+i*86400000); out.push(isoLocal(x)); }
+    return out;
+  }
+  function round1(n){ const v=Math.round((parseFloat(n)||0)*10)/10; return (Math.abs(v-Math.round(v))<1e-9) ? String(Math.round(v)) : String(v).replace('.',','); }
+  // una riga conta come PRELIEVO solo se il prelievo è stato eseguito (spunta o verbale assegnato)
+  function isPrelievo(e){ return (e.prelievo!=null) ? !!e.prelievo : !!String(e.verbale||'').trim(); }
+  function wrepLabTable(lab,days){
+    const rows=db.entries.filter(e=>(e.lab||'')===lab && days.indexOf(e.data||'')>=0);
+    const mixes=Array.from(new Set(rows.map(e=>(e.mix||'(senza mix)')))).sort();
+    if(!mixes.length) return '<div class="wrep-none">Nessuna registrazione in questa settimana.</div>';
+    const DOW=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+    let h='<div class="wrep-scroll"><table class="wrep"><thead><tr><th>Mix</th>'
+      + days.map((d,i)=>'<th>'+DOW[i]+'<small>'+fmtIt(d).slice(0,5)+'</small></th>').join('')
+      + '<th class="wrep-tot">Totale sett.<small>m³ · prel. · cubetti</small></th><th class="wrep-tot">Settimanale</th></tr></thead><tbody>';
+    const dayTot=days.map(()=>({p:0,c:0,mc:0,n:0}));
+    mixes.forEach(mix=>{
+      const cfg=mixCfgOf(mix);
+      let tp=0,tc=0,tmc=0,settOk=false;
+      let tds='';
+      days.forEach((d,i)=>{
+        const cell=rows.filter(e=>(e.mix||'(senza mix)')===mix && (e.data||'')===d);
+        const prel=cell.filter(isPrelievo);              // solo i prelievi realmente eseguiti
+        const p=prel.length;
+        const c=prel.reduce((s,e)=>s+(parseInt(e.cubetti,10)||0),0);
+        const mc=cell.reduce((s,e)=>s+num(e.mc),0);      // m³ gettati quel giorno
+        const aria=cell.some(e=>e.tests&&e.tests.aria&&e.tests.aria.on);
+        if(cfg.sett>0 && prel.some(e=>parseInt(e.cubetti,10)===cfg.sett)) settOk=true;
+        tp+=p; tc+=c; tmc+=mc; dayTot[i].p+=p; dayTot[i].c+=c; dayTot[i].mc+=mc; dayTot[i].n+=cell.length;
+        if(!cell.length){ tds+='<td class="wrep-empty">–</td>'; return; }
+        tds += '<td><span class="wrep-mc">'+round1(mc)+' m³</span>'
+             + '<div class="wrep-pc">'+(p?('<b>'+p+'</b> prel.'+(c?' · <span class="wrep-c"><b>'+c+'</b> cub.</span>':'')):'<span class="wrep-noprel">nessun prelievo</span>')+'</div>'
+             + '<span class="wrep-a">'+(aria?'<span class="reg-guide-ok">aria ✓</span>':'<span class="reg-guide-warn">aria ⚠</span>')+'</span></td>';
+      });
+      const settCell = cfg.sett>0
+        ? (settOk?'<span class="reg-guide-ok">✓ fatto ('+cfg.sett+' cub.)</span>':'<span class="reg-guide-warn">⚠ da fare ('+cfg.sett+' cub.)</span>')
+        : '<span style="color:var(--muted);">non previsto</span>';
+      h+='<tr><td class="wrep-mix">'+esc(mix)+'</td>'+tds
+        +'<td class="wrep-tot"><span class="wrep-mc">'+round1(tmc)+' m³</span><div class="wrep-pc"><b>'+tp+'</b> prel. · <span class="wrep-c"><b>'+tc+'</b> cub.</span></div></td>'
+        +'<td>'+settCell+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    return h;
+  }
+  function renderWeekReport(){
+    const box=$('wrep-body'); if(!box) return;
+    if(!wrepMonday) wrepMonday=mondayOf(($('reg-data')&&$('reg-data').value)||todayISO());
+    const days=wrepDays();
+    const lbl=$('wrep-label');
+    if(lbl) lbl.textContent='Settimana '+fmtIt(days[0])+' – '+fmtIt(days[6]);
+    const labs = (curLab==='__ALL__') ? db.labs.slice() : [curLab];
+    box.innerHTML = labs.map(l=>'<div class="wrep-lab">🧪 '+esc(l)+'</div>'+wrepLabTable(l,days)).join('')
+      + '<div class="wrep-legend">Ogni laboratorio è conteggiato a sé. «m³» = calcestruzzo gettato · «prel.» = prelievi eseguiti · «cub.» = cubetti realizzati · l\'aria è richiesta una volta al giorno per ogni mix gettato.</div>';
+  }
 
   /* ---------- guida prelievi (cubetti automatici, settimanale, m³ per WBS/Mix) ---------- */
   function mixCfgOf(mix){
@@ -31919,12 +32119,15 @@ setTool("erase");
       tclsMin:r('tclsMin'), tclsMax:r('tclsMax')};
   }
   function num(x){ const n=parseFloat(String(x==null?'':x).replace(',','.')); return isNaN(n)?0:n; }
+  function isoLocal(d){ // data locale -> 'YYYY-MM-DD' (niente fuso orario: toISOString sposta il giorno)
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
   function mondayOf(iso){ // iso 'YYYY-MM-DD' -> 'YYYY-MM-DD' del lunedì della settimana
     if(!iso) return '';
     const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return '';
     const wd=(d.getDay()+6)%7; // 0=lun ... 6=dom
     d.setDate(d.getDate()-wd);
-    return d.toISOString().slice(0,10);
+    return isoLocal(d);
   }
   function entriesToday(wbs,mix){ const t=($('reg-data')?$('reg-data').value:'')||todayISO(); return db.entries.filter(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId); }
   function mcToday(wbs,mix){ return entriesToday(wbs,mix).reduce((s,e)=>s+num(e.mc),0); }
@@ -31937,8 +32140,38 @@ setTool("erase");
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
     return db.entries.some(e=>(e.lab||'')===curLab && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId && e.tests && e.tests.aria && e.tests.aria.on);
   }
-  function weeklyDone(wbs,mix){
+  // varianti "per laboratorio" (tutte le WBS) usate nei riepiloghi
+  function weeklyDoneLab(lab,mix){
     const cfg=mixCfgOf(mix); if(!cfg.sett) return false;
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const wk=mondayOf(t);
+    return db.entries.some(e=>(e.lab||'')===lab && (e.mix||'')===mix && e.id!==editId && mondayOf(e.data||'')===wk && parseInt(e.cubetti,10)===cfg.sett);
+  }
+  function ariaDoneLab(lab,mix){
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO();
+    return db.entries.some(e=>(e.lab||'')===lab && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId && e.tests && e.tests.aria && e.tests.aria.on);
+  }
+  // riepilogo di oggi per un laboratorio, su TUTTE le WBS
+  function guideLabToday(lab){
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO();
+    const map={};
+    db.entries.forEach(e=>{ if((e.lab||'')===lab && (e.data||'')===t && e.id!==editId){
+      const m=e.mix||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0}; map[m].mc+=num(e.mc); map[m].cnt++; } });
+    Object.keys(map).forEach(m=>{ map[m].aria=ariaDoneLab(lab,m); map[m].sett=weeklyDoneLab(lab,m); map[m].hasSett=mixCfgOf(m).sett>0; });
+    return map;
+  }
+  function guideLabHtml(lab,titlePrefix){
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO();
+    const mm=guideLabToday(lab); const keys=Object.keys(mm).sort();
+    let h=guideHeader(titlePrefix||lab, t);
+    if(!keys.length){ h+='<div class="reg-guide-list"><div style="color:var(--muted);">Nessuna registrazione oggi.</div></div>'; return h; }
+    h+='<div class="reg-guide-list">'+keys.map(m=>{
+      const wk = mm[m].hasSett ? (mm[m].sett?'<span class="reg-guide-ok">settim. ✓</span>':'<span class="reg-guide-warn">settim. ⚠</span>') : '';
+      const ar = mm[m].aria ? '<span class="reg-guide-ok">aria ✓</span>' : '<span class="reg-guide-warn">aria ⚠</span>';
+      return '<div>'+esc(m)+': <b>'+mm[m].mc+' m³</b> · '+mm[m].cnt+' prel. '+wk+' '+ar+'</div>';
+    }).join('')+'</div>';
+    return h;
+  }
+  function weeklyDone(wbs,mix){    const cfg=mixCfgOf(mix); if(!cfg.sett) return false;
     const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const wk=mondayOf(t);
     return db.entries.some(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && e.id!==editId && mondayOf(e.data||'')===wk && parseInt(e.cubetti,10)===cfg.sett);
   }
@@ -31959,10 +32192,24 @@ setTool("erase");
   function updateGuide(){
     const box=$('reg-guide'); if(!box) return;
     const wbs=curWbs(); const mix=comboVal('reg-mix','reg-mix-other');
-    if(!wbs || curLab==='__ALL__'){ box.style.display='none'; box.innerHTML=''; return; }
+    // Su "Tutti": riepilogo di ogni laboratorio (settimanale e aria visibili anche all'admin)
+    if(curLab==='__ALL__'){
+      box.style.display='';
+      box.innerHTML=db.labs.map(l=>guideLabHtml(l,l)).join('<div style="height:8px;"></div>');
+      checkRanges();
+      return;
+    }
+    // Laboratorio scelto ma nessuna WBS: riepilogo del laboratorio su tutte le WBS
+    if(!wbs){
+      box.style.display='';
+      box.innerHTML=guideLabHtml(curLab,curLab+' · tutte le WBS')
+        +'<div class="reg-guide-suggest" style="color:var(--muted);">Scegli una <b>WBS</b> per avere l\'indicazione sui cubetti del prossimo prelievo.</div>';
+      checkRanges();
+      return;
+    }
     box.style.display='';
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
-    let html='<div class="reg-guide-t">📊 '+esc(curLab)+' · WBS <b>'+esc(wbs)+'</b> — oggi ('+esc(t)+')</div>';
+    let html=guideHeader(curLab+' · WBS '+wbs, t);
     const mm=guideMixesToday(wbs);
     const keys=Object.keys(mm);
     if(keys.length){
@@ -32276,15 +32523,76 @@ setTool("erase");
     currentRows().forEach(e=>{ const v=colText(c,e); if(v!=='') set[v]=1; });
     return Object.keys(set).sort((a,b)=>String(a).localeCompare(String(b),'it',{numeric:true}));
   }
+  // ---- FILTRI a selezione multipla (come le spunte di Excel) ----
+  let _fpanel=null;
+  function closeFilterPanel(){ if(_fpanel){ _fpanel.remove(); _fpanel=null; document.removeEventListener('mousedown',_fpanelOutside,true); document.removeEventListener('keydown',_fpanelEsc,true); } }
+  function _fpanelEsc(ev){ if(ev.key==='Escape') closeFilterPanel(); }
+  function _fpanelOutside(ev){ if(_fpanel && !_fpanel.contains(ev.target)) closeFilterPanel(); }
+  function filterLabel(key){
+    const sel=colFilters[key];
+    if(!sel || !sel.length) return '(tutti)';
+    if(sel.length===1) return sel[0];
+    return sel.length+' selezionati';
+  }
+  function openFilterPanel(key,anchor){
+    const wasOpen=_fpanel && _fpanel.dataset.key===key;
+    closeFilterPanel(); if(wasOpen) return;
+    const c=COLS.find(x=>x.key===key); if(!c) return;
+    const vals=distinctColValues(c);
+    const cur=colFilters[key]||[];
+    const isSel=(v)=> cur.length ? cur.indexOf(v)>=0 : true;
+    const isData=(key==='data');
+    const p=document.createElement('div'); p.className='reg-fpanel'; p.dataset.key=key;
+    p.innerHTML='<div class="reg-fpanel-h">'+esc(c.label)+'</div>'
+      +(vals.length>8?'<input type="text" class="reg-fpanel-s" placeholder="cerca..."/>':'')
+      +'<div class="reg-fpanel-a"><button data-act="all">Tutti</button><button data-act="none">Nessuno</button></div>'
+      +(isData?'<div class="reg-fpanel-a"><button data-act="today">Oggi</button><button data-act="week">Questa sett.</button><button data-act="month">Questo mese</button></div>':'')
+      +'<div class="reg-fpanel-l">'+vals.map(v=>{
+          const wk=isData?weekRange(v):'';
+          return '<label><input type="checkbox" value="'+esc(v)+'"'+(isSel(v)?' checked':'')+'/><span>'+esc(v)+(wk?' <span class="reg-fw">sett. '+wk+'</span>':'')+'</span></label>';
+        }).join('')+'</div>'
+      +'<div class="reg-fpanel-f"><button class="sec" data-act="cancel">Annulla</button><button data-act="ok">Applica</button></div>';
+    document.body.appendChild(p);
+    _fpanel=p;   // ← registra il pannello aperto (senza questo non si chiudeva)
+    const r=anchor.getBoundingClientRect();
+    const left=Math.max(8,Math.min(r.left+window.scrollX, window.scrollX+window.innerWidth-p.offsetWidth-8));
+    p.style.left=left+'px'; p.style.top=(r.bottom+window.scrollY+4)+'px';
+    const boxes=()=>Array.from(p.querySelectorAll('.reg-fpanel-l input[type=checkbox]'));
+    const srch=p.querySelector('.reg-fpanel-s');
+    if(srch) srch.addEventListener('input',()=>{ const q=srch.value.toLowerCase();
+      boxes().forEach(b=>{ b.parentNode.style.display = b.value.toLowerCase().indexOf(q)>=0 ? '' : 'none'; }); });
+    p.addEventListener('click',ev=>{
+      const act=ev.target && ev.target.dataset ? ev.target.dataset.act : null; if(!act) return;
+      if(act==='all'){ boxes().forEach(b=>{ if(b.parentNode.style.display!=='none') b.checked=true; }); return; }
+      if(act==='none'){ boxes().forEach(b=>{ if(b.parentNode.style.display!=='none') b.checked=false; }); return; }
+      if(act==='today'||act==='week'||act==='month'){
+        const base=toISODate(($('reg-data')&&$('reg-data').value)||todayISO());
+        const wkBase=mondayOf(base), ymBase=base.slice(0,7);
+        boxes().forEach(b=>{
+          const iso=toISODate(b.value);
+          b.checked = (act==='today') ? (iso===base) : (act==='week') ? (mondayOf(iso)===wkBase) : (iso.slice(0,7)===ymBase);
+        });
+        return;
+      }
+      if(act==='cancel'){ closeFilterPanel(); return; }
+      if(act==='ok'){
+        const chosen=boxes().filter(b=>b.checked).map(b=>b.value);
+        if(!chosen.length || chosen.length===vals.length) delete colFilters[key]; else colFilters[key]=chosen;
+        closeFilterPanel(); renderThead(); renderBody(); renderMobileTools();
+      }
+    });
+    document.addEventListener('mousedown',_fpanelOutside,true);
+    document.addEventListener('keydown',_fpanelEsc,true);
+    if(srch) srch.focus();
+  }
   function renderFilterRow(){
     const fr=$('reg-filter-row'); if(!fr)return;
     fr.innerHTML=COLS.map(c=>{
-      const vals=distinctColValues(c);
-      const opts=['<option value="__ALL__">(tutti)</option>'].concat(vals.map(v=>'<option value="'+esc(v)+'"'+(colFilters[c.key]===v?' selected':'')+'>'+esc(v)+'</option>'));
-      return '<th class="reg-fth"><select class="reg-col-filter" data-fkey="'+c.key+'">'+opts.join('')+'</select></th>';
+      const on=!!(colFilters[c.key]&&colFilters[c.key].length);
+      return '<th class="reg-fth"><button type="button" class="reg-fbtn'+(on?' on':'')+'" data-fkey="'+c.key+'" title="Filtra '+esc(c.label)+'">'+esc(filterLabel(c.key))+' ▾</button></th>';
     }).join('')+'<th class="reg-fth"></th>';
-    fr.querySelectorAll('select[data-fkey]').forEach(sel=>{
-      sel.addEventListener('change',()=>{ const k=sel.dataset.fkey; const v=sel.value; if(v && v!=='__ALL__')colFilters[k]=v; else delete colFilters[k]; renderBody(); });
+    fr.querySelectorAll('button[data-fkey]').forEach(btn=>{
+      btn.addEventListener('click',ev=>{ ev.stopPropagation(); openFilterPanel(btn.dataset.fkey,btn); });
     });
   }
   let sortKey='data', sortDir=1, _suppressSortClick=false;
@@ -32325,17 +32633,47 @@ setTool("erase");
     renderFilterRow();
   }
   function applyFilters(rows){
-    const keys=Object.keys(colFilters).filter(k=>colFilters[k]);
+    const keys=Object.keys(colFilters).filter(k=>colFilters[k]&&colFilters[k].length);
     if(!keys.length) return rows;
     return rows.filter(e=> keys.every(k=>{
       const c=COLS.find(x=>x.key===k); if(!c) return true;
-      return colText(c,e)===colFilters[k];
+      return colFilters[k].indexOf(colText(c,e))>=0;
     }));
+  }
+  // Strumenti mobile: ordinamento e filtri rapidi (su telefono le intestazioni non ci sono)
+  function renderMobileTools(){
+    if(!$('reg-mtools')) return;
+    const ss=$('reg-msort');
+    if(ss){
+      ss.innerHTML=COLS.map(c=>'<option value="'+c.key+'"'+(sortKey===c.key?' selected':'')+'>'+esc(c.label)+'</option>').join('');
+      ss.onchange=()=>{ sortKey=ss.value; renderThead(); renderBody(); renderMobileTools(); };
+    }
+    const sd=$('reg-msort-dir');
+    if(sd){ sd.textContent=(sortDir>0?'▲':'▼'); sd.title=(sortDir>0?'Crescente':'Decrescente');
+      sd.onclick=()=>{ sortDir=-sortDir; renderThead(); renderBody(); renderMobileTools(); }; }
+    const mk=(id,key,allLabel)=>{
+      const el=$(id); if(!el) return;
+      const c=COLS.find(x=>x.key===key); if(!c){ el.style.display='none'; return; }
+      const on=!!(colFilters[key]&&colFilters[key].length);
+      const btn=document.createElement('button');
+      btn.className='reg-mtools-btn'+(on?' on':'');
+      btn.style.cssText='flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+(on?'border-color:var(--accent);color:var(--accent);font-weight:700;':'');
+      btn.textContent=(on?filterLabel(key):allLabel)+' ▾';
+      btn.onclick=(ev)=>{ ev.stopPropagation(); openFilterPanel(key,btn); };
+      btn.id=id;
+      el.parentNode.replaceChild(btn,el);
+    };
+    mk('reg-mf-mix','mix','Tutti i mix');
+    mk('reg-mf-wbs','wbs','Tutte le WBS');
+    mk('reg-mf-data','data','Tutte le date');
+    const cl=$('reg-mf-clear');
+    if(cl) cl.onclick=()=>{ Object.keys(colFilters).forEach(k=>delete colFilters[k]); renderThead(); renderBody(); renderMobileTools(); };
   }
   function renderTable(){
     renderThead();
     renderBody();
     refreshExportSelect();
+    renderMobileTools();
   }
   function renderBody(){
     const allRows=currentRows();
@@ -32368,7 +32706,54 @@ setTool("erase");
 
   /* ---------- Excel export ---------- */
   // data ISO (AAAA-MM-GG) → GG/MM/AAAA
+  // numero della settimana ISO (lun-dom) da una data
+  function isoWeekNum(d){
+    if(!(d instanceof Date)||isNaN(d)) return '';
+    const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    const day=(t.getUTCDay()+6)%7;            // lunedì = 0
+    t.setUTCDate(t.getUTCDate()-day+3);        // giovedì della settimana
+    const first=new Date(Date.UTC(t.getUTCFullYear(),0,4));
+    const fday=(first.getUTCDay()+6)%7;
+    first.setUTCDate(first.getUTCDate()-fday+3);
+    return 1+Math.round((t-first)/(7*86400000));
+  }
+  const GIORNI=['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
+  function dayName(iso){ const d=new Date(toISODate(iso)+'T00:00:00'); return isNaN(d)?'':GIORNI[d.getDay()]; }
+  // intestazione comune: distingue chiaramente LA GIORNATA dalla SETTIMANA di riferimento
+  function guideHeader(scope,t){
+    return '<div class="reg-guide-t">📊 '+esc(scope)+'</div>'
+      +'<div class="reg-guide-when">'
+        +'<span class="reg-when-day">📅 Giornata: <b>'+esc(fmtIt(t))+'</b> <i>'+esc(dayName(t))+'</i></span>'
+        +'<span class="reg-when-week">🗓 Settimana: <b>'+esc(weekRange(t))+'</b> <i>(lun–dom)</i></span>'
+      +'</div>';
+  }
+  // etichetta settimana come intervallo: "10/08–16/08"
+  function weekRange(iso){
+    const s=toISODate(iso); if(!s) return '';
+    const mon=mondayOf(s); if(!mon) return '';
+    const d=new Date(mon+'T00:00:00'); if(isNaN(d)) return '';
+    const sun=new Date(d.getTime()+6*86400000);
+    const p=(x)=>String(x).padStart(2,'0');
+    return p(d.getDate())+'/'+p(d.getMonth()+1)+'–'+p(sun.getDate())+'/'+p(sun.getMonth()+1);
+  }
+  function weekOfIso(iso){ const s=toISODate(iso); if(!s) return ''; const d=new Date(s+'T00:00:00'); return isoWeekNum(d); }
+  function weekOfIt(it){ return weekOfIso(toISODate(it)); }
   function fmtIt(iso){ if(!iso) return ''; const m=String(iso).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? (m[3]+'/'+m[2]+'/'+m[1]) : String(iso); }
+  // qualsiasi formato (GG/MM/AAAA, AAAA-MM-GG, data Excel) → AAAA-MM-GG
+  function toISODate(v){
+    if(v==null) return '';
+    if(v instanceof Date && !isNaN(v)) return new Date(v.getTime()-v.getTimezoneOffset()*60000).toISOString().slice(0,10);
+    let s=String(v).trim(); if(!s) return '';
+    let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m) return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+    m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+    if(m){ let y=m[3]; if(y.length===2) y='20'+y; return y+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0'); }
+    if(/^\d+(\.\d+)?$/.test(s)){ // numero seriale Excel
+      const d=new Date(Date.UTC(1899,11,30)+parseFloat(s)*86400000);
+      if(!isNaN(d)) return d.toISOString().slice(0,10);
+    }
+    return s;
+  }
   // ordine colonne richiesto per l'esportazione
   const EXPORT_COLS=[
     {h:'Inserito da',            w:18, get:e=>e.by||''},
@@ -32392,7 +32777,8 @@ setTool("erase");
     {h:'Temp. CLS [°C]',         w:14, get:e=>e.tempCls||''},
     {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
     {h:'N° cubetti',             w:10, get:e=>e.cubetti||''},
-    {h:'Note',                   w:24, get:e=>e.note||''}
+    {h:'Note',                   w:24, get:e=>e.note||''},
+    {h:'ID (tecnico)',           w:16, get:e=>e.id||''}
   ];
   const HEAD=EXPORT_COLS.map(c=>c.h);
   function rowArr(e){ return EXPORT_COLS.map(c=>c.get(e)); }
@@ -32450,14 +32836,17 @@ setTool("erase");
       const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
       const ws=wb.Sheets[wb.SheetNames[0]];
       const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-      let added=0, updated=0;
+      let added=0, updated=0, skipped=0;
+      const onlyLab = isManager() ? '' : (myLab()||curLab||'');   // il laboratorio tocca solo le sue righe
       rows.forEach(r=>{
         const g=(...keys)=>{ for(const k of keys){ if(r[k]!==undefined&&r[k]!=='') return r[k]; } return ''; };
         const idFromFile=String(g('ID (tecnico)','ID')||'');
+        const labFromFile=String(g('Laboratorio')||'').trim();
+        if(onlyLab && labFromFile && labFromFile.toLowerCase()!==onlyLab.toLowerCase()){ skipped++; return; }
         const e={
           id: idFromFile || ('e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
-          lab: String(g('Laboratorio')||curLab||db.labs[0]||'Laboratorio 1'),
-          data:String(g('Data')), ddt:String(g('DDT')), impresa:String(g('Impresa Esecutrice','Impresa')),
+          lab: onlyLab || String(g('Laboratorio')||curLab||db.labs[0]||'Laboratorio 1'),
+          data:toISODate(g('Data')), ddt:String(g('DDT')), impresa:String(g('Impresa Esecutrice','Impresa')),
           wbs:String(g('WBS')), opera:String(g('Opera')), parte:String(g("Parte d'Opera",'Parte')),
           mix:String(g('Mix')), mc:String(g('m³','m3','mc')),
           tests:{
@@ -32479,6 +32868,12 @@ setTool("erase");
         let i=-1;
         if(idFromFile) i=db.entries.findIndex(x=>x.id===e.id);
         if(i<0 && e.verbale && e.verbale.trim()) i=db.entries.findIndex(x=>(x.verbale||'').trim()===e.verbale.trim());
+        if(i<0){ // stessa riga: laboratorio + data + DDT + mix
+          const k=(a)=>[(a.lab||''),(a.data||''),String(a.ddt||'').trim(),(a.mix||'')].join('|').toLowerCase();
+          const key=k(e);
+          if(String(e.ddt||'').trim()) i=db.entries.findIndex(x=>k(x)===key);
+        }
+        if(i>=0 && onlyLab && (db.entries[i].lab||'').toLowerCase()!==onlyLab.toLowerCase()){ skipped++; return; }
         if(i>=0){ e.id=db.entries[i].id; db.entries[i]=e; updated++; } else { db.entries.push(e); added++; }
       });
       // ricalcola flag ripetuto sull'intero database
@@ -32486,7 +32881,7 @@ setTool("erase");
       db.entries.forEach(e=>{ const k=String(e.verbale||'').trim().toLowerCase(); if(!k)return; if(seen[k])e.ripetuto=true; else seen[k]=true; });
       save(); renderLabs(); refreshCombos(); renderForm(); renderTable();
       if(cloudOn()){ try{ await sbRegUpsertMany(db.entries); lastSig=''; }catch(err){ console.warn('import cloud',err); db.entries.forEach(e=>e._pending=true); save(); } }
-      toast('Database aggiornato: '+added+' aggiunte, '+updated+' aggiornate.');
+      toast('Database aggiornato: '+added+' aggiunte, '+updated+' aggiornate'+(skipped?(' · '+skipped+' saltate (di altri laboratori)'):'')+'.');
     }catch(err){
       console.error(err); toast('Errore lettura file Excel.');
     }
@@ -32558,6 +32953,17 @@ setTool("erase");
       if(open){ fillReportFilters(); renderReport(); }
     };
     ['rep-mese','rep-anno'].forEach(id=>{ if($(id)) $(id).addEventListener('change',renderReport); });
+    // prospetto settimanale
+    if($('reg-wreport-toggle')) $('reg-wreport-toggle').onclick=()=>{
+      const b=$('reg-wreport-body'); if(!b)return;
+      const open=b.style.display==='none';
+      b.style.display=open?'':'none';
+      if(open) renderWeekReport();
+    };
+    const shiftWeek=(days)=>{ const d=new Date((wrepMonday||mondayOf(todayISO()))+'T00:00:00'); d.setDate(d.getDate()+days); wrepMonday=isoLocal(d); renderWeekReport(); };
+    if($('wrep-prev')) $('wrep-prev').onclick=()=>shiftWeek(-7);
+    if($('wrep-next')) $('wrep-next').onclick=()=>shiftWeek(7);
+    if($('wrep-today')) $('wrep-today').onclick=()=>{ wrepMonday=mondayOf(($('reg-data')&&$('reg-data').value)||todayISO()); renderWeekReport(); };
     // controllo intervalli: slump / spandimento / temperatura CLS
     ['reg-val-slump','reg-val-spand','reg-temp-cls'].forEach(id=>{ if($(id)) $(id).addEventListener('input',checkRanges); });
     ['reg-chk-slump','reg-chk-spand'].forEach(id=>{ if($(id)) $(id).addEventListener('change',checkRanges); });
@@ -32573,10 +32979,7 @@ setTool("erase");
       const tag=(all?'CONGIUNTI':curLab).replace(/[^\w]+/g,'_');
       exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
     };
-    // import: solo admin
-    if(!isManager()){
-      if($('reg-imp-btn')) $('reg-imp-btn').style.display='none';
-    }
+    // il caricamento Excel è disponibile a tutti: i laboratori aggiornano solo le proprie righe
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
     if($('reg-f-clear')) $('reg-f-clear').onclick=(ev)=>{ ev.preventDefault(); Object.keys(colFilters).forEach(k=>delete colFilters[k]); renderThead(); renderBody(); };
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
@@ -32618,7 +33021,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 3.6';
+  window.APP_VERSION = 'Versione 4.9';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
