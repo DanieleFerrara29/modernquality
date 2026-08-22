@@ -104,7 +104,12 @@ input,td,th,span,div,button,label,select,textarea{font-feature-settings:'zero' 0
 .login-creator{margin-top:28px;padding-top:18px;border-top:1px solid var(--border);text-align:center;}
 .login-creator .cr-role{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
 .login-creator .cr-name{font-size:20px;font-weight:700;color:var(--text);}
-.login-creator .cr-phone{font-size:15px;color:var(--muted);margin-top:5px;}
+.login-creator .cr-phone{font-size:15px;color:var(--muted);margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;}
+.login-creator .cr-phone a{display:inline-flex;align-items:center;gap:7px;text-decoration:none;padding:7px 14px;border-radius:999px;border:1px solid var(--border2);font-size:14px;transition:.15s;}
+.login-creator .cr-tel{color:var(--text);}
+.login-creator .cr-tel:hover{border-color:#e05a5a;background:rgba(224,90,90,.10);}
+.login-creator .cr-wa{color:#25D366;}
+.login-creator .cr-wa:hover{border-color:#25D366;background:rgba(37,211,102,.10);}
 
 /* ══════════════════════════════════════════════
    HEADER
@@ -567,7 +572,16 @@ tr.new-row{animation:rowIn .2s ease both;}
     <div class="login-creator">
       <div class="cr-role">Sviluppato da</div>
       <div class="cr-name">Ing. Daniele Ferrara</div>
-      <div class="cr-phone">📞 329 159 4220</div>
+      <div class="cr-phone">
+        <a class="cr-tel" href="tel:+393291594220" title="Chiama">
+          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="#e05a5a" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.5 21 3 13.5 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .7-.2 1l-2.3 2.2z"/></svg>
+          <span>329 159 4220</span>
+        </a>
+        <a class="cr-wa" href="https://wa.me/393291594220" target="_blank" rel="noopener" title="Scrivi su WhatsApp">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#25D366" d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.8-.6-3.1-1.3-5.1-4.4-5.2-4.6-.2-.2-1.3-1.7-1.3-3.2S6.4 7 6.7 6.7c.2-.3.5-.4.7-.4h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.2.4-.2.6-.1l2 .9c.2.1.4.2.4.3.1.2.1.8-.1 1.4z"/></svg>
+          <span>WhatsApp</span>
+        </a>
+      </div>
     </div>
   </div>
 </div>
@@ -592,11 +606,12 @@ tr.new-row{animation:rowIn .2s ease both;}
         <thead>
           <tr>
             <th>Nome e Cognome</th>
-            <th>Password</th>
             <th>Ruolo</th>
-            <th>Stato</th>
+            <th>Laboratorio</th>
+            <th>Password</th>
             <th>Ultimo accesso</th>
-            <th></th>
+            <th>Stato</th>
+            <th>Azioni</th>
           </tr>
         </thead>
         <tbody id="users-tbody"></tbody>
@@ -625,6 +640,7 @@ tr.new-row{animation:rowIn .2s ease both;}
             <select id="new-role">
               <option value="user">Utente</option>
               <option value="laboratorio">Laboratorio</option>
+              <option value="viewer">Solo visualizzatore</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -2353,6 +2369,29 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-when-week{background:rgba(125,133,144,.12);color:var(--text);}
 #tab-registro .reg-guide-when i{font-style:normal;color:var(--muted);font-size:11.5px;}
 #tab-registro .reg-guide-when b{color:var(--accent);}
+#tab-registro .reg-gline{padding:2px 0;}
+#tab-registro .reg-dbsize{display:flex;flex-direction:column;gap:2px;line-height:1.35;}
+#tab-registro .dbs-line{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--muted);}
+#tab-registro .dbs-line b{color:var(--text);}
+#tab-registro .dbs-bar{display:inline-block;width:70px;height:7px;background:var(--border2);border-radius:999px;overflow:hidden;vertical-align:middle;}
+#tab-registro .dbs-bar>span{display:block;height:100%;border-radius:999px;transition:width .4s ease;}
+#tab-registro .dbs-pct{font-variant-numeric:tabular-nums;}
+#tab-registro .dbs-delta{font-weight:700;animation:dbsflash 1.6s ease;}
+@keyframes dbsflash{0%{opacity:0;transform:translateY(-3px);}20%{opacity:1;transform:none;}100%{opacity:1;}}
+#tab-registro .dbs-line2{font-size:11px;color:var(--muted);}
+#tab-registro .dbs-est b{color:var(--accent);}
+
+#tab-registro .reg-prelbtn{background:rgba(var(--accent-rgb),.14);border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
+#tab-registro .reg-prelbtn:hover{background:rgba(var(--accent-rgb),.26);}
+#tab-registro .reg-noprel{color:var(--muted);}
+#tab-registro .reg-preldet{margin:6px 0 10px;overflow-x:auto;}
+#tab-registro table.reg-preltab{border-collapse:collapse;font-size:12px;min-width:min(100%,420px);}
+#tab-registro table.reg-preltab th{background:var(--surface);color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;padding:5px 9px;border:1px solid var(--border);text-align:left;white-space:nowrap;}
+#tab-registro table.reg-preltab td{padding:5px 9px;border:1px solid var(--border);color:var(--text);white-space:nowrap;}
+#tab-registro table.reg-preltab td.pv{color:var(--accent);font-weight:700;}
+#tab-registro table.reg-preltab td.pc{font-weight:700;}
+@media (max-width:640px){#tab-registro table.reg-preltab{font-size:11.5px;} #tab-registro .reg-prelbtn{padding:4px 10px;font-size:13px;}}
+
 /* prospetto settimanale */
 #tab-registro .reg-wnav{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;}
 #tab-registro .reg-wlabel{font-weight:700;color:var(--accent);font-size:14px;padding:0 6px;}
@@ -2508,6 +2547,28 @@ tr.new-row{animation:rowIn .2s ease both;}
 /* messa a fuoco coerente e accessibile */
 #tab-registro input:focus,#tab-registro select:focus,#tab-registro textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.18);}
 #tab-registro .reg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ═══ INTERFACCIA ARROTONDATA (rifinitura globale) ═══ */
+:root{ --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:26px; }
+/* campi e menu */
+input[type=text],input[type=password],input[type=number],input[type=date],input[type=search],
+input[type=email],input[type=tel],select,textarea{ border-radius:var(--r-md)!important; }
+/* pulsanti */
+button,.btn,.tab-btn,.reg-btn,.reg-chip,.chip,.reg-mtools-btn,.reg-mtools-sel{ border-radius:999px!important; }
+/* riquadri e pannelli */
+.card,.panel,.box,.tab-panel,.modal,.login-box,.login-card,.admin-panel,.drop,
+#tab-registro .reg-card,#tab-registro .reg-guide,#tab-registro .reg-report,
+#tab-registro .reg-rangewarn,.reg-fpanel,#dl-modal-box{ border-radius:var(--r-lg)!important; }
+/* tabelle: angoli morbidi e contenuto ritagliato */
+#tab-registro .reg-tablewrap,#tab-registro .wrep-scroll,#tab-registro .reg-preldet{ border-radius:var(--r-md)!important; overflow:hidden; }
+#tab-registro .reg-tablewrap{ overflow:auto; }
+#tab-registro table.reg-preltab{ border-radius:var(--r-sm); overflow:hidden; }
+/* barre del grafico e indicatori */
+#tab-registro .rep-bar,#tab-registro .rep-fill,#tab-registro .reg-dbsize span{ border-radius:999px!important; }
+/* immagini/anteprime e aree di rilascio file */
+.thumb,.preview,.file-item,.drop-zone,.dropzone{ border-radius:var(--r-md)!important; }
+/* etichette e badge */
+.badge,.tag,.pill,.reg-lab,#tab-registro .reg-guide-when span{ border-radius:999px!important; }
 </style>
 
 <div class="tab-panel" id="tab-registro">
@@ -25381,34 +25442,58 @@ async function renderAdminUsers() {
   const _RA=window.RegAdmin;
   const _labs=_RA?_RA.getLabs():[];
   const _assign=_RA?_RA.getLabUsers():{};
-  const labAssignHtml=(usr)=>{
-    if(!_RA) return '';
+  const ROLES=[['user','Utente'],['laboratorio','Laboratorio'],['viewer','Solo visualizzatore'],['admin','Admin']];
+  const roleSelHtml=(usr,role)=>{
+    const r=(role||'user').toLowerCase().trim();
+    const cur=ROLES.some(x=>x[0]===r)?r:'user';
+    return '<select class="role-sel" data-usr="'+escHtml(usr)+'" style="font-size:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:999px;padding:6px 10px;min-width:150px;">'
+      + ROLES.map(([v,l])=>'<option value="'+v+'"'+(v===cur?' selected':'')+'>'+l+'</option>').join('')
+      + '</select>';
+  };
+  const labCellHtml=(usr,role)=>{
+    const r=(role||'').toLowerCase().trim();
+    if(!_RA) return '<span style="color:var(--muted);font-size:11px;">—</span>';
+    if(r!=='laboratorio') return '<span style="color:var(--muted);font-size:11px;">—</span>';
     const cur=_assign[usr]||'';
-    const opts=['<option value="">— assegna laboratorio —</option>'].concat(_labs.map(l=>'<option'+(l===cur?' selected':'')+'>'+escHtml(l)+'</option>')).join('');
-    return '<div style="margin-top:7px;display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;">'
-      +'<span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Lab:</span>'
-      +'<select class="lab-assign" data-usr="'+escHtml(usr)+'" style="font-size:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:5px 8px;min-width:120px;">'+opts+'</select></div>';
+    const opts=['<option value="">— assegna —</option>'].concat(_labs.map(l=>'<option'+(l===cur?' selected':'')+'>'+escHtml(l)+'</option>')).join('');
+    return '<select class="lab-assign" data-usr="'+escHtml(usr)+'" style="font-size:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:999px;padding:6px 10px;min-width:130px;">'+opts+'</select>';
   };
   users.forEach(u => {
     const isMe = u.username === currentUser?.username;
+    const pid='pwd-'+u.username.replace(/\s/g,'_');
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="padding:10px;font-size:13px;font-weight:600;white-space:nowrap;">${escHtml(u.username)}${isMe?' <span style="font-size:9px;color:var(--accent);font-weight:400;">(tu)</span>':''}</td>
-      <td style="padding:8px 10px;text-align:center;">${u.role === 'admin' ? '<span class="badge-admin">Admin</span>' : ((u.role||'').toLowerCase().trim()==='laboratorio' ? '<span style="font-size:10px;color:var(--accent);font-weight:600;">Laboratorio</span>'+labAssignHtml(u.username) : '<span style="font-size:10px;color:var(--muted)">Utente</span>')}</td>
-      <td style="padding:8px 10px;font-size:11px;"><span id="pwd-${u.username.replace(/\s/g,'_')}" style="letter-spacing:.12em;font-family:monospace;">••••••••</span></td>
-      <td style="padding:8px 10px;font-size:10px;color:var(--muted);">${u.last_login||'—'}</td>
-      <td style="padding:8px 10px;text-align:center;">
-        <button class="btn btn-sm btn-ghost btn-toggle-user" data-usr="${u.username}" style="font-size:10px;padding:2px 8px;">${u.active?'Disabilita':'Abilita'}</button>
+      <td style="padding:8px 10px;text-align:center;">${roleSelHtml(u.username,u.role)}</td>
+      <td style="padding:8px 10px;text-align:center;">${labCellHtml(u.username,u.role)}</td>
+      <td style="padding:8px 10px;font-size:11px;white-space:nowrap;">
+        <span id="${pid}" style="letter-spacing:.12em;font-family:monospace;">••••••••</span>
+        <button class="btn btn-sm btn-ghost btn-show-pwd" data-pwdid="${pid}" data-plain="${escHtml(u.password||'')}" title="Mostra/nascondi" style="font-size:10px;padding:2px 8px;margin-left:6px;">👁</button>
       </td>
+      <td style="padding:8px 10px;font-size:10px;color:var(--muted);white-space:nowrap;">${u.last_login||'—'}</td>
       <td style="padding:8px 10px;text-align:center;">
-        <button class="btn btn-sm btn-ghost btn-show-pwd" data-pwdid="pwd-${u.username.replace(/\s/g,'_')}" data-plain="${u.password||''}" style="font-size:10px;padding:2px 8px;">👁</button>
+        <button class="btn btn-sm btn-ghost btn-toggle-user" data-usr="${u.username}" style="font-size:10px;padding:3px 10px;">${u.active?'Disabilita':'Abilita'}</button>
       </td>
       <td style="padding:8px 10px;text-align:center;white-space:nowrap;">
-        <button class="btn-ren-user" data-usr="${u.username}" title="Rinomina" style="background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:3px;padding:3px 9px;cursor:pointer;font-size:12px;margin-right:4px;">✎</button>
-        ${!isMe ? `<button class="btn-del-user" data-usr="${u.username}" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:3px;padding:3px 10px;cursor:pointer;font-size:12px;">✕</button>` : ''}
+        <button class="btn-ren-user" data-usr="${u.username}" title="Modifica nome/password" style="background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:999px;padding:4px 11px;cursor:pointer;font-size:12px;margin-right:4px;">✎</button>
+        ${!isMe ? `<button class="btn-del-user" data-usr="${u.username}" title="Elimina" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:999px;padding:4px 11px;cursor:pointer;font-size:12px;">✕</button>` : ''}
       </td>
     `;
     tbody.appendChild(tr);
+  });
+  // cambio ruolo dal menù a tendina
+  tbody.querySelectorAll('.role-sel').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const usr=sel.dataset.usr, role=sel.value;
+      const okUp=await sbUpdateUser(usr,{role});
+      if(!okUp){ showStatus('❌ Errore nel cambio ruolo','error'); return; }
+      if(role!=='laboratorio' && window.RegAdmin && window.RegAdmin.setUserLab) window.RegAdmin.setUserLab(usr,'');
+      addLog('Ruolo di '+usr+' → '+role);
+      const us=await sbGetUsers(); _usersCache=us;
+      if(currentUser && currentUser.username===usr) currentUser.role=role;
+      renderAdminUsers(); renderAdminLog(); renderRegAdmin();
+      showStatus('✅ Ruolo aggiornato','success');
+    });
   });
   tbody.querySelectorAll('.btn-show-pwd').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -25444,7 +25529,7 @@ async function renderAdminUsers() {
       const newPass = np;
       const roleIn = prompt('Ruolo: utente / laboratorio / admin  (lascia com\'è per non cambiarlo):', u.role||'user');
       if(roleIn===null) return;
-      const roleMap={'utente':'user','user':'user','laboratorio':'laboratorio','lab':'laboratorio','admin':'admin'};
+      const roleMap={'utente':'user','user':'user','laboratorio':'laboratorio','lab':'laboratorio','visualizzatore':'viewer','viewer':'viewer','sola lettura':'viewer','admin':'admin'};
       const newRole = roleMap[(roleIn||'').trim().toLowerCase()] || u.role || 'user';
       const nameChanged = newName.toLowerCase() !== oldName.toLowerCase();
       if(nameChanged && getUsers().find(x => (x.username||'').toLowerCase() === newName.toLowerCase())) { alert('Esiste già un utente con questo nome.'); return; }
@@ -25568,7 +25653,7 @@ document.getElementById('btn-bulk-users').addEventListener('click', async () => 
   if(!lines.length){ msg.style.color='var(--red)'; msg.textContent='Incolla almeno una riga.'; return; }
   const btn=document.getElementById('btn-bulk-users'); btn.disabled=true; btn.textContent='⏳ Importazione...';
   const existing=getUsers().map(u=>(u.username||'').toLowerCase());
-  const roleMap={'utente':'user','user':'user','laboratorio':'laboratorio','lab':'laboratorio','admin':'admin'};
+  const roleMap={'utente':'user','user':'user','laboratorio':'laboratorio','lab':'laboratorio','visualizzatore':'viewer','viewer':'viewer','sola lettura':'viewer','admin':'admin'};
   let added=0, skipped=0; const errors=[];
   for(const line of lines){
     const c=line.split(/\t|;/).map(s=>s.trim());
@@ -31701,18 +31786,98 @@ setTool("erase");
   }
   // indicatore spazio database (MB usati / 500, con MB liberi)
   let _dbSizeAt=0;
+  let _dbPrev=null;           // ultima misura, per mostrare la variazione
+  function fmtBytes(b){
+    b=Math.abs(b);
+    if(b<1024) return Math.round(b)+' B';
+    if(b<1024*1024) return (b/1024).toFixed(1).replace('.',',')+' KB';
+    return (b/1048576).toFixed(2).replace('.',',')+' MB';
+  }
+  // ---- storico giornaliero dello spazio: serve a calcolare la MEDIA REALE ----
+  const DBH_KEY='mq_dbsize_hist_v1';
+  function dbhLoad(){ try{ return JSON.parse(localStorage.getItem(DBH_KEY)||'[]')||[]; }catch(_){ return []; } }
+  function dbhSave(h){ try{ localStorage.setItem(DBH_KEY,JSON.stringify(h.slice(-120))); }catch(_){ } }
+  function dbhRecord(bytes,rows){
+    const d=todayISO(); const h=dbhLoad();
+    const last=h[h.length-1];
+    if(last && last.d===d){ last.b=bytes; if(rows!=null) last.r=rows; }
+    else h.push({d, b:bytes, r:(rows!=null?rows:null)});
+    dbhSave(h); return h;
+  }
+  function daysBetween(a,b){ return Math.max(1,Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000)); }
+  // media giornaliera: prima prova con le misure reali, poi con il ritmo delle righe
+  function dbAverages(bytesPerRow){
+    const h=dbhLoad();
+    let bytesDay=0, src='';
+    if(h.length>=2){
+      const first=h[0], last=h[h.length-1];
+      const gap=daysBetween(first.d,last.d);
+      const grow=last.b-first.b;
+      if(gap>=1 && grow>0){ bytesDay=grow/gap; src='misurata su '+gap+' giorn'+(gap===1?'o':'i'); }
+    }
+    // righe al giorno dai dati del registro (ultimi 30 giorni lavorati)
+    const today=new Date(todayISO()+'T00:00:00');
+    const from=new Date(today.getTime()-30*86400000);
+    let rows=0; const days={};
+    db.entries.forEach(e=>{ const s=String(e.data||''); const d=new Date(s+'T00:00:00');
+      if(!isNaN(d)&&d>=from&&d<=today){ rows++; days[s]=1; } });
+    const nDays=Math.max(1,Object.keys(days).length);
+    const rowsDay=rows/nDays;
+    if(!bytesDay && bytesPerRow && rowsDay>0){ bytesDay=rowsDay*bytesPerRow; src='stimata sul ritmo delle righe'; }
+    return {bytesDay, rowsDay, src, points:h.length};
+  }
+  function fillEstimate(freeBytes, bytesPerRow){
+    const a=dbAverages(bytesPerRow);
+    if(!a.bytesDay || a.bytesDay<=0) return '<span class="dbs-est">📈 media in raccolta — servono almeno due giorni di utilizzo</span>';
+    const daysLeft=freeBytes/a.bytesDay;          // giorni di calendario
+    const years=daysLeft/365;
+    let txt;
+    if(years>=100) txt='oltre 100 anni';
+    else if(years>=2) txt='circa '+Math.round(years)+' anni';
+    else if(years>=1) txt='circa 1 anno';
+    else if(daysLeft>=60) txt='circa '+Math.round(daysLeft/30)+' mesi';
+    else txt='circa '+Math.max(1,Math.round(daysLeft))+' giorni';
+    return '<span class="dbs-est" title="Media '+a.src+'">📈 media giornaliera: <b>'+fmtBytes(a.bytesDay)+'/giorno</b>'
+      + (a.rowsDay?(' · <b>'+a.rowsDay.toFixed(1).replace('.',',')+'</b> righe/giorno'):'')
+      + ' → si riempie tra <b>'+txt+'</b></span>';
+  }
   async function updateDbSize(){
     const el=$('reg-dbsize'); if(!el) return;
     if(!cloudOn()){ el.style.display='none'; return; }
     try{
-      const r=await sbRpc('db_size_mb',{});
-      let mb = (typeof r==='number') ? r : (Array.isArray(r) ? (typeof r[0]==='number'?r[0]:(r[0]&&r[0].db_size_mb)) : (r&&r.db_size_mb));
-      mb=parseFloat(mb); if(isNaN(mb)){ el.style.display='none'; return; }
-      const LIMIT=500, rem=Math.max(0,LIMIT-mb), pct=Math.min(100,Math.round(mb/LIMIT*100));
+      let bytes=null, rows=null;
+      try{                                        // funzione dettagliata (se presente sul database)
+        const s=await sbRpc('db_stats',{});
+        const o=Array.isArray(s)?s[0]:s;
+        if(o){ bytes=parseFloat(o.size_bytes); rows=parseInt(o.registro_rows,10); }
+      }catch(_){}
+      if(bytes==null||isNaN(bytes)){             // ripiego sulla funzione semplice
+        const r=await sbRpc('db_size_mb',{});
+        let mb=(typeof r==='number')?r:(Array.isArray(r)?(typeof r[0]==='number'?r[0]:(r[0]&&r[0].db_size_mb)):(r&&r.db_size_mb));
+        mb=parseFloat(mb); if(isNaN(mb)){ el.style.display='none'; return; }
+        bytes=mb*1048576;
+      }
+      const LIMIT=500*1048576;
+      const used=bytes, free=Math.max(0,LIMIT-used), pct=Math.min(100,used/LIMIT*100);
       const color = pct<70?'var(--green)':(pct<90?'var(--accent)':'var(--red)');
+      const usedMb=used/1048576;
+      // variazione rispetto alla misura precedente (si vede l'effetto di una riga)
+      let delta='';
+      if(_dbPrev!=null && Math.abs(used-_dbPrev)>=1){
+        const d=used-_dbPrev;
+        delta='<span class="dbs-delta" style="color:'+(d>0?'var(--accent)':'var(--green)')+';">'+(d>0?'▲ +':'▼ −')+fmtBytes(d)+'</span>';
+      }
+      _dbPrev=used;
+      dbhRecord(used, rows);                     // memorizza la misura di oggi (per la media)
+      const perRow = (rows && rows>0) ? (used/rows) : 0;
       el.style.display='';
-      el.innerHTML='💾 <b style="color:var(--text);">'+mb.toFixed(1)+'</b>/'+LIMIT+' MB · liberi <b style="color:'+color+';">'+rem.toFixed(0)+' MB</b> '
-        +'<span style="display:inline-block;width:56px;height:6px;background:var(--border2);border-radius:3px;vertical-align:middle;overflow:hidden;"><span style="display:block;height:100%;width:'+pct+'%;background:'+color+';"></span></span>';
+      el.innerHTML='<span class="dbs-line">💾 <b>'+usedMb.toFixed(3).replace('.',',')+'</b> / 500 MB'
+        + ' · liberi <b style="color:'+color+';">'+(free/1048576).toFixed(1).replace('.',',')+' MB</b>'
+        + ' <span class="dbs-bar"><span style="width:'+Math.max(0.6,pct).toFixed(2)+'%;background:'+color+';"></span></span>'
+        + ' <span class="dbs-pct">'+pct.toFixed(2).replace('.',',')+'%</span>'
+        + (rows?(' · <b>'+rows+'</b> righe'+(perRow?(' (~'+fmtBytes(perRow)+' l\'una)'):'')):'')
+        + ' '+delta+'</span>'
+        + '<span class="dbs-line2">'+fillEstimate(free,perRow)+'</span>';
     }catch(e){ el.style.display='none'; }
   }
 
@@ -31751,6 +31916,7 @@ setTool("erase");
   function role(){ try{ return (currentUser&&(currentUser.role||'').toLowerCase().trim())||''; }catch(e){ return ''; } }
   function isLabUser(){ const r=role(); return r==='laboratorio'||r==='lab'; }
   function isManager(){ return role()==='admin'; }
+  function isViewer(){ const r=role(); return r==='viewer'||r==='visualizzatore'; }   // sola lettura
   // ristretto = NON admin e legato a un laboratorio (per ruolo o per assegnazione): vede solo il suo
   function isRestricted(){ return !isManager() && (isLabUser() || !!myLab()); }
   // il pulsante esporta ciò che è selezionato nella barra in alto; l'etichetta lo dice
@@ -32136,7 +32302,7 @@ setTool("erase");
     const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const ym=String(t).slice(0,7);
     return db.entries.filter(e=>(e.lab||'')===curLab && (e.mix||'')===mix && String(e.data||'').slice(0,7)===ym && e.id!==editId).reduce((s,e)=>s+num(e.mc),0);
   }
-  function countToday(wbs,mix){ return entriesToday(wbs,mix).length; }
+  function countToday(wbs,mix){ return entriesToday(wbs,mix).filter(isPrelievo).length; }
   function ariaDoneToday(mix){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
     return db.entries.some(e=>(e.lab||'')===curLab && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId && e.tests && e.tests.aria && e.tests.aria.on);
@@ -32156,9 +32322,24 @@ setTool("erase");
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
     const map={};
     db.entries.forEach(e=>{ if((e.lab||'')===lab && (e.data||'')===t && e.id!==editId){
-      const m=e.mix||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0}; map[m].mc+=num(e.mc); map[m].cnt++; } });
+      const m=e.mix||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0}; map[m].mc+=num(e.mc); if(isPrelievo(e)) map[m].cnt++; } });
     Object.keys(map).forEach(m=>{ map[m].aria=ariaDoneLab(lab,m); map[m].sett=weeklyDoneLab(lab,m); map[m].hasSett=mixCfgOf(m).sett>0; });
     return map;
+  }
+  // pulsante «N prel.» che apre il dettaglio (data, cubetti, verbale)
+  function prelBtn(n,lab,mix,wbs){
+    if(!n) return '<span class="reg-noprel">0 prel.</span>';
+    return '<button type="button" class="reg-prelbtn" data-lab="'+esc(lab)+'" data-mix="'+esc(mix)+'" data-wbs="'+esc(wbs||'')+'">'+n+' prel. ▾</button>';
+  }
+  function prelDetailHtml(lab,mix,wbs){
+    const t=($('reg-data')?$('reg-data').value:'')||todayISO();
+    const list=db.entries.filter(e=>(e.lab||'')===lab && (e.mix||'(senza mix)')===mix && (e.data||'')===t
+      && (!wbs || (e.wbs||'')===wbs) && e.id!==editId && isPrelievo(e))
+      .sort((a,b)=>String(a.verbale||'').localeCompare(String(b.verbale||''),'it',{numeric:true}));
+    if(!list.length) return '<div class="reg-preldet"><i>Nessun prelievo.</i></div>';
+    return '<div class="reg-preldet"><table class="reg-preltab"><thead><tr><th>Verbale</th><th>Data</th><th>Cubetti</th><th>m³</th><th>DDT</th>'+(wbs?'':'<th>WBS</th>')+'</tr></thead><tbody>'
+      + list.map(e=>'<tr><td class="pv">'+esc(e.verbale||'—')+'</td><td>'+esc(fmtIt(e.data))+'</td><td class="pc">'+esc(e.cubetti||'—')+'</td><td>'+esc(e.mc||'')+'</td><td>'+esc(e.ddt||'')+'</td>'+(wbs?'':'<td>'+esc(e.wbs||'')+'</td>')+'</tr>').join('')
+      + '</tbody></table></div>';
   }
   function guideLabHtml(lab,titlePrefix){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
@@ -32168,7 +32349,7 @@ setTool("erase");
     h+='<div class="reg-guide-list">'+keys.map(m=>{
       const wk = mm[m].hasSett ? (mm[m].sett?'<span class="reg-guide-ok">settim. ✓</span>':'<span class="reg-guide-warn">settim. ⚠</span>') : '';
       const ar = mm[m].aria ? '<span class="reg-guide-ok">aria ✓</span>' : '<span class="reg-guide-warn">aria ⚠</span>';
-      return '<div>'+esc(m)+': <b>'+mm[m].mc+' m³</b> · '+mm[m].cnt+' prel. '+wk+' '+ar+'</div>';
+      return '<div class="reg-gline">'+esc(m)+': <b>'+round1(mm[m].mc)+' m³</b> · '+prelBtn(mm[m].cnt,lab,m,'')+' '+wk+' '+ar+'</div>';
     }).join('')+'</div>';
     return h;
   }
@@ -32186,7 +32367,7 @@ setTool("erase");
   function guideMixesToday(wbs){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
     const map={};
-    db.entries.forEach(e=>{ if((e.lab||'')===curLab && (e.wbs||'')===wbs && (e.data||'')===t && e.id!==editId){ const m=e.mix||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0,aria:false}; map[m].mc+=num(e.mc); map[m].cnt++; } });
+    db.entries.forEach(e=>{ if((e.lab||'')===curLab && (e.wbs||'')===wbs && (e.data||'')===t && e.id!==editId){ const m=e.mix||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0,aria:false}; map[m].mc+=num(e.mc); if(isPrelievo(e)) map[m].cnt++; } });
     Object.keys(map).forEach(m=>{ map[m].aria=ariaDoneToday(m); });  // aria: per mix/giorno, qualsiasi WBS
     return map;
   }
@@ -32217,7 +32398,7 @@ setTool("erase");
       html+='<div class="reg-guide-list">'+keys.sort().map(m=>{
         const wk = (mixCfgOf(m).sett>0) ? (weeklyDone(wbs,m)?'<span class="reg-guide-ok">settim. ✓</span>':'<span class="reg-guide-warn">settim. ⚠</span>') : '';
         const ar = mm[m].aria ? '<span class="reg-guide-ok">aria ✓</span>' : '<span class="reg-guide-warn">aria ⚠</span>';
-        return '<div>'+esc(m)+': <b>'+mm[m].mc+' m³</b> · '+mm[m].cnt+' prel. '+wk+' '+ar+'</div>';
+        return '<div class="reg-gline">'+esc(m)+': <b>'+round1(mm[m].mc)+' m³</b> · '+prelBtn(mm[m].cnt,curLab,m,wbs)+' '+wk+' '+ar+'</div>';
       }).join('')+'</div>';
     } else {
       html+='<div class="reg-guide-empty">Nessun prelievo oggi per questa WBS.</div>';
@@ -32349,10 +32530,13 @@ setTool("erase");
     composeVerbale();
   }
   function renderForm(){
-    const disabled=(curLab==='__ALL__');
-    $('reg-form-title').textContent=disabled
-      ? 'Nuova registrazione — seleziona prima un laboratorio'
-      : (editId?('Modifica registrazione — '+curLab):('Nuova registrazione — '+curLab));
+    const viewer=isViewer();
+    const disabled=(curLab==='__ALL__')||viewer;
+    $('reg-form-title').textContent=viewer
+      ? 'Sola consultazione — non è possibile inserire o modificare'
+      : (disabled
+        ? 'Nuova registrazione — seleziona prima un laboratorio'
+        : (editId?('Modifica registrazione — '+curLab):('Nuova registrazione — '+curLab)));
     $('reg-save').disabled=disabled;
     updateVerbHint();
   }
@@ -32407,6 +32591,7 @@ setTool("erase");
     $('tab-registro').scrollIntoView({behavior:'smooth',block:'start'});
   }
   function saveEntry(){
+    if(isViewer()){ toast('Profilo di sola consultazione: non puoi inserire o modificare.'); return; }
     if(curLab==='__ALL__'){ toast('Seleziona un laboratorio per inserire.'); return; }
     const prel=prelChecked();
     const verbale=prel?(($('reg-verbale').value||'').trim()):'';
@@ -32457,6 +32642,7 @@ setTool("erase");
     pushEntry(entry);
     if(entry.ripetuto) toast('Salvato. ⚠ Verbale ripetuto: '+entry.verbale);
     else toast(editId?'Modifica salvata.':'Registrazione salvata.');
+    setTimeout(()=>{ _dbSizeAt=Date.now(); updateDbSize(); },1500);   // mostra subito l'effetto sullo spazio
     clearForm();
     renderTable();
   }
@@ -32945,6 +33131,19 @@ setTool("erase");
     if($('reg-impresa')) $('reg-impresa').addEventListener('change',()=>{ comboOtherToggle('reg-impresa','reg-impresa-other',true); });
     if($('reg-data')) $('reg-data').addEventListener('change',()=>{ updateGuide(); suggestNumber(); });
     if($('reg-mc')) $('reg-mc').addEventListener('input',updateGuide);
+    // clic su «N prel.» → apre/chiude il dettaglio (verbale, data, cubetti)
+    if($('reg-guide')) $('reg-guide').addEventListener('click',ev=>{
+      const b=ev.target && ev.target.closest ? ev.target.closest('.reg-prelbtn') : null;
+      if(!b) return;
+      ev.preventDefault(); ev.stopPropagation();
+      const line=b.closest('.reg-gline'); if(!line) return;
+      const open=line.querySelector('.reg-preldet');
+      if(open){ open.remove(); b.textContent=b.textContent.replace('▴','▾'); return; }
+      const wrap=document.createElement('div');
+      wrap.innerHTML=prelDetailHtml(b.dataset.lab,b.dataset.mix,b.dataset.wbs||'');
+      line.appendChild(wrap.firstChild);
+      b.textContent=b.textContent.replace('▾','▴');
+    });
     // report metri cubi (solo admin)
     updateReportVisibility();
     if($('reg-report-toggle')) $('reg-report-toggle').onclick=()=>{
@@ -32980,7 +33179,8 @@ setTool("erase");
       const tag=(all?'CONGIUNTI':curLab).replace(/[^\w]+/g,'_');
       exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
     };
-    // il caricamento Excel è disponibile a tutti: i laboratori aggiornano solo le proprie righe
+    // il caricamento Excel è disponibile a tutti tranne i profili di sola consultazione
+    if(isViewer() && $('reg-imp-btn')) $('reg-imp-btn').style.display='none';
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
     if($('reg-colreset')) $('reg-colreset').onclick=(ev)=>{ ev.preventDefault(); resetColOrder(); };
@@ -33021,7 +33221,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 5.0';
+  window.APP_VERSION = 'Versione 5.5';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
