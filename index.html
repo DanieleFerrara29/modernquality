@@ -31805,17 +31805,21 @@ setTool("erase");
     dbhSave(h); return h;
   }
   function daysBetween(a,b){ return Math.max(1,Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000)); }
-  // media giornaliera: prima prova con le misure reali, poi con il ritmo delle righe
-  function dbAverages(bytesPerRow){
-    const h=dbhLoad();
-    let bytesDay=0, src='';
-    if(h.length>=2){
-      const first=h[0], last=h[h.length-1];
-      const gap=daysBetween(first.d,last.d);
-      const grow=last.b-first.b;
-      if(gap>=1 && grow>0){ bytesDay=grow/gap; src='misurata su '+gap+' giorn'+(gap===1?'o':'i'); }
+  // peso medio REALE di una riga: misurato sul contenuto, non dividendo tutto il database
+  // (il database contiene ~10 MB di strutture interne di Postgres che non dipendono dalle righe)
+  function avgRowBytes(){
+    const list=db.entries;
+    if(!list||!list.length) return 0;
+    const n=Math.min(list.length,200);
+    let tot=0;
+    for(let i=list.length-n;i<list.length;i++){
+      try{ tot+=(new TextEncoder().encode(JSON.stringify(list[i]))).length; }
+      catch(_){ tot+=JSON.stringify(list[i]).length; }
     }
-    // righe al giorno dai dati del registro (ultimi 30 giorni lavorati)
+    return Math.round(tot/n*1.35);   // +35% per indici e struttura della tabella
+  }
+  function dbAverages(bytesPerRow){
+    // righe al giorno dai dati del registro (giorni realmente lavorati, ultimi 30)
     const today=new Date(todayISO()+'T00:00:00');
     const from=new Date(today.getTime()-30*86400000);
     let rows=0; const days={};
@@ -31823,23 +31827,22 @@ setTool("erase");
       if(!isNaN(d)&&d>=from&&d<=today){ rows++; days[s]=1; } });
     const nDays=Math.max(1,Object.keys(days).length);
     const rowsDay=rows/nDays;
-    if(!bytesDay && bytesPerRow && rowsDay>0){ bytesDay=rowsDay*bytesPerRow; src='stimata sul ritmo delle righe'; }
-    return {bytesDay, rowsDay, src, points:h.length};
+    const bytesDay=(bytesPerRow&&rowsDay>0)?rowsDay*bytesPerRow:0;
+    return {bytesDay, rowsDay, nDays};
   }
   function fillEstimate(freeBytes, bytesPerRow){
     const a=dbAverages(bytesPerRow);
-    if(!a.bytesDay || a.bytesDay<=0) return '<span class="dbs-est">📈 media in raccolta — servono almeno due giorni di utilizzo</span>';
-    const daysLeft=freeBytes/a.bytesDay;          // giorni di calendario
-    const years=daysLeft/365;
+    if(!a.rowsDay || !bytesPerRow) return '<span class="dbs-est">📈 media in raccolta — servono alcune registrazioni</span>';
+    const daysLeft=freeBytes/a.bytesDay;      // giorni lavorati
+    const years=daysLeft/250;                 // ~250 giorni lavorativi l'anno
     let txt;
     if(years>=100) txt='oltre 100 anni';
     else if(years>=2) txt='circa '+Math.round(years)+' anni';
     else if(years>=1) txt='circa 1 anno';
-    else if(daysLeft>=60) txt='circa '+Math.round(daysLeft/30)+' mesi';
-    else txt='circa '+Math.max(1,Math.round(daysLeft))+' giorni';
-    return '<span class="dbs-est" title="Media '+a.src+'">📈 media giornaliera: <b>'+fmtBytes(a.bytesDay)+'/giorno</b>'
-      + (a.rowsDay?(' · <b>'+a.rowsDay.toFixed(1).replace('.',',')+'</b> righe/giorno'):'')
-      + ' → si riempie tra <b>'+txt+'</b></span>';
+    else txt='circa '+Math.max(1,Math.round(daysLeft/21))+' mesi';
+    return '<span class="dbs-est" title="Media sui '+a.nDays+' giorni lavorati degli ultimi 30. Lo spazio di sistema di Postgres (~10 MB) non dipende dalle tue righe.">'
+      + '📈 media: <b>'+a.rowsDay.toFixed(1).replace('.',',')+'</b> righe/giorno ≈ <b>'+fmtBytes(a.bytesDay)+'/giorno</b>'
+      + ' → spazio sufficiente per <b>'+txt+'</b></span>';
   }
   async function updateDbSize(){
     const el=$('reg-dbsize'); if(!el) return;
@@ -31869,13 +31872,13 @@ setTool("erase");
       }
       _dbPrev=used;
       dbhRecord(used, rows);                     // memorizza la misura di oggi (per la media)
-      const perRow = (rows && rows>0) ? (used/rows) : 0;
+      const perRow = avgRowBytes();     // peso reale della riga (contenuto), non used/rows
       el.style.display='';
       el.innerHTML='<span class="dbs-line">💾 <b>'+usedMb.toFixed(3).replace('.',',')+'</b> / 500 MB'
         + ' · liberi <b style="color:'+color+';">'+(free/1048576).toFixed(1).replace('.',',')+' MB</b>'
         + ' <span class="dbs-bar"><span style="width:'+Math.max(0.6,pct).toFixed(2)+'%;background:'+color+';"></span></span>'
         + ' <span class="dbs-pct">'+pct.toFixed(2).replace('.',',')+'%</span>'
-        + (rows?(' · <b>'+rows+'</b> righe'+(perRow?(' (~'+fmtBytes(perRow)+' l\'una)'):'')):'')
+        + (rows?(' · <b>'+rows+'</b> righe'+(perRow?(' · ~'+fmtBytes(perRow)+' a riga'):'')):'')
         + ' '+delta+'</span>'
         + '<span class="dbs-line2">'+fillEstimate(free,perRow)+'</span>';
     }catch(e){ el.style.display='none'; }
@@ -33221,7 +33224,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 5.5';
+  window.APP_VERSION = 'Versione 5.6';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
