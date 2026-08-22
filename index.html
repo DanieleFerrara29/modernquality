@@ -2708,9 +2708,9 @@ button,.btn,.tab-btn,.reg-btn,.reg-chip,.chip,.reg-mtools-btn,.reg-mtools-sel{ b
           </div>
           <input type="text" id="reg-mix-other" placeholder="scrivi la miscela" style="display:none;margin-top:8px;" autocomplete="off"/>
         </div>
-        <div class="reg-f"><label>Metri cubi (m³)</label><input type="number" step="0.01" id="reg-mc" autocomplete="off"/></div>
-        <div class="reg-f"><label>Temperatura ambiente (°C)</label><input type="number" step="0.1" id="reg-temp-amb" placeholder="es. 22" autocomplete="off"/></div>
-        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="number" step="0.1" id="reg-temp-cls" placeholder="es. 18" autocomplete="off"/><div class="reg-fieldwarn" id="reg-tcls-hint"></div></div>
+        <div class="reg-f"><label>Metri cubi (m³)</label><input type="text" inputmode="decimal" id="reg-mc" placeholder="es. 9,50" autocomplete="off"/></div>
+        <div class="reg-f"><label>Temperatura ambiente (°C)</label><input type="text" inputmode="decimal" id="reg-temp-amb" placeholder="es. 22" autocomplete="off"/></div>
+        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="text" inputmode="decimal" id="reg-temp-cls" placeholder="es. 18" autocomplete="off"/><div class="reg-fieldwarn" id="reg-tcls-hint"></div></div>
       </section>
 
       <div class="reg-guide" id="reg-guide" style="display:none;"></div>
@@ -25643,7 +25643,7 @@ function applyRoleUI(){
   try{
     const role=(currentUser&&(currentUser.role||'').toLowerCase().trim())||'';
     const isLab=(role==='laboratorio'||role==='lab');
-    const isViewerRole=(role==='user'||role==='utente'||role==='viewer'||role==='visualizzatore'||role==='');
+    const isViewerRole=(role==='user'||role==='utente'||role==='viewer'||role==='visualizzatore');
     const onlyReg=(isLab||isViewerRole);           // laboratorio e utente: solo il Registro
     const btns=[...document.querySelectorAll('.tab-nav .tab-btn')];
     const isReg=b=>((b.getAttribute('onclick')||'').indexOf("'registro'")>=0);
@@ -25655,6 +25655,7 @@ function applyRoleUI(){
       const rb=btns.find(isReg);
       if(rb){ try{ switchMainTab('registro',rb); }catch(e){} }
     }
+    if(window.RegApplyRole){ try{ window.RegApplyRole(); }catch(e){} }   // aggiorna i permessi del registro dopo il login
   }catch(e){ console.warn('role tabs',e); }
 }
 function renderAdminLog() {
@@ -31695,7 +31696,7 @@ setTool("erase");
     {k:'aria',  label:'Aria',           unit:'%'},
     {k:'ac',    label:'Rapporto A/C',   unit:''},
     {k:'essud', label:'Acqua essudata', unit:''},
-    {k:'massa', label:'Massa volumica', unit:'kg/m³'}
+    {k:'massa', label:'Massa volumica', unit:''}
   ];
 
   let db={labs:DEFAULT_LABS.slice(), mixes:DEFAULT_MIXES.slice(), entries:[], labUsers:{}, imprese:[], wbs:[], mixCfg:{}, cfg:{mid:'-CZ-',width:5}};
@@ -31980,7 +31981,7 @@ setTool("erase");
   function role(){ try{ return (currentUser&&(currentUser.role||'').toLowerCase().trim())||''; }catch(e){ return ''; } }
   function isLabUser(){ const r=role(); return r==='laboratorio'||r==='lab'; }
   function isManager(){ return role()==='admin'; }
-  function isViewer(){ const r=role(); return r==='user'||r==='utente'||r==='viewer'||r==='visualizzatore'||r===''; }   // Utente = sola consultazione
+  function isViewer(){ const r=role(); return r==='user'||r==='utente'||r==='viewer'||r==='visualizzatore'; }   // Utente = sola consultazione
   // ristretto = NON admin e legato a un laboratorio (per ruolo o per assegnazione): vede solo il suo
   function isRestricted(){ return !isManager() && (isLabUser() || !!myLab()); }
   // il pulsante esporta ciò che è selezionato nella barra in alto; l'etichetta lo dice
@@ -32160,7 +32161,7 @@ setTool("erase");
     const o={};
     TESTS.forEach(t=>{
       const on=$('reg-chk-'+t.k).checked;
-      const val=($('reg-val-'+t.k).value||'').trim();
+      const val=vir(($('reg-val-'+t.k).value||'').trim());
       o[t.k]={on:on, val:on?val:''};
     });
     return o;
@@ -32288,6 +32289,12 @@ setTool("erase");
     const out=[]; const d=new Date(wrepMonday+'T00:00:00');
     for(let i=0;i<7;i++){ const x=new Date(d.getTime()+i*86400000); out.push(isoLocal(x)); }
     return out;
+  }
+  // in Italia si usa la VIRGOLA: qualsiasi valore numerico viene mostrato/salvato con la virgola
+  function vir(v){
+    if(v==null) return '';
+    const s=String(v).trim(); if(s==='') return '';
+    return /^-?\d+([.,]\d+)?$/.test(s) ? s.replace('.',',') : s;
   }
   function round1(n){ const v=Math.round((parseFloat(n)||0)*10)/10; return (Math.abs(v-Math.round(v))<1e-9) ? String(Math.round(v)) : String(v).replace('.',','); }
   // una riga conta come PRELIEVO solo se il prelievo è stato eseguito (spunta o verbale assegnato)
@@ -32593,6 +32600,21 @@ setTool("erase");
     }
     composeVerbale();
   }
+  // applica (o toglie) le restrizioni di sola consultazione: richiamabile anche dopo il login
+  function applyViewerUI(){
+    const v=isViewer();
+    if($('reg-form-wrap')) $('reg-form-wrap').style.display = v ? 'none' : '';
+    if($('reg-imp-btn'))   $('reg-imp-btn').style.display   = v ? 'none' : '';
+    let note=$('reg-viewer-note');
+    if(v && !note){
+      note=document.createElement('div'); note.id='reg-viewer-note';
+      note.style.cssText='margin:10px 0 16px;padding:12px 16px;border:1px solid var(--border2);border-radius:14px;background:var(--surface);color:var(--muted);font-size:13px;';
+      note.innerHTML='👁 <b style="color:var(--text);">Sola consultazione</b> — puoi vedere registro, report e prospetti, ma non inserire o modificare dati.';
+      const lb=$('reg-labbar'); if(lb && lb.parentNode) lb.parentNode.insertBefore(note, lb.nextSibling);
+    } else if(!v && note){ note.remove(); }
+    try{ renderTable(); renderForm(); }catch(_){}
+  }
+  window.RegApplyRole=applyViewerUI;
   function renderForm(){
     const viewer=isViewer();
     const disabled=(curLab==='__ALL__')||viewer;
@@ -32669,15 +32691,15 @@ setTool("erase");
       opera: ($('reg-opera').value||'').trim(),
       parte: ($('reg-parte').value||'').trim(),
       mix: comboVal('reg-mix','reg-mix-other'),
-      mc: ($('reg-mc').value||'').trim(),
+      mc: vir(($('reg-mc').value||'').trim()),
       tests: readTests(),
       prelievo: prel,
       verbale: verbale,
       ripetuto: prel && isDup(verbale, editId),
       cubetti: prel ? ($('reg-cubetti').value||'').trim() : '',
       note: ($('reg-note').value||'').trim(),
-      tempAmb: ($('reg-temp-amb')?$('reg-temp-amb').value:'').trim(),
-      tempCls: ($('reg-temp-cls')?$('reg-temp-cls').value:'').trim(),
+      tempAmb: vir(($('reg-temp-amb')?$('reg-temp-amb').value:'').trim()),
+      tempCls: vir(($('reg-temp-cls')?$('reg-temp-cls').value:'').trim()),
       by: (currentUser&&currentUser.username)||'',
       at: new Date().toLocaleString('it-IT')
     };
@@ -32712,7 +32734,7 @@ setTool("erase");
   }
 
   /* ---------- UI: tabella ---------- */
-  function tval(e,k){ const x=e.tests&&e.tests[k]; if(!x||!x.on)return ''; return (x.val===''||x.val==null)?'✓':x.val; }
+  function tval(e,k){ const x=e.tests&&e.tests[k]; if(!x||!x.on)return ''; return (x.val===''||x.val==null)?'✓':vir(x.val); }
   function currentRows(){
     return (curLab==='__ALL__')?db.entries.slice():db.entries.filter(e=>e.lab===curLab);
   }
@@ -32726,9 +32748,9 @@ setTool("erase");
     {key:'opera',   label:'Opera',    get:e=>({v:e.opera})},
     {key:'parte',   label:'Parte',    get:e=>({v:e.parte})},
     {key:'mix',     label:'Mix',      get:e=>({v:e.mix})},
-    {key:'mc',      label:'m³',       get:e=>({v:e.mc})},
-    {key:'tempAmb', label:'T.amb °C', get:e=>({v:e.tempAmb})},
-    {key:'tempCls', label:'T.CLS °C', get:e=>({v:e.tempCls})},
+    {key:'mc',      label:'m³',       get:e=>({v:vir(e.mc)})},
+    {key:'tempAmb', label:'T.amb °C', get:e=>({v:vir(e.tempAmb)})},
+    {key:'tempCls', label:'T.CLS °C', get:e=>({v:vir(e.tempCls)})},
     {key:'slump',   label:'Slump',    get:e=>({v:tval(e,'slump')})},
     {key:'spand',   label:'Spand.',   get:e=>({v:tval(e,'spand')})},
     {key:'aria',    label:'Aria%',    get:e=>({v:tval(e,'aria')})},
@@ -33007,6 +33029,7 @@ setTool("erase");
     return s;
   }
   // ordine colonne richiesto per l'esportazione
+  const xnum=(v)=>{ const s=String(v==null?'':v).trim().replace(',','.'); if(s==='')return ''; const n=parseFloat(s); return isNaN(n)?vir(v):n; };
   const EXPORT_COLS=[
     {h:'Inserito da',            w:18, get:e=>e.by||''},
     {h:'Data inserimento',       w:18, get:e=>e.at||''},
@@ -33018,15 +33041,15 @@ setTool("erase");
     {h:'Opera',                  w:16, get:e=>e.opera||''},
     {h:"Parte d'Opera",          w:16, get:e=>e.parte||''},
     {h:'Mix',                    w:22, get:e=>e.mix||''},
-    {h:'m³',                     w:8,  get:e=>e.mc||''},
-    {h:'Slump [cm]',             w:11, get:e=>tval(e,'slump')},
-    {h:'Spandimento [cm]',       w:14, get:e=>tval(e,'spand')},
-    {h:'Aria [%]',               w:9,  get:e=>tval(e,'aria')},
-    {h:'Rapporto A/C',           w:12, get:e=>tval(e,'ac')},
+    {h:'m³',                     w:8,  get:e=>xnum(e.mc)},
+    {h:'Slump [cm]',             w:11, get:e=>xnum(tval(e,'slump'))},
+    {h:'Spandimento [cm]',       w:14, get:e=>xnum(tval(e,'spand'))},
+    {h:'Aria [%]',               w:9,  get:e=>xnum(tval(e,'aria'))},
+    {h:'Rapporto A/C',           w:12, get:e=>xnum(tval(e,'ac'))},
     {h:'Acqua essudata',         w:13, get:e=>tval(e,'essud')},
-    {h:'Massa volumica [kg/m³]', w:18, get:e=>tval(e,'massa')},
-    {h:'Temp. ambiente [°C]',    w:16, get:e=>e.tempAmb||''},
-    {h:'Temp. CLS [°C]',         w:14, get:e=>e.tempCls||''},
+    {h:'Massa volumica',         w:18, get:e=>xnum(tval(e,'massa'))},
+    {h:'Temp. ambiente [°C]',    w:16, get:e=>xnum(e.tempAmb)},
+    {h:'Temp. CLS [°C]',         w:14, get:e=>xnum(e.tempCls)},
     {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
     {h:'N° cubetti',             w:10, get:e=>e.cubetti||''},
     {h:'Note',                   w:24, get:e=>e.note||''},
@@ -33246,15 +33269,7 @@ setTool("erase");
       const tag=(all?'CONGIUNTI':curLab).replace(/[^\w]+/g,'_');
       exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
     };
-    // profilo di sola consultazione: niente inserimento, modifica o caricamento
-    if(isViewer()){
-      if($('reg-form-wrap')) $('reg-form-wrap').style.display='none';
-      if($('reg-imp-btn')) $('reg-imp-btn').style.display='none';
-      const note=document.createElement('div');
-      note.style.cssText='margin:10px 0 16px;padding:12px 16px;border:1px solid var(--border2);border-radius:14px;background:var(--surface);color:var(--muted);font-size:13px;';
-      note.innerHTML='👁 <b style="color:var(--text);">Sola consultazione</b> — puoi vedere registro, report e prospetti, ma non inserire o modificare dati.';
-      const lb=$('reg-labbar'); if(lb && lb.parentNode) lb.parentNode.insertBefore(note, lb.nextSibling);
-    }
+    applyViewerUI();
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
     if($('reg-colreset')) $('reg-colreset').onclick=(ev)=>{ ev.preventDefault(); resetColOrder(); };
@@ -33295,7 +33310,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 6.0';
+  window.APP_VERSION = 'Versione 6.3';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
