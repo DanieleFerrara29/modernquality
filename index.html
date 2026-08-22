@@ -272,7 +272,7 @@ input:checked+.slider::before{transform:translateX(16px);}
 }
 #admin-panel.open{display:flex;animation:fadeIn .2s ease;}
 .admin-drawer{
-  width:100%;max-width:900px;margin:0 auto;
+  width:100%;max-width:1080px;margin:0 auto;
   display:flex;flex-direction:column;min-height:100%;
 }
 .admin-header{
@@ -286,7 +286,28 @@ input:checked+.slider::before{transform:translateX(16px);}
 .admin-close{background:none;border:1px solid #444;color:#888;border-radius:2px;padding:6px 14px;cursor:pointer;font-size:13px;line-height:1;transition:color .15s,border-color .15s;font-family:'IBM Plex Mono',monospace;letter-spacing:.08em;}
 .admin-close:hover{color:#fff;border-color:#888;}
 
-.admin-body{padding:32px 36px;flex:1;}
+.admin-body{padding:28px 32px;flex:1;width:100%;box-sizing:border-box;}
+/* larghezza uniforme per tutte le sezioni del pannello admin */
+.admin-body > *{max-width:100%;box-sizing:border-box;}
+.admin-header{box-sizing:border-box;}
+.users-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border2);border-radius:14px;}
+.roles-help{margin:16px 0 26px;border:1px solid var(--border2);border-radius:14px;background:var(--surface);overflow:hidden;}
+.roles-help summary{cursor:pointer;padding:12px 16px;font-size:13px;font-weight:600;color:var(--text);list-style:none;}
+.roles-help summary::-webkit-details-marker{display:none;}
+.roles-help[open] summary{border-bottom:1px solid var(--border);}
+.roles-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;padding:14px 16px;}
+.role-card{border:1px solid var(--border2);border-radius:12px;padding:12px 14px;background:var(--bg);}
+.role-card .rc-t{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.rc-admin{color:var(--accent);} .rc-lab{color:#4aa3df;} .rc-view{color:var(--muted);} .rc-user{color:#2e8b57;}
+.role-card ul{margin:0;padding-left:18px;}
+.role-card li{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:4px;}
+.role-card li b{color:var(--text);}
+.roles-note{padding:0 16px 14px;font-size:11.5px;color:var(--muted);}
+
+table.users-table{width:100%;border-collapse:collapse;min-width:820px;}
+table.users-table th{white-space:nowrap;}
+@media (max-width:720px){.admin-body{padding:18px 14px;} .admin-header{padding:16px 14px;}}
+
 .admin-section-title{
   font-size:10px;letter-spacing:.2em;text-transform:uppercase;
   color:var(--muted);margin-bottom:14px;padding-bottom:8px;
@@ -602,6 +623,7 @@ tr.new-row{animation:rowIn .2s ease both;}
 
       <!-- Utenti -->
       <div class="admin-section-title">Utenti registrati</div>
+      <div class="users-wrap">
       <table class="users-table">
         <thead>
           <tr>
@@ -616,6 +638,45 @@ tr.new-row{animation:rowIn .2s ease both;}
         </thead>
         <tbody id="users-tbody"></tbody>
       </table>
+      </div>
+
+      <details class="roles-help">
+        <summary>❔ Cosa può fare ogni ruolo</summary>
+        <div class="roles-grid">
+          <div class="role-card">
+            <div class="rc-t rc-admin">Admin</div>
+            <ul>
+              <li>Vede <b>tutte le sezioni</b> del sito (registro, rinomina PDF, verbali, firma, ecc.)</li>
+              <li>Nel registro passa da un laboratorio all'altro e vede <b>«Tutti»</b></li>
+              <li>Inserisce, modifica ed elimina <b>qualsiasi</b> registrazione</li>
+              <li>Esporta un singolo laboratorio o <b>tutti congiunti</b>; carica e aggiorna da Excel senza limiti</li>
+              <li>Gestisce utenti, ruoli, laboratori, miscele, WBS, imprese e intervalli di accettazione</li>
+              <li>Può svuotare il database dei prelievi</li>
+            </ul>
+          </div>
+          <div class="role-card">
+            <div class="rc-t rc-lab">Laboratorio</div>
+            <ul>
+              <li>Vede <b>solo il Registro CLS</b>, bloccato sul <b>proprio</b> laboratorio</li>
+              <li>Inserisce, modifica ed elimina <b>solo le proprie</b> registrazioni</li>
+              <li>Ha guida prelievi, prospetto settimanale e report m³ dei propri dati</li>
+              <li>Esporta il proprio registro e può caricare da Excel, ma <b>solo righe proprie</b> (le altre vengono saltate)</li>
+              <li>Non può gestire utenti né modificare elenchi (miscele, WBS, imprese): li usa soltanto</li>
+            </ul>
+          </div>
+          <div class="role-card">
+            <div class="rc-t rc-user">Utente</div>
+            <ul>
+              <li>Vede <b>solo il Registro CLS</b>, in <b>sola consultazione</b></li>
+              <li><b>Non</b> può inserire, modificare o eliminare nulla</li>
+              <li>Consulta tabella, filtri, report m³ e prospetto settimanale di tutti i laboratori</li>
+              <li>Può esportare in Excel per consultazione</li>
+              <li>Non vede le altre sezioni del sito (PDF, verbali, firma…)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="roles-note">Il ruolo si cambia dalla tendina <b>Ruolo</b> nella tabella qui sopra. Per il ruolo <b>Laboratorio</b> ricorda di assegnare anche il laboratorio nella colonna accanto.</div>
+      </details>
 
       <!-- Aggiungi utente -->
       <div class="admin-section-title">Aggiungi utente</div>
@@ -638,9 +699,8 @@ tr.new-row{animation:rowIn .2s ease both;}
           <div class="form-field">
             <label>Ruolo</label>
             <select id="new-role">
-              <option value="user">Utente</option>
+              <option value="user">Utente (sola consultazione)</option>
               <option value="laboratorio">Laboratorio</option>
-              <option value="viewer">Solo visualizzatore</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -2612,7 +2672,7 @@ button,.btn,.tab-btn,.reg-btn,.reg-chip,.chip,.reg-mtools-btn,.reg-mtools-sel{ b
     <!-- (le impostazioni del verbale sono ora accanto al campo del verbale, nel modulo) -->
 
     <!-- Form nuovo prelievo — stile modulo -->
-    <div class="reg-form">
+    <div class="reg-form" id="reg-form-wrap">
       <div class="reg-formhead">
         <h3 id="reg-form-title">Nuovo prelievo</h3>
         <p class="reg-formsub">Compila i campi e premi <b>Salva</b> in fondo. Le prove e il prelievo sono facoltativi.</p>
@@ -25442,7 +25502,7 @@ async function renderAdminUsers() {
   const _RA=window.RegAdmin;
   const _labs=_RA?_RA.getLabs():[];
   const _assign=_RA?_RA.getLabUsers():{};
-  const ROLES=[['user','Utente'],['laboratorio','Laboratorio'],['viewer','Solo visualizzatore'],['admin','Admin']];
+  const ROLES=[['user','Utente (sola consultazione)'],['laboratorio','Laboratorio'],['admin','Admin']];
   const roleSelHtml=(usr,role)=>{
     const r=(role||'user').toLowerCase().trim();
     const cur=ROLES.some(x=>x[0]===r)?r:'user';
@@ -25529,7 +25589,7 @@ async function renderAdminUsers() {
       const newPass = np;
       const roleIn = prompt('Ruolo: utente / laboratorio / admin  (lascia com\'è per non cambiarlo):', u.role||'user');
       if(roleIn===null) return;
-      const roleMap={'utente':'user','user':'user','laboratorio':'laboratorio','lab':'laboratorio','visualizzatore':'viewer','viewer':'viewer','sola lettura':'viewer','admin':'admin'};
+      const roleMap={'utente':'user','user':'user','visualizzatore':'user','viewer':'user','sola lettura':'user','laboratorio':'laboratorio','lab':'laboratorio','admin':'admin'};
       const newRole = roleMap[(roleIn||'').trim().toLowerCase()] || u.role || 'user';
       const nameChanged = newName.toLowerCase() !== oldName.toLowerCase();
       if(nameChanged && getUsers().find(x => (x.username||'').toLowerCase() === newName.toLowerCase())) { alert('Esiste già un utente con questo nome.'); return; }
@@ -25583,14 +25643,15 @@ function applyRoleUI(){
   try{
     const role=(currentUser&&(currentUser.role||'').toLowerCase().trim())||'';
     const isLab=(role==='laboratorio'||role==='lab');
+    const isViewerRole=(role==='user'||role==='utente'||role==='viewer'||role==='visualizzatore'||role==='');
+    const onlyReg=(isLab||isViewerRole);           // laboratorio e utente: solo il Registro
     const btns=[...document.querySelectorAll('.tab-nav .tab-btn')];
     const isReg=b=>((b.getAttribute('onclick')||'').indexOf("'registro'")>=0);
     btns.forEach(b=>{
-      if(isLab)          b.style.display=isReg(b)?'':'none';   // laboratorio: solo Registro
-      else if(isAdmin)   b.style.display='';                    // admin: tutto
-      else               b.style.display=isReg(b)?'none':'';    // utente: tutto tranne Registro
+      if(onlyReg)        b.style.display=isReg(b)?'':'none';   // laboratorio e utente: solo Registro
+      else               b.style.display='';                    // admin: tutto
     });
-    if(isLab){
+    if(onlyReg){
       const rb=btns.find(isReg);
       if(rb){ try{ switchMainTab('registro',rb); }catch(e){} }
     }
@@ -31919,7 +31980,7 @@ setTool("erase");
   function role(){ try{ return (currentUser&&(currentUser.role||'').toLowerCase().trim())||''; }catch(e){ return ''; } }
   function isLabUser(){ const r=role(); return r==='laboratorio'||r==='lab'; }
   function isManager(){ return role()==='admin'; }
-  function isViewer(){ const r=role(); return r==='viewer'||r==='visualizzatore'; }   // sola lettura
+  function isViewer(){ const r=role(); return r==='user'||r==='utente'||r==='viewer'||r==='visualizzatore'||r===''; }   // Utente = sola consultazione
   // ristretto = NON admin e legato a un laboratorio (per ruolo o per assegnazione): vede solo il suo
   function isRestricted(){ return !isManager() && (isLabUser() || !!myLab()); }
   // il pulsante esporta ciò che è selezionato nella barra in alto; l'etichetta lo dice
@@ -32878,8 +32939,9 @@ setTool("erase");
     tb.innerHTML=rows.map(e=>{
       let tds='';
       COLS.forEach(c=>{ tds+=cellHtml(c.label, c.get(e)); });
-      tds+='<td class="reg-actions-cell" style="white-space:nowrap;"><button class="reg-del" data-edit="'+esc(e.id)+'" style="border-color:var(--border2);color:var(--muted);margin-right:4px;">✎<span class="reg-btn-txt"> Modifica</span></button>'+
-        '<button class="reg-del" data-del="'+esc(e.id)+'">✕<span class="reg-btn-txt"> Elimina</span></button></td>';
+      tds+= isViewer() ? '<td class="reg-actions-cell"></td>'
+        : ('<td class="reg-actions-cell" style="white-space:nowrap;"><button class="reg-del" data-edit="'+esc(e.id)+'" style="border-color:var(--border2);color:var(--muted);margin-right:4px;">✎<span class="reg-btn-txt"> Modifica</span></button>'+
+        '<button class="reg-del" data-del="'+esc(e.id)+'">✕<span class="reg-btn-txt"> Elimina</span></button></td>');
       return '<tr class="'+(e.ripetuto?'rip':'')+'">'+tds+'</tr>';
     }).join('');
     tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
@@ -33029,7 +33091,9 @@ setTool("erase");
       let added=0, updated=0, skipped=0;
       const onlyLab = isManager() ? '' : (myLab()||curLab||'');   // il laboratorio tocca solo le sue righe
       rows.forEach(r=>{
-        const g=(...keys)=>{ for(const k of keys){ if(r[k]!==undefined&&r[k]!=='') return r[k]; } return ''; };
+        // toglie l'eventuale apostrofo iniziale usato in Excel per forzare il testo ('00099 → 00099)
+        const noAp=(v)=>(typeof v==='string')?v.trim().replace(/^'+/,'').trim():v;
+        const g=(...keys)=>{ for(const k of keys){ if(r[k]!==undefined&&r[k]!=='') return noAp(r[k]); } return ''; };
         const idFromFile=String(g('ID (tecnico)','ID')||'');
         const labFromFile=String(g('Laboratorio')||'').trim();
         if(onlyLab && labFromFile && labFromFile.toLowerCase()!==onlyLab.toLowerCase()){ skipped++; return; }
@@ -33182,8 +33246,15 @@ setTool("erase");
       const tag=(all?'CONGIUNTI':curLab).replace(/[^\w]+/g,'_');
       exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
     };
-    // il caricamento Excel è disponibile a tutti tranne i profili di sola consultazione
-    if(isViewer() && $('reg-imp-btn')) $('reg-imp-btn').style.display='none';
+    // profilo di sola consultazione: niente inserimento, modifica o caricamento
+    if(isViewer()){
+      if($('reg-form-wrap')) $('reg-form-wrap').style.display='none';
+      if($('reg-imp-btn')) $('reg-imp-btn').style.display='none';
+      const note=document.createElement('div');
+      note.style.cssText='margin:10px 0 16px;padding:12px 16px;border:1px solid var(--border2);border-radius:14px;background:var(--surface);color:var(--muted);font-size:13px;';
+      note.innerHTML='👁 <b style="color:var(--text);">Sola consultazione</b> — puoi vedere registro, report e prospetti, ma non inserire o modificare dati.';
+      const lb=$('reg-labbar'); if(lb && lb.parentNode) lb.parentNode.insertBefore(note, lb.nextSibling);
+    }
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
     if($('reg-colreset')) $('reg-colreset').onclick=(ev)=>{ ev.preventDefault(); resetColOrder(); };
@@ -33224,7 +33295,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 5.6';
+  window.APP_VERSION = 'Versione 6.0';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
