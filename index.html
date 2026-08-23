@@ -2704,6 +2704,7 @@ input[type="date"]{ color-scheme:dark; }
   #tab-registro table.rp-tab td{padding:8px 4px;}
   #tab-registro table.rp-tab th{padding:6px 4px;}
 }
+
 </style>
 
 <div class="tab-panel" id="tab-registro">
@@ -33177,7 +33178,7 @@ setTool("erase");
     {h:'Data inserimento',       w:18, get:e=>e.at||''},
     {h:'Laboratorio',            w:14, get:e=>e.lab||''},
     {h:'Data',                   w:12, get:e=>fmtIt(e.data)},
-    {h:'DDT',                    w:12, get:e=>{ const v=String(e.ddt||'').trim(); return v?("'"+v.replace(/^'+/,'')):''; }},   // apostrofo iniziale: Excel lo tratta come testo (3123/1 resta 3123/1)
+    {h:'DDT',                    w:12, get:e=>String(e.ddt||'').trim().replace(/^'+/,''), text:true},   // colonna formattata come TESTO: 6228/1 non diventa una data
     {h:'Impresa Esecutrice',     w:18, get:e=>e.impresa||''},
     {h:'WBS',                    w:10, get:e=>e.wbs||''},
     {h:'Opera',                  w:16, get:e=>e.opera||''},
@@ -33200,6 +33201,43 @@ setTool("erase");
   const HEAD=EXPORT_COLS.map(c=>c.h);
   function rowArr(e){ return EXPORT_COLS.map(c=>c.get(e)); }
 
+  // Excel: marca le colonne di testo con l'apostrofo "di sistema" (quotePrefix).
+  // Il valore resta pulito nella cella (6228/1) e non viene interpretato come data.
+  function colLetter(n){ let s=''; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
+  async function applyQuotePrefix(buf, cols){
+    if(typeof JSZip==='undefined') return buf;
+    const idx=cols.map((c,i)=>c.text?i+1:0).filter(Boolean);
+    if(!idx.length) return buf;
+    const zip=await JSZip.loadAsync(buf);
+    const sp='xl/styles.xml', wp='xl/worksheets/sheet1.xml';
+    if(!zip.file(sp)||!zip.file(wp)) return buf;
+    let styles=await zip.file(sp).async('string');
+    const m=styles.match(/<cellXfs count="(\d+)">([\s\S]*?)<\/cellXfs>/); if(!m) return buf;
+    const count=parseInt(m[1],10);
+    const xfs=m[2].match(/<xf\b[^>]*\/>|<xf\b[^>]*>[\s\S]*?<\/xf>/g)||[];
+    let sheet=await zip.file(wp).async('string');
+    const map={}, added=[];
+    idx.forEach(n=>{
+      const L=colLetter(n);
+      sheet=sheet.replace(new RegExp('<c r="'+L+'(\\d+)"([^>]*?)(/?)>','g'),(full,row,attrs,sc)=>{
+        if(row==='1') return full;                       // intestazione esclusa
+        const sm=attrs.match(/\ss="(\d+)"/); const old=sm?parseInt(sm[1],10):0;
+        if(map[old]===undefined){
+          const base=xfs[old]||'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>';
+          added.push(base.replace('<xf','<xf quotePrefix="1"'));
+          map[old]=count+added.length-1;
+        }
+        const ns=map[old];
+        const a2=sm?attrs.replace(/\ss="\d+"/,' s="'+ns+'"'):(attrs+' s="'+ns+'"');
+        return '<c r="'+L+row+'"'+a2+sc+'>';
+      });
+    });
+    if(!added.length) return buf;
+    styles=styles.replace(/<cellXfs count="\d+">/,'<cellXfs count="'+(count+added.length)+'">')
+                 .replace('</cellXfs>',added.join('')+'</cellXfs>');
+    zip.file(sp,styles); zip.file(wp,sheet);
+    return await zip.generateAsync({type:'arraybuffer'});
+  }
   async function exportRows(rows,fname){
     if(!rows.length){ toast('Nessun dato da esportare.'); return; }
     // se ExcelJS è disponibile → tabella colorata; altrimenti Excel semplice
@@ -33208,6 +33246,8 @@ setTool("erase");
         const wb=new ExcelJS.Workbook();
         const ws=wb.addWorksheet('Registro Prelievi',{views:[{state:'frozen',ySplit:1}]});
         ws.columns=EXPORT_COLS.map(c=>({header:c.h,key:c.h,width:c.w}));
+        // colonne da trattare come testo (es. DDT 6228/1, che Excel altrimenti converte in data)
+        EXPORT_COLS.forEach((c,i)=>{ if(c.text) ws.getColumn(i+1).numFmt='@'; });
         const bd={style:'thin',color:{argb:'FFB8CCE4'}};                       // bordi azzurro tenue
         const border={top:bd,left:bd,bottom:bd,right:bd};
         const hr=ws.getRow(1); hr.height=24;
@@ -33226,7 +33266,9 @@ setTool("erase");
           });
         });
         ws.autoFilter={from:{row:1,column:1},to:{row:1,column:EXPORT_COLS.length}};
-        const buf=await wb.xlsx.writeBuffer();
+        let buf=await wb.xlsx.writeBuffer();
+        // apostrofo "invisibile" sulle colonne di testo (DDT): presente nella barra della formula, non nella cella
+        try{ buf=await applyQuotePrefix(buf, EXPORT_COLS); }catch(_){}
         const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
         const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
         setTimeout(()=>URL.revokeObjectURL(a.href),1500);
@@ -33459,12 +33501,14 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 8.3';
+  window.APP_VERSION = 'Versione 8.6';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
     else apply();
   })();
 </script>
+
+
 </body>
 </html>
