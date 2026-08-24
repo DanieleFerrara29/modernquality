@@ -780,6 +780,20 @@ tr.new-row{animation:rowIn .2s ease both;}
         </details>
       </div>
       <div style="margin-top:16px;">
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Fornitori CLS</label>
+        <div style="display:flex;gap:8px;margin:6px 0 10px;">
+          <input type="text" id="ra-forn-input" placeholder="es. Calcestruzzi Sud S.r.l." style="flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;"/>
+          <button class="btn btn-blue btn-sm" id="ra-forn-add">+ Aggiungi</button>
+        </div>
+        <div id="ra-forn-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;font-size:11px;color:var(--accent);">⬆ Importa fornitori da Excel (incolla)</summary>
+          <div style="font-size:11px;color:var(--muted);margin:6px 0;">Copia la colonna dei fornitori da Excel e incollala qui sotto (uno per riga). Poi premi «Importa elenco».</div>
+          <textarea id="ra-forn-bulk" rows="5" placeholder="Calcestruzzi Sud S.r.l.&#10;Betonrossi S.p.A.&#10;..." style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+          <button class="btn btn-blue btn-sm" id="ra-forn-bulk-add" style="margin-top:6px;">Importa elenco</button>
+        </details>
+      </div>
+      <div style="margin-top:16px;">
         <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">WBS</label>
         <div style="display:flex;gap:8px;margin:6px 0 10px;">
           <input type="text" id="ra-wbs-input" placeholder="es. 0P09" style="flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;"/>
@@ -2673,7 +2687,7 @@ input[type="date"]{ color-scheme:dark; }
 /* tutte le linee della griglia, uguali per ogni laboratorio */
 #tab-registro table.rp-tab th,#tab-registro table.rp-tab td{border:1px solid var(--border);}
 #tab-registro table.rp-tab th{background:var(--surface);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;padding:9px 10px;text-align:center;}
-#tab-registro table.rp-tab th.rp-mix,#tab-registro table.rp-tab th.rp-bar-h{text-align:left;vertical-align:bottom;white-space:nowrap;}
+#tab-registro table.rp-tab th.rp-mix,#tab-registro table.rp-tab th.rp-bar-h{text-align:center;vertical-align:middle;white-space:nowrap;}
 #tab-registro th.rp-mix,#tab-registro td.rp-mix{width:250px;}
 #tab-registro th.rp-bar-h,#tab-registro td.rp-barcell{width:210px;}
 #tab-registro th.rp-labhead{font-size:12px;letter-spacing:.1em;color:var(--accent);background:rgba(var(--accent-rgb),.12);padding:8px 10px;}
@@ -2764,6 +2778,10 @@ input[type="date"]{ color-scheme:dark; }
           <input type="text" id="reg-ddt" placeholder="n° DDT" list="reg-ddt-list" autocomplete="off"/>
           <datalist id="reg-ddt-list"></datalist>
           <div class="reg-verbhint" id="reg-ddt-hint" style="margin-top:4px;"></div>
+        </div>
+        <div class="reg-f"><label>Fornitore CLS</label>
+          <select id="reg-forn"></select>
+          <input type="text" id="reg-forn-other" placeholder="scrivi il fornitore" style="display:none;margin-top:8px;" autocomplete="off"/>
         </div>
         <div class="reg-f"><label>Impresa esecutrice</label>
           <select id="reg-impresa"></select>
@@ -25922,6 +25940,17 @@ function renderRegAdmin(){
         ()=>{ if(confirm('Rimuovere l\'impresa "'+m+'"?')){ RA.removeImpresa(m); renderRegAdmin(); } });
     });
   }
+  // elenco fornitori CLS
+  const fornWrap=document.getElementById('ra-forn-list');
+  if(fornWrap && RA.getFornitori){
+    const forn=RA.getFornitori();
+    fornWrap.innerHTML = forn.length ? '' : '<div style="color:var(--muted);font-size:11px;">Nessun fornitore.</div>';
+    forn.forEach(m=>{
+      raItemRow(fornWrap, m,
+        ()=>raRename('il fornitore', m, RA.renameFornitore),
+        ()=>{ if(confirm('Rimuovere il fornitore "'+m+'"?')){ RA.removeFornitore(m); renderRegAdmin(); } });
+    });
+  }
   // elenco WBS
   const wbsWrap=document.getElementById('ra-wbs-list');
   if(wbsWrap && RA.getWbs){
@@ -26017,6 +26046,26 @@ function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/
     const res=window.RegAdmin.addImprese(list);
     bulkTa.value=''; renderRegAdmin();
     if(typeof showStatus==='function') showStatus('✅ Aggiunte '+res.added+' imprese','success');
+  });
+})();
+
+// fornitori CLS
+(function(){
+  const addBtn=document.getElementById('ra-forn-add'), inp=document.getElementById('ra-forn-input');
+  if(addBtn) addBtn.addEventListener('click',()=>{
+    if(!window.RegAdmin||!window.RegAdmin.addFornitore) return;
+    const v=(inp.value||'').trim(); if(!v) return;
+    window.RegAdmin.addFornitore(v); inp.value=''; renderRegAdmin();
+  });
+  if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); if(addBtn)addBtn.click(); } });
+  const bulkBtn=document.getElementById('ra-forn-bulk-add'), bulkTa=document.getElementById('ra-forn-bulk');
+  if(bulkBtn) bulkBtn.addEventListener('click',()=>{
+    if(!window.RegAdmin||!window.RegAdmin.addFornitori) return;
+    const list=(bulkTa.value||'').split(/[\r\n\t;]+/).map(s=>s.trim()).filter(Boolean);
+    if(!list.length) return;
+    const res=window.RegAdmin.addFornitori(list);
+    bulkTa.value=''; renderRegAdmin();
+    if(typeof showStatus==='function') showStatus('✅ Aggiunti '+res.added+' fornitori','success');
   });
 })();
 
@@ -31778,7 +31827,7 @@ setTool("erase");
     {k:'massa', label:'Massa volumica', unit:''}
   ];
 
-  let db={labs:DEFAULT_LABS.slice(), mixes:DEFAULT_MIXES.slice(), entries:[], labUsers:{}, imprese:[], wbs:[], mixCfg:{}, cfg:{mid:'-CZ-',width:5}};
+  let db={labs:DEFAULT_LABS.slice(), mixes:DEFAULT_MIXES.slice(), entries:[], labUsers:{}, imprese:[], fornitori:[], wbs:[], mixCfg:{}, cfg:{mid:'-CZ-',width:5}};
   let verbaleManual=false;   // true se l'utente ha scritto a mano il verbale
   let cubettiManual=false;   // true se l'utente ha scelto i cubetti a mano
   let curLab=db.labs[0];
@@ -31817,7 +31866,7 @@ setTool("erase");
   const cloudOn=()=>typeof sbFetch==='function';   // sbFetch è definito nell'app principale
   function toRow(e){
     return {
-      id:e.id, lab:e.lab||'', data:e.data||'', ddt:e.ddt||'', impresa:e.impresa||'',
+      id:e.id, lab:e.lab||'', data:e.data||'', ddt:e.ddt||'', impresa:e.impresa||'', fornitore:e.fornitore||'',
       wbs:e.wbs||'', opera:e.opera||'', parte:e.parte||'', mix:e.mix||'', mc:e.mc||'',
       tests:e.tests||{}, prelievo:!!e.prelievo, verbale:e.verbale||'', ripetuto:!!e.ripetuto,
       cubetti:e.cubetti||'', note:e.note||'', temp_amb:e.tempAmb||'', temp_cls:e.tempCls||'',
@@ -31827,7 +31876,7 @@ setTool("erase");
   }
   function fromRow(r){
     return {
-      id:String(r.id), lab:r.lab||'', data:r.data||'', ddt:r.ddt||'', impresa:r.impresa||'',
+      id:String(r.id), lab:r.lab||'', data:r.data||'', ddt:r.ddt||'', impresa:r.impresa||'', fornitore:r.fornitore||'',
       wbs:r.wbs||'', opera:r.opera||'', parte:r.parte||'', mix:r.mix||'', mc:r.mc||'',
       tests:(r.tests&&typeof r.tests==='object')?r.tests:{}, prelievo:(r.prelievo!=null?!!r.prelievo:!!(r.verbale&&String(r.verbale).trim())), verbale:r.verbale||'', ripetuto:!!r.ripetuto,
       cubetti:r.cubetti||'', note:r.note||'', tempAmb:r.temp_amb||'', tempCls:r.temp_cls||'', by:r.inserito_da||'', at:r.inserito_il||'',
@@ -32028,7 +32077,7 @@ setTool("erase");
   /* ---------- CONFIG condivisa (laboratori, miscele, formato, utenti→lab) ---------- */
   let lastCfgSig='';
   function currentConfig(){
-    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), width:db.cfg.width||5, labUsers:db.labUsers||{} };
+    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), width:db.cfg.width||5, labUsers:db.labUsers||{} };
   }
   function applyConfig(c){
     if(!c||typeof c!=='object')return false;
@@ -32036,6 +32085,7 @@ setTool("erase");
     if(Array.isArray(c.labs)&&c.labs.length){ if(JSON.stringify(c.labs)!==JSON.stringify(db.labs)){db.labs=c.labs.slice();changed=true;} }
     if(Array.isArray(c.mixes)){ if(JSON.stringify(c.mixes)!==JSON.stringify(db.mixes)){db.mixes=c.mixes.slice();changed=true;} }
     if(Array.isArray(c.imprese)){ if(JSON.stringify(c.imprese)!==JSON.stringify(db.imprese||[])){db.imprese=c.imprese.slice();changed=true;} }
+    if(Array.isArray(c.fornitori)){ if(JSON.stringify(c.fornitori)!==JSON.stringify(db.fornitori||[])){db.fornitori=c.fornitori.slice();changed=true;} }
     if(Array.isArray(c.wbs)){ if(JSON.stringify(c.wbs)!==JSON.stringify(db.wbs||[])){db.wbs=c.wbs.slice();changed=true;} }
     if(c.mixCfg&&typeof c.mixCfg==='object'){ if(JSON.stringify(c.mixCfg)!==JSON.stringify(db.mixCfg||{})){db.mixCfg=c.mixCfg;changed=true;} }
     if(c.mid!=null && c.mid!==db.cfg.mid){ db.cfg.mid=c.mid; changed=true; }
@@ -32108,6 +32158,11 @@ setTool("erase");
     addImpresa:(name)=>{ name=(name||'').trim(); db.imprese=db.imprese||[]; if(name&&!db.imprese.includes(name)){db.imprese.push(name);pushConfig();refreshAll();} return db.imprese.slice(); },
     addImprese:(list)=>{ db.imprese=db.imprese||[]; let added=0; (list||[]).forEach(n=>{ n=(n||'').trim(); if(n&&!db.imprese.includes(n)){db.imprese.push(n);added++;} }); if(added){pushConfig();refreshAll();} return {added, imprese:db.imprese.slice()}; },
     removeImpresa:(name)=>{ db.imprese=(db.imprese||[]).filter(x=>x!==name); pushConfig(); refreshAll(); return db.imprese.slice(); },
+    getFornitori:()=>(db.fornitori||[]).slice(),
+    addFornitore:(name)=>{ name=(name||'').trim(); db.fornitori=db.fornitori||[]; if(name&&!db.fornitori.includes(name)){db.fornitori.push(name);pushConfig();refreshAll();} return db.fornitori.slice(); },
+    addFornitori:(list)=>{ db.fornitori=db.fornitori||[]; let added=0; (list||[]).forEach(n=>{ n=(n||'').trim(); if(n&&!db.fornitori.includes(n)){db.fornitori.push(n);added++;} }); if(added){pushConfig();refreshAll();} return {added, fornitori:db.fornitori.slice()}; },
+    removeFornitore:(name)=>{ db.fornitori=(db.fornitori||[]).filter(x=>x!==name); pushConfig(); refreshAll(); return db.fornitori.slice(); },
+    renameFornitore:(o,n)=>renameListItem('fornitori','fornitore',o,n),
     getWbs:()=>(db.wbs||[]).slice(),
     addWbs:(name)=>{ name=(name||'').trim(); db.wbs=db.wbs||[]; if(name&&!db.wbs.includes(name)){db.wbs.push(name);pushConfig();refreshAll();} return db.wbs.slice(); },
     addWbsList:(list)=>{ db.wbs=db.wbs||[]; let added=0; (list||[]).forEach(n=>{ n=(n||'').trim(); if(n&&!db.wbs.includes(n)){db.wbs.push(n);added++;} }); if(added){pushConfig();refreshAll();} return {added, wbs:db.wbs.slice()}; },
@@ -32312,7 +32367,12 @@ setTool("erase");
     fillCombo('reg-impresa', (db.imprese||[]).slice(), recentValues('impresa',6));
     setCombo('reg-impresa','reg-impresa-other', cur);
   }
-  function refreshCombos(){ refreshWbs(); refreshMix(); refreshImprese(); refreshDdtList(); updateGuide(); }
+  function refreshFornitori(sel){
+    const cur = (sel!=null) ? sel : comboVal('reg-forn','reg-forn-other');
+    fillCombo('reg-forn', (db.fornitori||[]).slice(), recentValues('fornitore',6));
+    setCombo('reg-forn','reg-forn-other', cur);
+  }
+  function refreshCombos(){ refreshWbs(); refreshMix(); refreshImprese(); refreshFornitori(); refreshDdtList(); updateGuide(); }
 
   /* ---------- REPORT metri cubi (solo admin) ---------- */
   const MESI=['','Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
@@ -32792,7 +32852,7 @@ setTool("erase");
     ['reg-data','reg-ddt','reg-opera','reg-parte','reg-mc','reg-verbale','reg-cubetti','reg-note','reg-temp-amb','reg-temp-cls'].forEach(id=>{ if($(id))$(id).value=''; });
     if($('reg-num'))$('reg-num').value='';
     setCubetti(''); cubettiManual=false;
-    setCombo('reg-wbs','reg-wbs-other',''); setCombo('reg-impresa','reg-impresa-other','');
+    setCombo('reg-wbs','reg-wbs-other',''); setCombo('reg-impresa','reg-impresa-other',''); setCombo('reg-forn','reg-forn-other','');
     refreshMix(''); setTests(null); editId=null;
     setPrel(false); verbaleManual=false; setCubettiEnabled(false);
     if($('reg-data')) $('reg-data').value=todayISO();   // data di oggi, modificabile
@@ -32809,6 +32869,7 @@ setTool("erase");
     $('reg-mc').value=e.mc||''; $('reg-verbale').value=e.verbale||''; $('reg-note').value=e.note||'';
     refreshWbs(); setCombo('reg-wbs','reg-wbs-other', e.wbs||'');
     refreshImprese(); setCombo('reg-impresa','reg-impresa-other', e.impresa||'');
+    refreshFornitori(); setCombo('reg-forn','reg-forn-other', e.fornitore||'');
     if($('reg-temp-amb')) $('reg-temp-amb').value=e.tempAmb||'';
     if($('reg-temp-cls')) $('reg-temp-cls').value=e.tempCls||'';
     setCubetti(e.cubetti||''); cubettiManual=true;
@@ -32833,6 +32894,7 @@ setTool("erase");
       lab: curLab,
       data: $('reg-data').value||'',
       ddt: ($('reg-ddt').value||'').trim().replace(/^'+/,''),   // mai apostrofi nei dati salvati
+      fornitore: comboVal('reg-forn','reg-forn-other'),
       impresa: comboVal('reg-impresa','reg-impresa-other'),
       wbs: comboVal('reg-wbs','reg-wbs-other'),
       opera: ($('reg-opera').value||'').trim(),
@@ -32863,6 +32925,8 @@ setTool("erase");
     if(entry.mix && !db.mixes.includes(entry.mix)){ db.mixes.push(entry.mix); cfgGrew=true; }
     db.imprese=db.imprese||[];
     if(entry.impresa && !db.imprese.includes(entry.impresa)){ db.imprese.push(entry.impresa); cfgGrew=true; }
+    db.fornitori=db.fornitori||[];
+    if(entry.fornitore && !db.fornitori.includes(entry.fornitore)){ db.fornitori.push(entry.fornitore); cfgGrew=true; }
     if(cfgGrew) pushConfig();
     if(editId){
       const i=db.entries.findIndex(x=>x.id===editId);
@@ -32897,6 +32961,7 @@ setTool("erase");
   const COLS=[
     {key:'data',    label:'Data',     get:e=>({v:fmtIt(e.data)})},
     {key:'ddt',     label:'DDT',      get:e=>({v:e.ddt})},
+    {key:'fornitore',label:'Fornitore CLS', get:e=>({v:e.fornitore})},
     {key:'impresa', label:'Impresa',  get:e=>({v:e.impresa})},
     {key:'wbs',     label:'WBS',      get:e=>({v:e.wbs})},
     {key:'opera',   label:'Opera',    get:e=>({v:e.opera})},
@@ -33190,6 +33255,7 @@ setTool("erase");
     {h:'Laboratorio',            w:14, get:e=>e.lab||''},
     {h:'Data',                   w:12, get:e=>fmtIt(e.data)},
     {h:'DDT',                    w:12, get:e=>String(e.ddt||'').trim().replace(/^'+/,''), text:true},   // colonna formattata come TESTO: 6228/1 non diventa una data
+    {h:'Fornitore CLS',          w:20, get:e=>e.fornitore||''},
     {h:'Impresa Esecutrice',     w:18, get:e=>e.impresa||''},
     {h:'WBS',                    w:10, get:e=>e.wbs||''},
     {h:'Opera',                  w:16, get:e=>e.opera||''},
@@ -33318,7 +33384,7 @@ setTool("erase");
         const e={
           id: idFromFile || ('e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
           lab: onlyLab || String(g('Laboratorio')||curLab||db.labs[0]||'Laboratorio 1'),
-          data:toISODate(g('Data')), ddt:String(g('DDT')), impresa:String(g('Impresa Esecutrice','Impresa')),
+          data:toISODate(g('Data')), ddt:String(g('DDT')), fornitore:String(g('Fornitore CLS','Fornitore')), impresa:String(g('Impresa Esecutrice','Impresa')),
           wbs:String(g('WBS')), opera:String(g('Opera')), parte:String(g("Parte d'Opera",'Parte')),
           mix:String(g('Mix')), mc:String(g('m³','m3','mc')),
           tests:{
@@ -33374,7 +33440,7 @@ setTool("erase");
     load();
     loadColOrder();
     // impedisce al browser di riproporre/salvare i valori ("Salva DDT" ecc.): nome casuale + autocomplete off
-    ['reg-ddt','reg-opera','reg-parte','reg-note','reg-wbs-other','reg-impresa-other','reg-mix-other','reg-cubetti-manual'].forEach(id=>{
+    ['reg-ddt','reg-opera','reg-parte','reg-note','reg-wbs-other','reg-impresa-other','reg-forn-other','reg-mix-other','reg-cubetti-manual'].forEach(id=>{
       const el=$(id); if(!el)return;
       el.setAttribute('autocomplete','off'); el.setAttribute('autocorrect','off');
       el.setAttribute('autocapitalize','off'); el.setAttribute('spellcheck','false');
@@ -33414,6 +33480,7 @@ setTool("erase");
     if($('reg-mix')) $('reg-mix').addEventListener('change',()=>{ comboOtherToggle('reg-mix','reg-mix-other',true); updateGuide(); });
     if($('reg-mix-other')) $('reg-mix-other').addEventListener('input',()=>{ updateGuide(); });
     if($('reg-impresa')) $('reg-impresa').addEventListener('change',()=>{ comboOtherToggle('reg-impresa','reg-impresa-other',true); });
+    if($('reg-forn')) $('reg-forn').addEventListener('change',()=>{ comboOtherToggle('reg-forn','reg-forn-other',true); });
     if($('reg-data')) $('reg-data').addEventListener('change',()=>{ updateGuide(); suggestNumber(); });
     if($('reg-mc')) $('reg-mc').addEventListener('input',updateGuide);
     // clic su «N prel.» → apre/chiude il dettaglio (verbale, data, cubetti)
@@ -33512,7 +33579,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 9.0';
+  window.APP_VERSION = 'Versione 9.1';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
