@@ -809,8 +809,12 @@ tr.new-row{animation:rowIn .2s ease both;}
       </div>
       <div style="margin-top:16px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;">
         <div class="form-field" style="max-width:150px;">
-          <label>Formato verbale — parte dopo la WBS</label>
+          <label>Verbale CLS — parte dopo la WBS</label>
           <input type="text" id="ra-fmt-mid" placeholder="-CZ-" style="background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;font-family:monospace;text-align:center;"/>
+        </div>
+        <div class="form-field" style="max-width:150px;">
+          <label>Verbale MALTA — parte dopo la WBS</label>
+          <input type="text" id="ra-fmt-midm" placeholder="-MI-" style="background:var(--bg);border:1px solid #4aa3df;color:#4aa3df;border-radius:6px;padding:8px;font-family:monospace;text-align:center;"/>
         </div>
         <div class="form-field" style="max-width:110px;">
           <label>Cifre numero</label>
@@ -2719,6 +2723,33 @@ input[type="date"]{ color-scheme:dark; }
   #tab-registro table.rp-tab th{padding:6px 4px;}
 }
 
+
+/* barra comandi rapidi sopra la tabella */
+#tab-registro .reg-quickbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px;padding:8px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;}
+#tab-registro .reg-qbtn{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+#tab-registro .reg-qbtn:hover{border-color:var(--accent);color:var(--accent);}
+#tab-registro .reg-qbtn.danger{border-color:var(--red);color:var(--red);}
+#tab-registro .reg-qbtn.danger:hover{background:rgba(224,90,90,.12);}
+#tab-registro .reg-qbtn.danger.on{background:var(--red);color:#fff;}
+#tab-registro .reg-qinfo{font-size:11.5px;color:var(--accent);font-weight:700;}
+#tab-registro .reg-qhint{font-size:11px;color:var(--muted);margin-left:auto;}
+@media (max-width:640px){
+  #tab-registro .reg-quickbar{gap:6px;padding:8px;}
+  #tab-registro .reg-qbtn{flex:1 1 46%;text-align:center;font-size:12px;padding:9px 8px;}
+  #tab-registro .reg-qhint{display:none;}
+  #tab-registro .reg-qinfo{flex:1 1 100%;text-align:center;}
+}
+
+/* tipo di prelievo (CLS / MALTA) e avvisi sulla numerazione */
+#tab-registro .reg-tipo{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:999px;margin-right:8px;}
+#tab-registro .reg-tipo.cls{background:rgba(var(--accent-rgb),.18);color:var(--accent);border:1px solid var(--accent);}
+#tab-registro .reg-tipo.malta{background:rgba(74,163,223,.18);color:#4aa3df;border:1px solid #4aa3df;}
+#tab-registro .reg-vwarn{margin-top:6px;padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.45;}
+#tab-registro .reg-vwarn.dup{background:rgba(224,90,90,.12);border:1px solid var(--red);color:var(--text);}
+#tab-registro .reg-vwarn.skip{background:rgba(var(--accent-rgb),.12);border:1px solid var(--accent);color:var(--text);}
+#tab-registro .reg-vwarn.back{background:rgba(125,133,144,.12);border:1px solid var(--border2);color:var(--muted);}
+#tab-registro .reg-vwarn b{color:var(--accent);}
+#tab-registro .reg-vwarn.dup b{color:var(--red);}
 </style>
 
 <div class="tab-panel" id="tab-registro">
@@ -2868,7 +2899,12 @@ input[type="date"]{ color-scheme:dark; }
       <button class="reg-btn ghost" id="reg-imp-btn">⬆ Carica / aggiorna da Excel</button>
       <input type="file" id="reg-imp-file" accept=".xlsx,.xls" style="display:none;" autocomplete="off"/>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin:2px 2px 8px;">↔ Trascina le intestazioni per spostare le colonne · clic per ordinare · usa le tendine sotto le intestazioni per filtrare (come Excel). <a href="#" id="reg-colreset" style="color:var(--accent);text-decoration:none;">Ripristina ordine</a> · <a href="#" id="reg-f-clear" style="color:var(--accent);text-decoration:none;font-weight:700;">✕ Togli tutti i filtri</a></div>
+    <div class="reg-quickbar">
+      <button type="button" class="reg-qbtn danger" id="reg-f-clear" title="Rimuove tutti i filtri attivi sulle colonne">✕ Togli tutti i filtri</button>
+      <span class="reg-qinfo" id="reg-f-count"></span>
+      <button type="button" class="reg-qbtn" id="reg-colreset" title="Rimette le colonne nell'ordine originale">↺ Ripristina colonne</button>
+      <span class="reg-qhint">↔ trascina le intestazioni per spostarle · clic per ordinare · tendine sotto le intestazioni per filtrare</span>
+    </div>
 
     <!-- Strumenti compatti per smartphone (ordina + filtri) -->
     <div class="reg-mtools" id="reg-mtools">
@@ -25924,6 +25960,16 @@ function renderRegAdmin(){
       sub.appendChild(mkRange('Slump','cm','slumpMin','slumpMax'));
       sub.appendChild(mkRange('Spand.','cm','spandMin','spandMax'));
       sub.appendChild(mkRange('T.CLS','°C','tclsMin','tclsMax'));
+      // interruttore: questa miscela è una MALTA → verbale con sigla diversa
+      (function(){
+        const w=document.createElement('label');
+        w.style.cssText='display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);cursor:pointer;padding:3px 10px;border:1px solid '+(cfg.malta?'#4aa3df':'var(--border2)')+';border-radius:999px;'+(cfg.malta?'background:rgba(74,163,223,.12);color:#4aa3df;font-weight:700;':'');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!cfg.malta;
+        cb.style.cssText='width:15px;height:15px;accent-color:#4aa3df;';
+        cb.addEventListener('change',()=>{ if(RA.setMixCfg) RA.setMixCfg(m,{malta:cb.checked}); renderRegAdmin(); });
+        w.appendChild(cb); w.appendChild(document.createTextNode(cfg.malta?'MALTA':'è una malta'));
+        sub.appendChild(w);
+      })();
       gear.onclick=()=>{ sub.style.display = (sub.style.display==='none'?'flex':'none'); };
       row.appendChild(sub);
       mixWrap.appendChild(row);
@@ -25964,11 +26010,15 @@ function renderRegAdmin(){
   }
   // formato verbale
   const fmt=RA.getFormat();
-  const midEl=document.getElementById('ra-fmt-mid'), wEl=document.getElementById('ra-fmt-width');
+  const fmt2=RA.getFormat2?RA.getFormat2():{midMalta:'-MI-'};
+  const midEl=document.getElementById('ra-fmt-mid'), wEl=document.getElementById('ra-fmt-width'), midmEl=document.getElementById('ra-fmt-midm');
   if(midEl && document.activeElement!==midEl) midEl.value=fmt.mid;
+  if(midmEl && document.activeElement!==midmEl) midmEl.value=fmt2.midMalta||'-MI-';
   if(wEl && document.activeElement!==wEl) wEl.value=fmt.width;
   const pv=document.getElementById('ra-fmt-preview');
-  if(pv){ let z=''; for(let i=0;i<(fmt.width||5)-1;i++)z+='0'; pv.innerHTML='Esempio: <b style="font-family:monospace;color:var(--text);">0P09'+escHtml(fmt.mid)+z+'1</b>'; }
+  if(pv){ let z=''; for(let i=0;i<(fmt.width||5)-1;i++)z+='0';
+    pv.innerHTML='CLS: <b style="font-family:monospace;color:var(--accent);">0P09'+escHtml(fmt.mid)+z+'1</b>'
+      +' · Malta: <b style="font-family:monospace;color:#4aa3df;">0P09'+escHtml(fmt2.midMalta||'-MI-')+z+'1</b>'; }
   // select laboratorio nel form "Aggiungi utente"
   const sel=document.getElementById('new-lab');
   if(sel){
@@ -26112,8 +26162,9 @@ function escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/
   if(b) b.addEventListener('click',()=>{
     if(!window.RegAdmin) return;
     const mid=document.getElementById('ra-fmt-mid').value;
+    const midm=document.getElementById('ra-fmt-midm')?document.getElementById('ra-fmt-midm').value:null;
     const width=document.getElementById('ra-fmt-width').value;
-    window.RegAdmin.setFormat(mid,width);
+    window.RegAdmin.setFormat(mid,width,midm);
     renderRegAdmin();
     if(typeof showStatus==='function') showStatus('✅ Formato verbale salvato','success');
   });
@@ -32077,7 +32128,7 @@ setTool("erase");
   /* ---------- CONFIG condivisa (laboratori, miscele, formato, utenti→lab) ---------- */
   let lastCfgSig='';
   function currentConfig(){
-    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), width:db.cfg.width||5, labUsers:db.labUsers||{} };
+    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), midMalta:midMalta(), width:db.cfg.width||5, labUsers:db.labUsers||{} };
   }
   function applyConfig(c){
     if(!c||typeof c!=='object')return false;
@@ -32089,6 +32140,7 @@ setTool("erase");
     if(Array.isArray(c.wbs)){ if(JSON.stringify(c.wbs)!==JSON.stringify(db.wbs||[])){db.wbs=c.wbs.slice();changed=true;} }
     if(c.mixCfg&&typeof c.mixCfg==='object'){ if(JSON.stringify(c.mixCfg)!==JSON.stringify(db.mixCfg||{})){db.mixCfg=c.mixCfg;changed=true;} }
     if(c.mid!=null && c.mid!==db.cfg.mid){ db.cfg.mid=c.mid; changed=true; }
+    if(c.midMalta!=null && c.midMalta!==db.cfg.midMalta){ db.cfg.midMalta=c.midMalta; changed=true; }
     if(c.width && c.width!==db.cfg.width){ db.cfg.width=c.width; changed=true; }
     if(c.labUsers&&typeof c.labUsers==='object'){ if(JSON.stringify(c.labUsers)!==JSON.stringify(db.labUsers||{})){db.labUsers=c.labUsers;changed=true;} }
     return changed;
@@ -32173,10 +32225,12 @@ setTool("erase");
     getMixCfg:(mix)=>mixCfgOf(mix),
     setMixCfg:(mix,patch)=>{ if(!mix)return; db.mixCfg=db.mixCfg||{}; const merged=Object.assign({}, db.mixCfg[mix]||{});
       ['sett','g1','g2'].forEach(k=>{ if(patch[k]!==undefined) merged[k]=Math.max(0,parseInt(patch[k],10)||0); });
+      if(patch.malta!==undefined) merged.malta=!!patch.malta;
       ['slumpMin','slumpMax','spandMin','spandMax','tclsMin','tclsMax'].forEach(k=>{ if(patch[k]!==undefined){ const v=String(patch[k]).trim().replace(',','.'); merged[k]=(v===''||isNaN(parseFloat(v)))?'':parseFloat(v); } });
       db.mixCfg[mix]=merged; pushConfig(); refreshAll(); return merged; },
     setUserLab:(username,lab)=>{ if(!username)return; db.labUsers=db.labUsers||{}; if(lab)db.labUsers[username]=lab; else delete db.labUsers[username]; pushConfig(); return Object.assign({},db.labUsers); },
-    setFormat:(mid,width)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),width:db.cfg.width}; },
+    setFormat:(mid,width,midM)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); if(midM!=null) db.cfg.midMalta=midM; db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),midMalta:midMalta(),width:db.cfg.width}; },
+    getFormat2:()=>({mid:midPart(),midMalta:midMalta(),width:db.cfg.width||5}),
     syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); },
     clearAllEntries: async ()=>{ if(cloudOn()){ await sbFetch('registro?id=not.is.null',{method:'DELETE',headers:{'Prefer':'return=minimal'}}); } db.entries=[]; save(); refreshAll(); return true; },
     exportRegistro: (lab)=>{ const all=(!lab||lab==='__ALL__'); const rows=all?db.entries.slice():db.entries.filter(e=>(e.lab||'')===lab); if(!rows.length){ toast('Nessun dato da esportare per '+(all?'il database':lab)+'.'); return; } const tag=(all?'CONGIUNTI':String(lab)).replace(/[^\w]+/g,'_'); exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx'); }
@@ -32201,9 +32255,14 @@ setTool("erase");
   function pad(n,w){ n=String(n); while(n.length<w)n='0'+n; return n; }
   function numOf(v){ const m=String(v==null?'':v).match(/(\d+)\s*$/); return m?parseInt(m[1],10):null; }
   function midPart(){ return (db.cfg.mid!=null?db.cfg.mid:'-CZ-'); }
+  function midMalta(){ return (db.cfg.midMalta!=null?db.cfg.midMalta:'-MI-'); }
+  // il mix selezionato è una malta? (impostabile dal pannello admin)
+  function isMalta(mix){ return !!mixCfgOf(mix||'').malta; }
+  // sigla da usare adesso: dipende dal mix selezionato nel modulo
+  function midNow(mix){ return isMalta(mix!=null?mix:comboVal('reg-mix','reg-mix-other')) ? midMalta() : midPart(); }
   // prefisso del verbale = WBS + parte centrale (es. "VI10" + "-CZ-" = "VI10-CZ-")
-  function verbalePrefix(wbs){
-    const mid=midPart();
+  function verbalePrefix(wbs, mix){
+    const mid=midNow(mix);
     wbs=(wbs||'').trim();
     return wbs ? (wbs+mid) : mid.replace(/^[-_\s]+/,'');
   }
@@ -32219,7 +32278,7 @@ setTool("erase");
     });
     return found?max:0;
   }
-  function nextVerbale(wbs){ const pf=verbalePrefix(wbs); return pf+pad(lastNumForPrefix(pf)+1, db.cfg.width||5); }
+  function nextVerbale(wbs,mix){ const pf=verbalePrefix(wbs,mix); return pf+pad(lastNumForPrefix(pf)+1, db.cfg.width||5); }
   function isDup(verbale, exceptId){
     const key=String(verbale||'').trim().toLowerCase();
     if(!key)return false;
@@ -32554,7 +32613,7 @@ setTool("erase");
   function mixCfgOf(mix){
     const c=(db.mixCfg||{})[mix]||{};
     const r=(k)=>(c[k]!=null?c[k]:'');
-    return {sett:(c.sett||0), g1:(c.g1||4), g2:(c.g2||4),
+    return {sett:(c.sett||0), g1:(c.g1||4), g2:(c.g2||4), malta:!!c.malta,
       slumpMin:r('slumpMin'), slumpMax:r('slumpMax'),
       spandMin:r('spandMin'), spandMax:r('spandMax'),
       tclsMin:r('tclsMin'), tclsMax:r('tclsMax')};
@@ -32784,7 +32843,7 @@ setTool("erase");
   function currentNum(){ const v=parseInt(($('reg-num')?$('reg-num').value:''),10); return isNaN(v)?null:v; }
   // compone il verbale completo (WBS + parte centrale + numero) e aggiorna anteprima + campo nascosto
   function composeVerbale(){
-    const pf=verbalePrefix(curWbs());
+    const pf=verbalePrefix(curWbs(), comboVal('reg-mix','reg-mix-other'));
     const n=currentNum();
     const full=(n!=null&&n>0)?(pf+pad(n,db.cfg.width||5)):'';
     if($('reg-verbale')) $('reg-verbale').value=full;
@@ -32802,7 +32861,7 @@ setTool("erase");
   // propone il prossimo numero della serie WBS (se l'utente non l'ha scelto a mano)
   function suggestNumber(){
     if(prelChecked() && curLab!=='__ALL__' && !verbaleManual){
-      const pf=verbalePrefix(curWbs());
+      const pf=verbalePrefix(curWbs(), comboVal('reg-mix','reg-mix-other'));
       if($('reg-num')) $('reg-num').value=lastNumForPrefix(pf)+1;
     }
     composeVerbale();
@@ -32837,10 +32896,28 @@ setTool("erase");
     const h=$('reg-verbhint'); if(!h)return;
     if(curLab==='__ALL__' || !prelChecked()){ h.innerHTML=''; return; }
     const wbs=curWbs();
-    const pf=verbalePrefix(wbs);
+    const mix=comboVal('reg-mix','reg-mix-other');
+    const pf=verbalePrefix(wbs,mix);
     const last=lastNumForPrefix(pf);
     const lastStr=last>0?(pf+pad(last,db.cfg.width||5)):'nessuno';
-    h.innerHTML='Serie WBS <b>'+esc(wbs.trim()||'(vuota)')+'</b> · ultimo: <b>'+esc(lastStr)+'</b> · prossimo numero suggerito: <b>'+(last+1)+'</b>';
+    const tipo = isMalta(mix) ? '<span class="reg-tipo malta">MALTA · '+esc(midMalta().replace(/[-_]/g,''))+'</span>'
+                              : '<span class="reg-tipo cls">CLS · '+esc(midPart().replace(/[-_]/g,''))+'</span>';
+    let html = tipo+' Serie <b>'+esc(wbs.trim()||'(vuota)')+esc(midNow(mix))+'</b> · ultimo: <b>'+esc(lastStr)+'</b> · prossimo: <b>'+(last+1)+'</b>';
+    // controllo del numero scritto: duplicato oppure salto nella numerazione
+    const n=currentNum();
+    if(n!=null && n>0){
+      const full=pf+pad(n,db.cfg.width||5);
+      if(isDup(full, editId)){
+        html+='<div class="reg-vwarn dup">⚠ Numero <b>'+n+'</b> già usato in questa serie — il prelievo risulterà <b>RIPETUTO</b>.</div>';
+      } else if(n>last+1){
+        const saltati=[]; for(let k=last+1;k<n && saltati.length<12;k++) saltati.push(k);
+        html+='<div class="reg-vwarn skip">⚠ <b>Salto di numerazione</b>: stai usando il <b>'+n+'</b> ma l\'ultimo è il <b>'+last+'</b>. '
+            + 'Restano scoperti: <b>'+saltati.join(', ')+(n-last-1>12?'…':'')+'</b> ('+(n-last-1)+' numer'+((n-last-1)===1?'o':'i')+').</div>';
+      } else if(n<=last && !isDup(full, editId)){
+        html+='<div class="reg-vwarn back">↩ Numero <b>'+n+'</b> precedente all\'ultimo (<b>'+last+'</b>): stai recuperando un numero non usato.</div>';
+      }
+    }
+    h.innerHTML=html;
   }
   function todayISO(){
     const d=new Date();
@@ -32939,7 +33016,7 @@ setTool("erase");
     // lascio che sia il database ad assegnare il numero in modo atomico → niente doppioni in contemporanea.
     const autoVerbale = prel && !verbaleManual && !editId;
     if(autoVerbale){
-      pushEntryAuto(entry, verbalePrefix(entry.wbs), db.cfg.width||5);
+      pushEntryAuto(entry, verbalePrefix(entry.wbs, entry.mix), db.cfg.width||5);
       clearForm(); renderTable();
       return;
     }
@@ -33070,7 +33147,7 @@ setTool("erase");
       if(act==='ok'){
         const chosen=boxes().filter(b=>b.checked).map(b=>b.value);
         if(!chosen.length || chosen.length===vals.length) delete colFilters[key]; else colFilters[key]=chosen;
-        closeFilterPanel(); renderThead(); renderBody(); renderMobileTools();
+        closeFilterPanel(); renderThead(); renderBody(); renderMobileTools(); updateFilterCount();
       }
     });
     document.addEventListener('mousedown',_fpanelOutside,true);
@@ -33166,6 +33243,13 @@ setTool("erase");
     renderBody();
     refreshExportSelect();
     renderMobileTools();
+    updateFilterCount();
+  }
+  function updateFilterCount(){
+    const n=Object.keys(colFilters).filter(k=>colFilters[k]&&colFilters[k].length).length;
+    const info=$('reg-f-count'), btn=$('reg-f-clear');
+    if(info) info.textContent = n ? (n===1?'1 filtro attivo':n+' filtri attivi') : '';
+    if(btn) btn.classList.toggle('on', n>0);
   }
   function renderBody(){
     const allRows=currentRows();
@@ -33477,7 +33561,7 @@ setTool("erase");
     // menù a tendina con "Altro": mostra il campo manuale quando serve
     if($('reg-wbs')) $('reg-wbs').addEventListener('change',()=>{ comboOtherToggle('reg-wbs','reg-wbs-other',true); suggestNumber(); updateGuide(); });
     if($('reg-wbs-other')) $('reg-wbs-other').addEventListener('input',()=>{ suggestNumber(); updateGuide(); });
-    if($('reg-mix')) $('reg-mix').addEventListener('change',()=>{ comboOtherToggle('reg-mix','reg-mix-other',true); updateGuide(); });
+    if($('reg-mix')) $('reg-mix').addEventListener('change',()=>{ comboOtherToggle('reg-mix','reg-mix-other',true); updateGuide(); suggestNumber(); });
     if($('reg-mix-other')) $('reg-mix-other').addEventListener('input',()=>{ updateGuide(); });
     if($('reg-impresa')) $('reg-impresa').addEventListener('change',()=>{ comboOtherToggle('reg-impresa','reg-impresa-other',true); });
     if($('reg-forn')) $('reg-forn').addEventListener('change',()=>{ comboOtherToggle('reg-forn','reg-forn-other',true); });
@@ -33541,7 +33625,16 @@ setTool("erase");
     applyViewerUI();
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
-    if($('reg-colreset')) $('reg-colreset').onclick=(ev)=>{ ev.preventDefault(); resetColOrder(); };
+    if($('reg-colreset')) $('reg-colreset').onclick=(ev)=>{ ev.preventDefault(); resetColOrder(); toast('Ordine colonne ripristinato.'); };
+    // ✕ Togli tutti i filtri
+    if($('reg-f-clear')) $('reg-f-clear').onclick=(ev)=>{
+      ev.preventDefault();
+      const n=Object.keys(colFilters).filter(k=>colFilters[k]&&colFilters[k].length).length;
+      Object.keys(colFilters).forEach(k=>delete colFilters[k]);
+      closeFilterPanel();
+      renderThead(); renderBody(); renderMobileTools(); updateFilterCount();
+      toast(n?('Filtri rimossi ('+n+').'):'Nessun filtro attivo.');
+    };
     // cubetti: pulsanti 4/6/8 + Altro (numero manuale)
     const cbChips=$('reg-cubetti-chips'), cbMan=$('reg-cubetti-manual');
     const cbHi=(which)=>{ if(cbChips) cbChips.querySelectorAll('.reg-chip').forEach(x=>x.classList.toggle('on', x.getAttribute('data-v')===which)); };
@@ -33579,7 +33672,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 9.1';
+  window.APP_VERSION = 'Versione 9.3';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
