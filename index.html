@@ -824,6 +824,11 @@ tr.new-row{animation:rowIn .2s ease both;}
         <div id="ra-fmt-preview" style="font-size:12px;color:var(--muted);align-self:center;"></div>
       </div>
 
+      <!-- Ultimo prelievo per WBS -->
+      <div class="admin-section-title" style="margin-top:24px;">📋 Ultimo prelievo per WBS</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Per ogni WBS, l'ultimo verbale assegnato. Le WBS con righe incomplete (senza DDT o senza mix) sono evidenziate in arancione.</div>
+      <div id="ra-wbs-report"><div style="color:var(--muted);font-size:11px;">—</div></div>
+
       <!-- Log -->
       <div class="admin-section-title" style="margin-top:24px;">Log attività recenti</div>
       <div class="log-list" id="log-list">
@@ -25875,8 +25880,27 @@ document.getElementById('btn-bulk-users').addEventListener('click', async () => 
 // ════════════════════════════════════════════════════
 // REGISTRO CLS — gestione laboratori, miscele, formato (solo admin)
 // ════════════════════════════════════════════════════
+function renderWbsReport(){
+  const box=document.getElementById('ra-wbs-report'); if(!box) return;
+  const RA=window.RegAdmin; if(!RA||!RA.wbsReport){ box.innerHTML=''; return; }
+  const rows=RA.wbsReport();
+  if(!rows.length){ box.innerHTML='<div style="color:var(--muted);font-size:11px;">Nessun prelievo registrato.</div>'; return; }
+  let h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">'
+    +'<thead><tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border2);">'
+    +'<th style="padding:6px 8px;">WBS</th><th style="padding:6px 8px;">Ultimo verbale</th><th style="padding:6px 8px;">Laboratorio</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    const warn=r.incompleti>0;
+    h+='<tr style="border-bottom:1px solid var(--border);'+(warn?'background:rgba(255,170,0,.09);':'')+'">'
+      +'<td style="padding:6px 8px;font-weight:600;">'+escHtml(r.wbs)+'</td>'
+      +'<td style="padding:6px 8px;">'+(escHtml(r.ultimoVerbale)||'—')+'</td>'
+      +'<td style="padding:6px 8px;color:var(--muted);">'+(escHtml(r.lab)||'—')+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  box.innerHTML=h;
+}
 function renderRegAdmin(){
   const RA=window.RegAdmin; if(!RA) return;
+  renderWbsReport();
   // elenco laboratori
   const labWrap=document.getElementById('ra-lab-list');
   if(labWrap){
@@ -31981,7 +32005,25 @@ setTool("erase");
       catch(e2){ e._pending=true; save(); setStatus('offline'); toast('Salvato in locale (offline).'); }
     }
   }
-  function deleteCloud(id){ if(cloudOn()) sbRegDelete(id).catch(err=>console.warn('del cloud',err)); }
+  // ── Righe cancellate: ne teniamo memoria finché non spariscono davvero dal cloud.
+  //    Senza questo, una cancellazione non arrivata al server faceva RIAPPARIRE la riga.
+  function tombs(){ try{ return JSON.parse(localStorage.getItem('mq_reg_deleted_v1')||'[]')||[]; }catch(_){ return []; } }
+  function tombsSave(list){ try{ localStorage.setItem('mq_reg_deleted_v1', JSON.stringify(list.slice(-3000))); }catch(_){ } }
+  function tombAdd(id){ const l=tombs(); if(!l.some(t=>t.id===id)){ l.push({id, at:Date.now()}); tombsSave(l); } }
+  function tombHas(id){ return tombs().some(t=>t.id===id); }
+  function tombDrop(id){ tombsSave(tombs().filter(t=>t.id!==id)); }
+  // unisce le "lapidi" che arrivano dagli altri dispositivi tramite la config condivisa.
+  // Ritorna true se ne aggiunge almeno una nuova.
+  function tombMerge(list){ const l=tombs(); const have=new Set(l.map(t=>t.id)); let add=0;
+    (list||[]).forEach(t=>{ const id=t&&t.id; if(id&&!have.has(id)){ l.push({id, at:t.at||Date.now()}); have.add(id); add++; } });
+    if(add) tombsSave(l); return add>0; }
+  function deleteCloud(id){
+    tombAdd(id);
+    pushConfig();                 // propaga la cancellazione a TUTTI i dispositivi (config condivisa)
+    if(!cloudOn()) return;
+    sbRegDelete(id).then(()=>{ /* confermata: resta in lista finché il cloud non la restituisce più */ })
+      .catch(err=>{ console.warn('del cloud',err); toast('Riga eliminata qui: verrà rimossa dal cloud appena possibile.'); });
+  }
 
   // sincronizza: ricarica dal cloud, unisce eventuali pendenti locali, ridisegna se cambia
   let cfgLoaded=false;
@@ -31990,13 +32032,27 @@ setTool("erase");
     try{
       // 0) configurazione condivisa (laboratori, miscele, formato, utenti→lab)
       let cfgChanged=false;
-      try{ const c=await sbConfigGet(); if(c){ cfgChanged=applyConfig(c); cfgLoaded=true; } }catch(_){}
-      // 1) riprova a inviare i pendenti
+      try{ const c=await sbConfigGet(); if(c){ cfgChanged=applyConfig(c); cfgLoaded=true;
+        const mine=myLab();                      // riallinea al laboratorio assegnato
+        if(isRestricted() && mine && curLab!==mine){ curLab=mine; cfgChanged=true; }
+      } }catch(_){}
+      // 1) riprova a inviare i pendenti — ma NON ripubblicare righe già cancellate altrove
+      const _delSet=new Set(tombs().map(t=>t.id));
+      if(_delSet.size){ const _b=db.entries.length; db.entries=db.entries.filter(e=>!(e._pending&&_delSet.has(e.id))); if(db.entries.length!==_b) save(); }
       const pend=db.entries.filter(x=>x._pending);
       if(pend.length){ try{ await sbRegUpsertMany(pend); pend.forEach(x=>delete x._pending); }catch(_){} }
       // 2) scarica lo stato dal cloud
       const rows=await sbRegList();
-      const cloud=rows.map(fromRow);
+      let cloud=rows.map(fromRow);
+      // righe cancellate ma ancora presenti sul cloud: riprova a eliminarle e non mostrarle
+      const tl=tombs();
+      if(tl.length){
+        const daRimuovere=cloud.filter(e=>tl.some(t=>t.id===e.id));
+        daRimuovere.forEach(e=>{ sbRegDelete(e.id).catch(()=>{}); });
+        cloud=cloud.filter(e=>!tl.some(t=>t.id===e.id));
+        // le "lapidi" NON scadono più a tempo: una riga cancellata resta cancellata per sempre,
+        // così nessun dispositivo (nemmeno uno rimasto offline a lungo) può farla riapparire.
+      }
       const cloudIds=new Set(cloud.map(e=>e.id));
       const stillPending=db.entries.filter(e=>e._pending && !cloudIds.has(e.id));
       const merged=cloud.concat(stillPending);
@@ -32128,7 +32184,7 @@ setTool("erase");
   /* ---------- CONFIG condivisa (laboratori, miscele, formato, utenti→lab) ---------- */
   let lastCfgSig='';
   function currentConfig(){
-    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), midMalta:midMalta(), width:db.cfg.width||5, labUsers:db.labUsers||{} };
+    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), midMalta:midMalta(), width:db.cfg.width||5, labUsers:db.labUsers||{}, deleted:tombs() };
   }
   function applyConfig(c){
     if(!c||typeof c!=='object')return false;
@@ -32143,6 +32199,7 @@ setTool("erase");
     if(c.midMalta!=null && c.midMalta!==db.cfg.midMalta){ db.cfg.midMalta=c.midMalta; changed=true; }
     if(c.width && c.width!==db.cfg.width){ db.cfg.width=c.width; changed=true; }
     if(c.labUsers&&typeof c.labUsers==='object'){ if(JSON.stringify(c.labUsers)!==JSON.stringify(db.labUsers||{})){db.labUsers=c.labUsers;changed=true;} }
+    if(Array.isArray(c.deleted)&&c.deleted.length){ if(tombMerge(c.deleted)) changed=true; }   // cancellazioni condivise dagli altri dispositivi
     return changed;
   }
   async function sbConfigGet(){
@@ -32173,7 +32230,11 @@ setTool("erase");
   }
   function myLab(){
     const u=((currentUser&&currentUser.username)||'').toLowerCase().trim();
-    if(!u||!db.labUsers) return '';
+    if(!u) return '';
+    // se il nome utente coincide con un laboratorio, usa quello (es. utente "AGC" → laboratorio AGC)
+    const perNome=(db.labs||[]).find(l=>String(l).toLowerCase().trim()===u);
+    if(perNome && !(db.labUsers && db.labUsers[u])) return perNome;
+    if(!db.labUsers) return '';
     if(db.labUsers[u]!==undefined) return db.labUsers[u];
     for(const k in db.labUsers){ if(String(k).toLowerCase().trim()===u) return db.labUsers[k]; }
     return '';
@@ -32232,6 +32293,39 @@ setTool("erase");
     setFormat:(mid,width,midM)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); if(midM!=null) db.cfg.midMalta=midM; db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),midMalta:midMalta(),width:db.cfg.width}; },
     getFormat2:()=>({mid:midPart(),midMalta:midMalta(),width:db.cfg.width||5}),
     syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); },
+    // report: per ogni WBS, ultimo DDT, ultima data e ULTIMO VERBALE ASSEGNATO (le righe senza verbale non contano) + incompleti
+    wbsReport:()=>{
+      const byW={};
+      db.entries.forEach(e=>{ const w=(e.wbs||'').trim()||'(senza WBS)'; (byW[w]=byW[w]||[]).push(e); });
+      const maxOf=(arr,key)=>{ let best='',has=false; arr.forEach(e=>{ const v=(e[key]||'').trim(); if(v){ if(!has||natCmp(v,best)>0){best=v;has=true;} } }); return best; };
+      const rows=Object.keys(byW).map(w=>{
+        const arr=byW[w];
+        const incompleti=arr.filter(e=>!((e.ddt||'').trim())||!((e.mix||'').trim())).length;
+        const labs=Array.from(new Set(arr.map(e=>(e.lab||'').trim()).filter(Boolean)));
+        return { wbs:w, count:arr.length, lab:labs.join(', '),
+                 ultimaData:maxOf(arr,'data'),        // data più recente
+                 ultimoDdt:maxOf(arr,'ddt'),          // DDT più alto (ordine naturale)
+                 ultimoVerbale:maxOf(arr,'verbale'),  // ULTIMO verbale assegnato: salta le righe senza verbale
+                 incompleti };
+      });
+      rows.sort((a,b)=>natCmp(a.wbs,b.wbs));
+      return rows;
+    },
+    // conta / elimina definitivamente le righe di un laboratorio in un periodo
+    countEntries:(lab,da,a)=>db.entries.filter(e=>(!lab||(e.lab||'')===lab)&&(!da||(e.data||'')>=da)&&(!a||(e.data||'')<=a)).length,
+    purgeEntries: async (lab,da,a)=>{
+      const target=db.entries.filter(e=>(!lab||(e.lab||'')===lab)&&(!da||(e.data||'')>=da)&&(!a||(e.data||'')<=a));
+      if(!target.length) return 0;
+      for(const e of target){
+        tombAdd(e.id);
+        if(cloudOn()){ try{ await sbRegDelete(e.id); }catch(_){ } }
+      }
+      const ids=new Set(target.map(e=>e.id));
+      db.entries=db.entries.filter(e=>!ids.has(e.id));
+      pushConfig();               // propaga le cancellazioni a tutti i dispositivi (config condivisa)
+      refreshAll();
+      return target.length;
+    },
     clearAllEntries: async ()=>{ if(cloudOn()){ await sbFetch('registro?id=not.is.null',{method:'DELETE',headers:{'Prefer':'return=minimal'}}); } db.entries=[]; save(); refreshAll(); return true; },
     exportRegistro: (lab)=>{ const all=(!lab||lab==='__ALL__'); const rows=all?db.entries.slice():db.entries.filter(e=>(e.lab||'')===lab); if(!rows.length){ toast('Nessun dato da esportare per '+(all?'il database':lab)+'.'); return; } const tag=(all?'CONGIUNTI':String(lab)).replace(/[^\w]+/g,'_'); exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx'); }
   };
@@ -32963,12 +33057,17 @@ setTool("erase");
   }
   function saveEntry(){
     if(isViewer()){ toast('Profilo di sola consultazione: non puoi inserire o modificare.'); return; }
+    // evita che una riga finisca sul laboratorio sbagliato prima che arrivi la configurazione
+    if(cloudOn() && !cfgLoaded && isRestricted() && !myLab()){
+      toast('Attendi qualche secondo: sto caricando la configurazione…');
+      return;
+    }
     if(curLab==='__ALL__'){ toast('Seleziona un laboratorio per inserire.'); return; }
     const prel=prelChecked();
     const verbale=prel?(($('reg-verbale').value||'').trim()):'';
     const entry={
       id: editId||('e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
-      lab: curLab,
+      lab: (isRestricted() && myLab()) ? myLab() : curLab,   // il laboratorio assegnato vince sempre
       data: $('reg-data').value||'',
       ddt: ($('reg-ddt').value||'').trim().replace(/^'+/,''),   // mai apostrofi nei dati salvati
       fornitore: comboVal('reg-forn','reg-forn-other'),
@@ -33005,6 +33104,7 @@ setTool("erase");
     db.fornitori=db.fornitori||[];
     if(entry.fornitore && !db.fornitori.includes(entry.fornitore)){ db.fornitori.push(entry.fornitore); cfgGrew=true; }
     if(cfgGrew) pushConfig();
+    tombDrop(entry.id);   // se si risalva una riga con lo stesso id, non è più "cancellata"
     if(editId){
       const i=db.entries.findIndex(x=>x.id===editId);
       if(i>=0)db.entries[i]=entry;
@@ -33164,19 +33264,40 @@ setTool("erase");
       btn.addEventListener('click',ev=>{ ev.stopPropagation(); openFilterPanel(btn.dataset.fkey,btn); });
     });
   }
-  let sortKey='data', sortDir=1, _suppressSortClick=false;
+  let sortKey='data', sortDir=1, _suppressSortClick=false;   // ordine iniziale: Data crescente
+  // confronto "naturale": spezza il testo in parti (numeri e lettere) e confronta
+  // i numeri come numeri. Così 14/0078 viene prima di 14/002277 e 6325/1 prima di 6330.
+  const _NUMONLY=/^-?\d+([.,]\d+)?$/;
+  function natCmp(va,vb){
+    va=String(va==null?'':va).trim(); vb=String(vb==null?'':vb).trim();
+    if(va===vb) return 0;
+    if(va==='') return 1;            // le celle vuote vanno in fondo
+    if(vb==='') return -1;
+    if(_NUMONLY.test(va) && _NUMONLY.test(vb))      // valori puramente numerici
+      return parseFloat(va.replace(',','.'))-parseFloat(vb.replace(',','.'));
+    const ra=va.match(/\d+|\D+/g)||[], rb=vb.match(/\d+|\D+/g)||[];
+    const n=Math.min(ra.length,rb.length);
+    for(let i=0;i<n;i++){
+      const pa=ra[i], pb=rb[i];
+      const da=/^\d/.test(pa), dbb=/^\d/.test(pb);
+      if(da&&dbb){ const d=parseInt(pa,10)-parseInt(pb,10); if(d) return d; }
+      else { const d=pa.localeCompare(pb,'it',{sensitivity:'base'}); if(d) return d; }
+    }
+    return ra.length-rb.length;
+  }
   function sortRows(rows){
     const c=COLS.find(x=>x.key===sortKey); if(!c) return rows;
     const isDate=(sortKey==='data');
     return rows.slice().sort((a,b)=>{
-      let va,vb;
-      if(isDate){ va=a.data||''; vb=b.data||''; }   // ISO: ordina cronologicamente
-      else { va=colText(c,a); vb=colText(c,b); }
-      const na=parseFloat(String(va).replace(',','.')), nb=parseFloat(String(vb).replace(',','.'));
       let cmp;
-      if(!isDate && String(va).trim()!=='' && String(vb).trim()!=='' && !isNaN(na) && !isNaN(nb)) cmp=na-nb;
-      else cmp=String(va).localeCompare(String(vb),'it',{numeric:true});
-      return cmp*sortDir;
+      if(isDate) cmp=String(a.data||'').localeCompare(String(b.data||''));   // ISO: cronologico
+      else cmp=natCmp(colText(c,a), colText(c,b));
+      if(cmp) return cmp*sortDir;
+      // a parità: WBS → DDT → Data (righe della stessa WBS consecutive, in ordine di DDT e poi data)
+      let t=natCmp(a.wbs,b.wbs); if(t) return t;
+      t=natCmp(a.ddt,b.ddt); if(t) return t;
+      t=String(a.data||'').localeCompare(String(b.data||'')); if(t) return t;
+      return natCmp(a.verbale,b.verbale);
     });
   }
   function renderThead(){
@@ -33399,8 +33520,17 @@ setTool("erase");
     zip.file(sp,styles); zip.file(wp,sheet);
     return await zip.generateAsync({type:'arraybuffer'});
   }
+  // ordine del registro: Data crescente → WBS → DDT
+  function sortRegistro(a,b){
+    let t=String(a.data||'').localeCompare(String(b.data||'')); if(t) return t;
+    t=natCmp(a.wbs,b.wbs); if(t) return t;
+    t=natCmp(a.ddt,b.ddt); if(t) return t;
+    return natCmp(a.verbale,b.verbale);
+  }
+  function sortForExport(rows){ return rows.slice().sort(sortRegistro); }
   async function exportRows(rows,fname){
     if(!rows.length){ toast('Nessun dato da esportare.'); return; }
+    rows=sortForExport(rows);
     // se ExcelJS è disponibile → tabella colorata; altrimenti Excel semplice
     if(typeof ExcelJS!=='undefined'){
       try{
@@ -33672,7 +33802,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 9.3';
+  window.APP_VERSION = 'Versione 10.3';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
