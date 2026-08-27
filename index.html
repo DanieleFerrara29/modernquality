@@ -824,6 +824,11 @@ tr.new-row{animation:rowIn .2s ease both;}
         <div id="ra-fmt-preview" style="font-size:12px;color:var(--muted);align-self:center;"></div>
       </div>
 
+      <!-- Campi obbligatori -->
+      <div class="admin-section-title" style="margin-top:24px;">🔒 Campi obbligatori per il salvataggio</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Scegli quali campi non possono restare vuoti quando si salva una registrazione. La regola vale per tutti i laboratori e per tutti gli utenti (il campo compare con un <b style="color:var(--red);">*</b> rosso nel form).</div>
+      <div id="ra-required" style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--text);"></div>
+
       <!-- Ultimo prelievo per WBS -->
       <div class="admin-section-title" style="margin-top:24px;">📋 Ultimo prelievo per WBS</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Per ogni WBS, l'ultimo verbale assegnato. Le WBS con righe incomplete (senza DDT o senza mix) sono evidenziate in arancione.</div>
@@ -2489,6 +2494,19 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro table.wrep .wrep-pc b{color:var(--text);font-size:12.5px;}
 #tab-registro table.wrep .wrep-c b{color:var(--accent);}
 #tab-registro table.wrep .wrep-a{display:block;margin-top:3px;}
+#tab-registro table.wrep .wrep-verb{margin-top:5px;padding-top:5px;border-top:1px dashed var(--border);font-family:monospace;font-size:10.5px;color:var(--muted);line-height:1.4;word-break:break-all;}
+#tab-registro table.wrep .wrep-verb span{color:var(--accent);}
+/* --- campo obbligatorio non compilato al momento del salvataggio --- */
+#tab-registro .reg-f.reg-missing-wrap > label{ color:var(--red); font-weight:700; }
+#tab-registro .reg-f.reg-missing-wrap input,
+#tab-registro .reg-f.reg-missing-wrap select,
+#tab-registro .reg-f.reg-missing-wrap textarea{ border-color:var(--red)!important; box-shadow:0 0 0 2px rgba(224,90,90,.18)!important; }
+#tab-registro .reg-f.reg-missing-wrap::after{ content:'⚠ Campo obbligatorio'; display:block; margin-top:4px; font-size:11px; color:var(--red); font-weight:600; letter-spacing:.02em; }
+/* --- pulsante Salva in modalità "non salvato" --- */
+#tab-registro #reg-save.reg-save-failed{ background:var(--red)!important; border-color:var(--red)!important; color:#fff!important; }
+#tab-registro #reg-save.reg-save-failed:hover{ background:var(--red-dark)!important; border-color:var(--red-dark)!important; }
+#tab-registro #reg-save.reg-save-shake{ animation:reg-save-shake .55s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes reg-save-shake{ 10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);} 30%,50%,70%{transform:translateX(-8px);} 40%,60%{transform:translateX(8px);} }
 #tab-registro table.wrep td{min-width:96px;}
 #tab-registro table.wrep td.wrep-tot .wrep-mc{color:var(--accent);}
 
@@ -2902,7 +2920,9 @@ input[type="date"]{ color-scheme:dark; }
       <span class="reg-dbsize" id="reg-dbsize" title="Spazio usato del database su Supabase (limite 500 MB nel piano gratuito)" style="display:none;font-size:11px;color:var(--muted);"></span>
       <button class="reg-btn excel" id="reg-exp-go">⬇ Esporta in Excel</button>
       <button class="reg-btn ghost" id="reg-imp-btn">⬆ Carica / aggiorna da Excel</button>
+      <button class="reg-btn ghost" id="reg-sync-btn" title="Confronta l'Excel con il registro: aggiunge le nuove, aggiorna le modificate, CANCELLA quelle che nel file non ci sono più (con anteprima e conferma)">⇄ Sincronizza da Excel</button>
       <input type="file" id="reg-imp-file" accept=".xlsx,.xls" style="display:none;" autocomplete="off"/>
+      <input type="file" id="reg-sync-file" accept=".xlsx,.xls" style="display:none;" autocomplete="off"/>
     </div>
     <div class="reg-quickbar">
       <button type="button" class="reg-qbtn danger" id="reg-f-clear" title="Rimuove tutti i filtri attivi sulle colonne">✕ Togli tutti i filtri</button>
@@ -25880,6 +25900,25 @@ document.getElementById('btn-bulk-users').addEventListener('click', async () => 
 // ════════════════════════════════════════════════════
 // REGISTRO CLS — gestione laboratori, miscele, formato (solo admin)
 // ════════════════════════════════════════════════════
+function renderRequired(){
+  const box=document.getElementById('ra-required'); if(!box) return;
+  const RA=window.RegAdmin; if(!RA||!RA.getRequiredFields){ box.innerHTML=''; return; }
+  const fields=RA.getRequiredFields();
+  const cur=RA.getRequired()||{};
+  box.innerHTML=fields.map(f=>{
+    const on=!!cur[f.key];
+    return '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;min-width:170px;padding:4px 8px;border:1px solid var(--border2);border-radius:6px;'+(on?'background:rgba(var(--accent-rgb),.08);border-color:var(--accent);':'')+'">'
+      +'<input type="checkbox" data-req-key="'+escHtml(f.key)+'"'+(on?' checked':'')+' style="cursor:pointer;">'
+      +'<span>'+escHtml(f.label)+'</span></label>';
+  }).join('');
+  box.querySelectorAll('input[type=checkbox][data-req-key]').forEach(chk=>{
+    chk.addEventListener('change',()=>{
+      RA.setRequiredField(chk.dataset.reqKey, chk.checked);
+      renderRequired();   // ridisegna per aggiornare il badge attivo
+      if(typeof addLog==='function'){ addLog('Campo "'+chk.dataset.reqKey+'" '+(chk.checked?'reso obbligatorio':'reso facoltativo')); renderAdminLog(); }
+    });
+  });
+}
 function renderWbsReport(){
   const box=document.getElementById('ra-wbs-report'); if(!box) return;
   const RA=window.RegAdmin; if(!RA||!RA.wbsReport){ box.innerHTML=''; return; }
@@ -25900,6 +25939,7 @@ function renderWbsReport(){
 }
 function renderRegAdmin(){
   const RA=window.RegAdmin; if(!RA) return;
+  renderRequired();
   renderWbsReport();
   // elenco laboratori
   const labWrap=document.getElementById('ra-lab-list');
@@ -32184,7 +32224,7 @@ setTool("erase");
   /* ---------- CONFIG condivisa (laboratori, miscele, formato, utenti→lab) ---------- */
   let lastCfgSig='';
   function currentConfig(){
-    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), midMalta:midMalta(), width:db.cfg.width||5, labUsers:db.labUsers||{}, deleted:tombs() };
+    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), midMalta:midMalta(), width:db.cfg.width||5, labUsers:db.labUsers||{}, deleted:tombs(), required:reqCfg() };
   }
   function applyConfig(c){
     if(!c||typeof c!=='object')return false;
@@ -32200,6 +32240,7 @@ setTool("erase");
     if(c.width && c.width!==db.cfg.width){ db.cfg.width=c.width; changed=true; }
     if(c.labUsers&&typeof c.labUsers==='object'){ if(JSON.stringify(c.labUsers)!==JSON.stringify(db.labUsers||{})){db.labUsers=c.labUsers;changed=true;} }
     if(Array.isArray(c.deleted)&&c.deleted.length){ if(tombMerge(c.deleted)) changed=true; }   // cancellazioni condivise dagli altri dispositivi
+    if(c.required && typeof c.required==='object'){ if(JSON.stringify(c.required)!==JSON.stringify(db.cfg.required||{})){ db.cfg.required=Object.assign({}, c.required); changed=true; } }
     return changed;
   }
   async function sbConfigGet(){
@@ -32292,6 +32333,12 @@ setTool("erase");
     setUserLab:(username,lab)=>{ if(!username)return; db.labUsers=db.labUsers||{}; if(lab)db.labUsers[username]=lab; else delete db.labUsers[username]; pushConfig(); return Object.assign({},db.labUsers); },
     setFormat:(mid,width,midM)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); if(midM!=null) db.cfg.midMalta=midM; db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),midMalta:midMalta(),width:db.cfg.width}; },
     getFormat2:()=>({mid:midPart(),midMalta:midMalta(),width:db.cfg.width||5}),
+    // campi obbligatori (condivisi via config)
+    getRequired:()=> Object.assign({}, reqCfg()),
+    getRequiredFields:()=> REQ_FIELDS_DEF.map(f=>({key:f.key,label:f.label})),
+    setRequiredField:(key,on)=>{ db.cfg.required = Object.assign({}, reqCfg()); db.cfg.required[key]=!!on;
+      if(!on) delete db.cfg.required[key];  // pulizia: le chiavi false non servono
+      pushConfig(); applyRequiredMarkers(); return Object.assign({}, reqCfg()); },
     syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); },
     // report: per ogni WBS, ultimo DDT, ultima data e ULTIMO VERBALE ASSEGNATO (le righe senza verbale non contano) + incompleti
     wbsReport:()=>{
@@ -32303,9 +32350,9 @@ setTool("erase");
         const incompleti=arr.filter(e=>!((e.ddt||'').trim())||!((e.mix||'').trim())).length;
         const labs=Array.from(new Set(arr.map(e=>(e.lab||'').trim()).filter(Boolean)));
         return { wbs:w, count:arr.length, lab:labs.join(', '),
-                 ultimaData:maxOf(arr,'data'),        // data più recente
-                 ultimoDdt:maxOf(arr,'ddt'),          // DDT più alto (ordine naturale)
-                 ultimoVerbale:maxOf(arr,'verbale'),  // ULTIMO verbale assegnato: salta le righe senza verbale
+                 ultimaData:maxOf(arr,'data'),
+                 ultimoDdt:maxOf(arr,'ddt'),
+                 ultimoVerbale:maxOf(arr,'verbale'),
                  incompleti };
       });
       rows.sort((a,b)=>natCmp(a.wbs,b.wbs));
@@ -32350,6 +32397,105 @@ setTool("erase");
   function numOf(v){ const m=String(v==null?'':v).match(/(\d+)\s*$/); return m?parseInt(m[1],10):null; }
   function midPart(){ return (db.cfg.mid!=null?db.cfg.mid:'-CZ-'); }
   function midMalta(){ return (db.cfg.midMalta!=null?db.cfg.midMalta:'-MI-'); }
+  // ---- campi obbligatori (configurabili da Admin, condivisi via config) ----
+  // Default: DDT e Mix. La chiave 'cubetti' viene richiesta solo quando la riga è un prelievo.
+  const REQ_FIELDS_DEF=[
+    {key:'data',      label:'Data',              inputId:'reg-data'},
+    {key:'ddt',       label:'DDT',               inputId:'reg-ddt'},
+    {key:'fornitore', label:'Fornitore',         inputId:'reg-forn'},
+    {key:'impresa',   label:'Impresa esecutrice',inputId:'reg-impresa'},
+    {key:'wbs',       label:'WBS',               inputId:'reg-wbs'},
+    {key:'opera',     label:'Opera',             inputId:'reg-opera'},
+    {key:'parte',     label:"Parte d'opera",     inputId:'reg-parte'},
+    {key:'mix',       label:'Mix',               inputId:'reg-mix'},
+    {key:'mc',        label:'Metri cubi (m³)',   inputId:'reg-mc'},
+    {key:'cubetti',   label:'N° cubetti (se prelievo)', inputId:'reg-cubetti'},
+    {key:'note',      label:'Note',              inputId:'reg-note'},
+    {key:'tempAmb',   label:'Temp. ambiente',    inputId:'reg-temp-amb'},
+    {key:'tempCls',   label:'Temp. CLS',         inputId:'reg-temp-cls'}
+  ];
+  function reqCfg(){ return (db.cfg && db.cfg.required && typeof db.cfg.required==='object') ? db.cfg.required : {}; }
+  function reqValueOfEntry(entry,key){
+    switch(key){
+      case 'data': return entry.data; case 'ddt': return entry.ddt;
+      case 'fornitore': return entry.fornitore; case 'impresa': return entry.impresa;
+      case 'wbs': return entry.wbs; case 'opera': return entry.opera; case 'parte': return entry.parte;
+      case 'mix': return entry.mix; case 'mc': return entry.mc;
+      case 'cubetti': return entry.cubetti; case 'note': return entry.note;
+      case 'tempAmb': return entry.tempAmb; case 'tempCls': return entry.tempCls;
+      default: return '';
+    }
+  }
+  // marker * rossi accanto ai label dei campi obbligatori (aggiornato ad ogni renderForm/pushConfig)
+  function applyRequiredMarkers(){
+    const req=reqCfg();
+    REQ_FIELDS_DEF.forEach(f=>{
+      const inp=document.getElementById(f.inputId); if(!inp) return;
+      const wrap=inp.closest('.reg-f')||inp.parentElement; if(!wrap) return;
+      const label=wrap.querySelector('label'); if(!label) return;
+      const old=label.querySelector('.reg-req-mark'); if(old) old.remove();
+      if(req[f.key]){
+        const m=document.createElement('span'); m.className='reg-req-mark'; m.textContent=' *';
+        m.style.color='var(--red)'; m.title='Campo obbligatorio'; label.appendChild(m);
+      }
+    });
+    installMissingCleaners();
+  }
+  // helper: contenitore .reg-f di un campo obbligatorio
+  function fieldWrapperOf(key){
+    const f=REQ_FIELDS_DEF.find(x=>x.key===key); if(!f) return null;
+    const inp=document.getElementById(f.inputId); if(!inp) return null;
+    return inp.closest('.reg-f')||inp.parentElement;
+  }
+  function clearMissingHighlight(){
+    document.querySelectorAll('#tab-registro .reg-f.reg-missing-wrap').forEach(el=>el.classList.remove('reg-missing-wrap'));
+    restoreSaveButton();
+  }
+  function highlightMissingFields(keys){
+    clearMissingHighlight();
+    let first=null;
+    keys.forEach(k=>{ const w=fieldWrapperOf(k); if(!w) return; w.classList.add('reg-missing-wrap'); if(!first) first=w; });
+    if(first){
+      try{ first.scrollIntoView({behavior:'smooth',block:'center'}); }catch(_){ }
+      const inp=first.querySelector('input:not([type=hidden]),select,textarea');
+      if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 300);
+    }
+    markSaveFailed(keys.length);
+  }
+  // pulsante Salva: modalità "non salvato" (rossa) e ritorno alla normalità
+  function markSaveFailed(nMissing){
+    const btn=document.getElementById('reg-save'); if(!btn) return;
+    if(!btn._origText) btn._origText=btn.textContent;
+    btn.textContent='⚠ NON SALVATO — compila i campi obbligatori'+(nMissing?(' ('+nMissing+')'):'');
+    btn.classList.add('reg-save-failed');
+    // rianima lo shake ogni volta
+    btn.classList.remove('reg-save-shake'); void btn.offsetWidth; btn.classList.add('reg-save-shake');
+  }
+  function restoreSaveButton(){
+    const btn=document.getElementById('reg-save'); if(!btn) return;
+    if(btn._origText){ btn.textContent=btn._origText; }
+    btn.classList.remove('reg-save-failed');
+    btn.classList.remove('reg-save-shake');
+  }
+  // rimuove l'evidenziazione appena l'utente inizia a compilare quel campo;
+  // se non restano più campi mancanti, il bottone torna verde/arancio normale.
+  function installMissingCleaners(){
+    REQ_FIELDS_DEF.forEach(f=>{
+      [f.inputId, f.inputId+'-other'].forEach(id=>{
+        const inp=document.getElementById(id); if(!inp || inp._missingBound) return;
+        inp._missingBound=true;
+        const clear=()=>{
+          const w=inp.closest('.reg-f'); if(w) w.classList.remove('reg-missing-wrap');
+          // aggiorna anche il bottone: se non restano campi da evidenziare, ripristina; altrimenti aggiorna il contatore
+          const left=document.querySelectorAll('#tab-registro .reg-f.reg-missing-wrap').length;
+          if(!left) restoreSaveButton();
+          else { const btn=document.getElementById('reg-save'); if(btn&&btn.classList.contains('reg-save-failed')) btn.textContent='⚠ NON SALVATO — compila i campi obbligatori ('+left+')'; }
+        };
+        inp.addEventListener('input',clear);
+        inp.addEventListener('change',clear);
+      });
+    });
+  }
   // il mix selezionato è una malta? (impostabile dal pannello admin)
   function isMalta(mix){ return !!mixCfgOf(mix||'').malta; }
   // sigla da usare adesso: dipende dal mix selezionato nel modulo
@@ -32670,9 +32816,19 @@ setTool("erase");
         if(cfg.sett>0 && prel.some(e=>isSettMark(e)||parseInt(e.cubetti,10)===cfg.sett)) settOk=true;
         tp+=p; tc+=c; tmc+=mc; dayTot[i].p+=p; dayTot[i].c+=c; dayTot[i].mc+=mc; dayTot[i].n+=cell.length;
         if(!cell.length){ tds+='<td class="wrep-empty">–</td>'; return; }
+        // codici dei verbali fatti quel giorno per quel mix (i primi 3 in chiaro, gli altri contati)
+        const verbaliDay=prel.map(e=>(e.verbale||'').trim()).filter(Boolean);
+        let vHtml='';
+        if(verbaliDay.length){
+          const show=verbaliDay.slice(0,3).map(v=>esc(v)).join('<br>');
+          const extra=verbaliDay.length>3 ? ('<br><span title="'+esc(verbaliDay.join(', '))+'">+'+(verbaliDay.length-3)+' altri</span>') : '';
+          vHtml='<div class="wrep-verb">'+show+extra+'</div>';
+        }
         tds += '<td><span class="wrep-mc">'+round1(mc)+' m³</span>'
              + '<div class="wrep-pc">'+(p?('<b>'+p+'</b> prel.'+(c?' · <span class="wrep-c"><b>'+c+'</b> cub.</span>':'')):'<span class="wrep-noprel">nessun prelievo</span>')+'</div>'
-             + '<span class="wrep-a">'+(aria?'<span class="reg-guide-ok">aria ✓</span>':'<span class="reg-guide-warn">aria ⚠</span>')+'</span></td>';
+             + '<span class="wrep-a">'+(aria?'<span class="reg-guide-ok">aria ✓</span>':'<span class="reg-guide-warn">aria ⚠</span>')+'</span>'
+             + vHtml
+             + '</td>';
       });
       const settCell = cfg.sett>0
         ? (settOk?'<span class="reg-guide-ok">✓ fatto ('+cfg.sett+' cub.)</span>':'<span class="reg-guide-warn">⚠ da fare ('+cfg.sett+' cub.)</span>')
@@ -32985,10 +33141,13 @@ setTool("erase");
         : (editId?('Modifica registrazione — '+curLab):('Nuova registrazione — '+curLab)));
     $('reg-save').disabled=disabled;
     updateVerbHint();
+    applyRequiredMarkers();
   }
   function updateVerbHint(){
     const h=$('reg-verbhint'); if(!h)return;
-    if(curLab==='__ALL__' || !prelChecked()){ h.innerHTML=''; return; }
+    // il progressivo dipende dal prefisso (WBS + mix), non dal laboratorio,
+    // quindi funziona anche con "Tutti i laboratori" selezionato in Admin.
+    if(!prelChecked()){ h.innerHTML=''; return; }
     const wbs=curWbs();
     const mix=comboVal('reg-mix','reg-mix-other');
     const pf=verbalePrefix(wbs,mix);
@@ -33053,6 +33212,7 @@ setTool("erase");
     $('reg-cancel-edit').style.display='';
     $('reg-save').textContent='✓ Salva modifiche';
     renderLabs(); renderForm(); updateGuide();
+    clearMissingHighlight();
     $('tab-registro').scrollIntoView({behavior:'smooth',block:'start'});
   }
   function saveEntry(){
@@ -33088,7 +33248,28 @@ setTool("erase");
       by: (currentUser&&currentUser.username)||'',
       at: new Date().toLocaleString('it-IT')
     };
-    if(!entry.data && !entry.ddt && !entry.impresa && !entry.verbale){ toast('Inserisci almeno data, DDT o impresa.'); return; }
+    // validazione: campi obbligatori configurati (default: DDT, Mix)
+    const req=reqCfg();
+    const missing=[];
+    REQ_FIELDS_DEF.forEach(f=>{
+      if(!req[f.key]) return;
+      // "cubetti" ha senso solo se la riga è un prelievo — se non lo è, non lo pretendiamo
+      if(f.key==='cubetti' && !entry.prelievo) return;
+      const v=reqValueOfEntry(entry,f.key);
+      if(!String(v==null?'':v).trim()) missing.push(f.label);
+    });
+    if(missing.length){
+      const missKeys=REQ_FIELDS_DEF.filter(f=>{
+        if(!req[f.key]) return false;
+        if(f.key==='cubetti' && !entry.prelievo) return false;
+        return !String(reqValueOfEntry(entry,f.key)||'').trim();
+      }).map(f=>f.key);
+      highlightMissingFields(missKeys);
+      toast('Compila i campi in rosso per salvare ('+missing.length+' mancant'+(missing.length===1?'e':'i')+').');
+      return;
+    }
+    // fallback (nel caso non ci siano campi obbligatori configurati): evita di salvare una riga completamente vuota
+    if(!Object.values(req).some(Boolean) && !entry.data && !entry.ddt && !entry.impresa && !entry.verbale && !entry.wbs && !entry.mix){ toast('Compila almeno un campo prima di salvare.'); return; }
     // contrassegna il prelievo settimanale (resiste ai futuri cambi di protocollo)
     try{
       const _cfg=mixCfgOf(entry.mix||'');
@@ -33580,52 +33761,62 @@ setTool("erase");
   /* ---------- Excel import / merge ---------- */
   function pickTest(v){ v=(v==null?'':String(v)).trim(); return v?{on:true,val:(v==='✓'?'':v)}:{on:false,val:''}; }
   function truthy(v){ v=(v==null?'':String(v)).trim().toLowerCase(); return ['sì','si','s','yes','y','x','✓','1','true','vero'].includes(v); }
+  // legge il file Excel e ricostruisce le righe (senza toccare il registro).
+  // Usato sia da importFile (merge) che da syncFile (sincronizzazione con cancellazioni).
+  async function readEntriesFromFile(file){
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    const onlyLab = isManager() ? '' : (myLab()||curLab||'');
+    const out=[]; let skipped=0;
+    rows.forEach(r=>{
+      const noAp=(v)=>(typeof v==='string')?v.trim().replace(/^'+/,'').trim():v;
+      const g=(...keys)=>{ for(const k of keys){ if(r[k]!==undefined&&r[k]!=='') return noAp(r[k]); } return ''; };
+      const idFromFile=String(g('ID (tecnico)','ID')||'');
+      const labFromFile=String(g('Laboratorio')||'').trim();
+      if(onlyLab && labFromFile && labFromFile.toLowerCase()!==onlyLab.toLowerCase()){ skipped++; return; }
+      const e={
+        id: idFromFile || ('e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
+        lab: onlyLab || String(g('Laboratorio')||curLab||db.labs[0]||'Laboratorio 1'),
+        data:toISODate(g('Data')), ddt:String(g('DDT')), fornitore:String(g('Fornitore CLS','Fornitore')), impresa:String(g('Impresa Esecutrice','Impresa')),
+        wbs:String(g('WBS')), opera:String(g('Opera')), parte:String(g("Parte d'Opera",'Parte')),
+        mix:String(g('Mix')), mc:String(g('m³','m3','mc')),
+        tests:{
+          slump:pickTest(g('Slump [cm]','Slump')), spand:pickTest(g('Spandimento [cm]','Spandimento')),
+          aria:pickTest(g('Aria [%]','Aria')), ac:pickTest(g('Rapporto A/C','A/C')),
+          essud:pickTest(g('Acqua essudata')), massa:pickTest(g('Massa volumica [kg/m³]','Massa volumica'))
+        },
+        verbale:String(g('Verbale di prelievo','Verbale')),
+        ripetuto:truthy(g('Ripetuto')),
+        cubetti:String(g('N° cubetti','N cubetti','Cubetti')),
+        note:String(g('Note')), by:String(g('Inserito da')), at:String(g('Data inserimento')),
+        tempAmb:String(g('Temp. ambiente [°C]','Temp ambiente','Temperatura ambiente')),
+        tempCls:String(g('Temp. CLS [°C]','Temp CLS','Temperatura CLS'))
+      };
+      e.prelievo = (g('Prelievo eseguito','Prelievo')!=='') ? truthy(g('Prelievo eseguito','Prelievo')) : !!(e.verbale && e.verbale.trim());
+      if(!e.prelievo){ e.verbale=''; e.ripetuto=false; }
+      out.push(e);
+    });
+    return {entries:out, skipped, onlyLab};
+  }
+  // trova la riga esistente che corrisponde a quella importata (id, poi verbale, poi lab+data+ddt+mix)
+  function findExisting(e){
+    if(e.id){ const i=db.entries.findIndex(x=>x.id===e.id); if(i>=0) return i; }
+    if(e.verbale && e.verbale.trim()){ const i=db.entries.findIndex(x=>(x.verbale||'').trim()===e.verbale.trim()); if(i>=0) return i; }
+    const k=(a)=>[(a.lab||''),(a.data||''),String(a.ddt||'').trim(),(a.mix||'')].join('|').toLowerCase();
+    if(String(e.ddt||'').trim()){ const key=k(e); return db.entries.findIndex(x=>k(x)===key); }
+    return -1;
+  }
   async function importFile(file){
     try{
-      const buf=await file.arrayBuffer();
-      const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-      let added=0, updated=0, skipped=0;
-      const onlyLab = isManager() ? '' : (myLab()||curLab||'');   // il laboratorio tocca solo le sue righe
-      rows.forEach(r=>{
-        // toglie l'eventuale apostrofo iniziale usato in Excel per forzare il testo ('00099 → 00099)
-        const noAp=(v)=>(typeof v==='string')?v.trim().replace(/^'+/,'').trim():v;
-        const g=(...keys)=>{ for(const k of keys){ if(r[k]!==undefined&&r[k]!=='') return noAp(r[k]); } return ''; };
-        const idFromFile=String(g('ID (tecnico)','ID')||'');
-        const labFromFile=String(g('Laboratorio')||'').trim();
-        if(onlyLab && labFromFile && labFromFile.toLowerCase()!==onlyLab.toLowerCase()){ skipped++; return; }
-        const e={
-          id: idFromFile || ('e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
-          lab: onlyLab || String(g('Laboratorio')||curLab||db.labs[0]||'Laboratorio 1'),
-          data:toISODate(g('Data')), ddt:String(g('DDT')), fornitore:String(g('Fornitore CLS','Fornitore')), impresa:String(g('Impresa Esecutrice','Impresa')),
-          wbs:String(g('WBS')), opera:String(g('Opera')), parte:String(g("Parte d'Opera",'Parte')),
-          mix:String(g('Mix')), mc:String(g('m³','m3','mc')),
-          tests:{
-            slump:pickTest(g('Slump [cm]','Slump')), spand:pickTest(g('Spandimento [cm]','Spandimento')),
-            aria:pickTest(g('Aria [%]','Aria')), ac:pickTest(g('Rapporto A/C','A/C')),
-            essud:pickTest(g('Acqua essudata')), massa:pickTest(g('Massa volumica [kg/m³]','Massa volumica'))
-          },
-          verbale:String(g('Verbale di prelievo','Verbale')),
-          ripetuto:truthy(g('Ripetuto')),
-          cubetti:String(g('N° cubetti','N cubetti','Cubetti')),
-          note:String(g('Note')), by:String(g('Inserito da')), at:String(g('Data inserimento')),
-          tempAmb:String(g('Temp. ambiente [°C]','Temp ambiente','Temperatura ambiente')),
-          tempCls:String(g('Temp. CLS [°C]','Temp CLS','Temperatura CLS'))
-        };
-        e.prelievo = (g('Prelievo eseguito','Prelievo')!=='') ? truthy(g('Prelievo eseguito','Prelievo')) : !!(e.verbale && e.verbale.trim());
-        if(!e.prelievo){ e.verbale=''; e.ripetuto=false; }
+      const {entries, skipped, onlyLab} = await readEntriesFromFile(file);
+      let added=0, updated=0, skipLab=skipped;
+      entries.forEach(e=>{
         if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
         if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
-        let i=-1;
-        if(idFromFile) i=db.entries.findIndex(x=>x.id===e.id);
-        if(i<0 && e.verbale && e.verbale.trim()) i=db.entries.findIndex(x=>(x.verbale||'').trim()===e.verbale.trim());
-        if(i<0){ // stessa riga: laboratorio + data + DDT + mix
-          const k=(a)=>[(a.lab||''),(a.data||''),String(a.ddt||'').trim(),(a.mix||'')].join('|').toLowerCase();
-          const key=k(e);
-          if(String(e.ddt||'').trim()) i=db.entries.findIndex(x=>k(x)===key);
-        }
-        if(i>=0 && onlyLab && (db.entries[i].lab||'').toLowerCase()!==onlyLab.toLowerCase()){ skipped++; return; }
+        const i=findExisting(e);
+        if(i>=0 && onlyLab && (db.entries[i].lab||'').toLowerCase()!==onlyLab.toLowerCase()){ skipLab++; return; }
         if(i>=0){ e.id=db.entries[i].id; db.entries[i]=e; updated++; } else { db.entries.push(e); added++; }
       });
       // ricalcola flag ripetuto sull'intero database
@@ -33633,7 +33824,69 @@ setTool("erase");
       db.entries.forEach(e=>{ const k=String(e.verbale||'').trim().toLowerCase(); if(!k)return; if(seen[k])e.ripetuto=true; else seen[k]=true; });
       save(); renderLabs(); refreshCombos(); renderForm(); renderTable();
       if(cloudOn()){ try{ await sbRegUpsertMany(db.entries); lastSig=''; }catch(err){ console.warn('import cloud',err); db.entries.forEach(e=>e._pending=true); save(); } }
-      toast('Database aggiornato: '+added+' aggiunte, '+updated+' aggiornate'+(skipped?(' · '+skipped+' saltate (di altri laboratori)'):'')+'.');
+      toast('Database aggiornato: '+added+' aggiunte, '+updated+' aggiornate'+(skipLab?(' · '+skipLab+' saltate (di altri laboratori)'):'')+'.');
+    }catch(err){
+      console.error(err); toast('Errore lettura file Excel.');
+    }
+  }
+  // SINCRONIZZAZIONE: come importFile, ma le righe presenti nel registro e assenti nel file vengono CANCELLATE.
+  // Mostra un'anteprima con conteggi + elenco delle cancellazioni, e procede solo se l'utente conferma.
+  async function syncFile(file){
+    try{
+      const {entries, skipped, onlyLab} = await readEntriesFromFile(file);
+      // scopo del confronto = laboratorio corrente (o solo il proprio, se non admin). Le altre righe NON vengono toccate.
+      const scope = onlyLab || (curLab && curLab!=='__ALL__' ? curLab : '');
+      const inScope = e => scope ? ((e.lab||'').toLowerCase()===scope.toLowerCase()) : true;
+      // mappa: id esistente -> indice; per ogni riga del file annota se è nuova/aggiornata
+      const toUpdate=[]; const toAdd=[]; const seenIdx=new Set();
+      entries.forEach(e=>{
+        const i=findExisting(e);
+        if(i>=0){ seenIdx.add(i); toUpdate.push({e, i}); } else { toAdd.push(e); }
+      });
+      // righe da cancellare = quelle nello scopo che il file NON riporta
+      const toDelete=[]; db.entries.forEach((x,idx)=>{ if(inScope(x) && !seenIdx.has(idx)) toDelete.push(x); });
+      const scopeLabel = scope ? ('del laboratorio "'+scope+'"') : 'di TUTTI i laboratori';
+      // anteprima delle cancellazioni (max 12) per la conferma
+      const fmtRow=r=>[r.data||'—', (r.wbs||'').trim()||'—', (r.ddt||'').trim()||'—', (r.verbale||'').trim()||'—'].join('  ·  ');
+      const antep = toDelete.slice(0,12).map(fmtRow).join('\n');
+      const extra = toDelete.length>12 ? ('\n... e altre '+(toDelete.length-12)+' righe') : '';
+      const msg =
+        'Sincronizzazione '+scopeLabel+':\n\n'+
+        '  • '+toAdd.length+' righe nuove da AGGIUNGERE\n'+
+        '  • '+toUpdate.length+' righe da AGGIORNARE\n'+
+        '  • '+toDelete.length+' righe da CANCELLARE (presenti nel registro, assenti nel file)\n'+
+        (skipped?('  • '+skipped+' righe del file saltate (di altri laboratori)\n'):'')+
+        (toDelete.length?('\nEsempi di righe che verranno cancellate:\n'+antep+extra+'\n'):'')+
+        '\nProcedere?';
+      if(!confirm(msg)) return;
+      if(toDelete.length){
+        if((prompt('Confermare la cancellazione di '+toDelete.length+' righe scrivendo ELIMINA:')||'').trim().toUpperCase()!=='ELIMINA'){
+          toast('Sincronizzazione annullata.'); return;
+        }
+      }
+      // esegui: aggiorna, aggiungi, cancella (con lapide → propagata a tutti i dispositivi)
+      toUpdate.forEach(({e,i})=>{ if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
+        if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
+        e.id=db.entries[i].id; db.entries[i]=e; });
+      toAdd.forEach(e=>{ if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
+        if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
+        db.entries.push(e); });
+      const delIds=new Set(toDelete.map(x=>x.id));
+      db.entries=db.entries.filter(x=>!delIds.has(x.id));
+      // ricalcola ripetuto
+      const seen={};
+      db.entries.forEach(e=>{ const k=String(e.verbale||'').trim().toLowerCase(); if(!k)return; if(seen[k])e.ripetuto=true; else seen[k]=true; });
+      // registra le cancellazioni come "lapidi" e propagale via config, poi cancella su cloud
+      toDelete.forEach(x=>{ tombAdd(x.id); });
+      pushConfig();                                // propaga le cancellazioni a tutti i dispositivi
+      save(); renderLabs(); refreshCombos(); renderForm(); renderTable();
+      if(cloudOn()){
+        try{ await sbRegUpsertMany(db.entries); }catch(err){ console.warn('sync upsert',err); db.entries.forEach(e=>e._pending=true); save(); }
+        for(const id of delIds){ try{ await deleteCloud(id); }catch(_){ } }
+        lastSig='';
+      }
+      if(typeof addLog==='function'){ addLog('Sincronizzazione Excel '+scopeLabel+': +'+toAdd.length+' / ~'+toUpdate.length+' / -'+toDelete.length); }
+      toast('Sincronizzazione: '+toAdd.length+' aggiunte, '+toUpdate.length+' aggiornate, '+toDelete.length+' cancellate.');
     }catch(err){
       console.error(err); toast('Errore lettura file Excel.');
     }
@@ -33755,6 +34008,10 @@ setTool("erase");
     applyViewerUI();
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
+    if($('reg-sync-btn')){
+      $('reg-sync-btn').onclick=()=>$('reg-sync-file').click();
+      $('reg-sync-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)syncFile(f); ev.target.value=''; };
+    }
     if($('reg-colreset')) $('reg-colreset').onclick=(ev)=>{ ev.preventDefault(); resetColOrder(); toast('Ordine colonne ripristinato.'); };
     // ✕ Togli tutti i filtri
     if($('reg-f-clear')) $('reg-f-clear').onclick=(ev)=>{
@@ -33802,7 +34059,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 10.3';
+  window.APP_VERSION = 'Versione 10.8';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
