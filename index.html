@@ -856,7 +856,9 @@ tr.new-row{animation:rowIn .2s ease both;}
       <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
         <div class="admin-section-title">🤖 Notifiche Telegram</div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">
-          Bot attivo: <b>@modernquality_notifiche_bot</b><br/>Ogni accesso richiede approvazione via Telegram.
+          Bot attivo: <b>@modernquality_notifiche_bot</b><br/>
+          Ogni accesso viene notificato su Telegram. Admin e laboratori entrano direttamente;
+          l'approvazione con i pulsanti Approva/Rifiuta è richiesta solo per gli utenti in sola consultazione.
         </div>
 
       </div>
@@ -25314,6 +25316,16 @@ function sendTelegram(msg){
 // ── LOGIN con approvazione Telegram ──
 let _pending=null, _pollTimer=null, _pollOff=0, _reqId=null, _loginTs=0;
 
+// Registra data e ora dell'ultimo accesso. Chiamata da TUTTI i percorsi di login
+// (admin, laboratorio e approvazione Telegram), così la colonna in Admin è sempre veritiera.
+function markLastLogin(username){
+  try{
+    const d=new Date();
+    const txt=d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT').slice(0,5);
+    return sbUpdateUser(username,{last_login:txt});
+  }catch(_){ /* se il cloud non risponde, l'accesso non deve fallire */ }
+}
+
 async function doLogin(){
   const username=(document.getElementById('login-user').value||'').trim();
   const password=document.getElementById('login-pass').value||'';
@@ -25329,11 +25341,15 @@ async function doLogin(){
   errEl.classList.remove('show');
   // Admin non locale: controlla ruolo e bypassa Telegram
   if((user.role||'').toLowerCase().trim()==='admin'){
-    sendTelegram('✅ Admin: '+user.username).catch(()=>{});loginAs(user);return;
+    sendTelegram('✅ Admin: '+user.username).catch(()=>{});
+    markLastLogin(user.username);          // registra l'ultimo accesso anche senza approvazione
+    loginAs(user);return;
   }
   // Laboratorio: accesso diretto, senza richiesta di approvazione
   if((user.role||'').toLowerCase().trim()==='laboratorio'){
-    sendTelegram('🧪 Laboratorio: '+user.username).catch(()=>{});loginAs(user);return;
+    sendTelegram('🧪 Laboratorio: '+user.username).catch(()=>{});
+    markLastLogin(user.username);          // registra l'ultimo accesso anche senza approvazione
+    loginAs(user);return;
   }
   _reqId='r'+Date.now(); _pending=user; _loginTs=Math.floor(Date.now()/1000);
   // Mostra schermata attesa
@@ -25411,7 +25427,7 @@ async function pollApproval(){
       const u=_pending; _pending=null; _reqId=null;
       // Non-blocking: non aspettiamo sendTelegram
       sendTelegram('\u2705 Accesso approvato: '+u.username).catch(()=>{});
-      sbUpdateUser(u.username,{last_login:new Date().toLocaleDateString('it-IT')});
+      markLastLogin(u.username);
       loginAs(u); return;
     }
     if(approved===false){
@@ -25690,7 +25706,30 @@ async function renderAdminUsers() {
     const opts=['<option value="">— assegna —</option>'].concat(_labs.map(l=>'<option'+(l===cur?' selected':'')+'>'+escHtml(l)+'</option>')).join('');
     return '<select class="lab-assign" data-usr="'+escHtml(usr)+'" style="font-size:12px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:999px;padding:6px 10px;min-width:130px;">'+opts+'</select>';
   };
-  users.forEach(u => {
+  // ordine: prima gli Admin, poi i Laboratori raggruppati per laboratorio, infine gli utenti in sola consultazione.
+  // Dentro ogni gruppo, ordine alfabetico per nome.
+  const _rank=r=>{ const x=(r||'user').toLowerCase().trim(); return x==='admin'?0:(x==='laboratorio'?1:2); };
+  const _sorted=users.slice().sort((a,b)=>{
+    const ra=_rank(a.role), rb=_rank(b.role);
+    if(ra!==rb) return ra-rb;
+    if(ra===1){   // fra i laboratori: raggruppa per laboratorio assegnato (i non assegnati in fondo)
+      const la=(_assign[a.username]||''), lb=(_assign[b.username]||'');
+      if(!la!==!lb) return la?-1:1;
+      const t=la.localeCompare(lb,'it',{sensitivity:'base'}); if(t) return t;
+    }
+    return String(a.username||'').localeCompare(String(b.username||''),'it',{sensitivity:'base'});
+  });
+  let _prevGroup=null;
+  _sorted.forEach(u => {
+    // intestazione di gruppo (Admin · Laboratorio X · Sola consultazione)
+    const _r=_rank(u.role);
+    const _g = _r===0 ? 'Admin' : (_r===1 ? ('Laboratorio '+((_assign[u.username]||'').trim()||'— non assegnato')) : 'Sola consultazione');
+    if(_g!==_prevGroup){
+      _prevGroup=_g;
+      const gtr=document.createElement('tr');
+      gtr.innerHTML='<td colspan="7" style="padding:10px 10px 4px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border2);">'+escHtml(_g)+'</td>';
+      tbody.appendChild(gtr);
+    }
     const isMe = u.username === currentUser?.username;
     const pid='pwd-'+u.username.replace(/\s/g,'_');
     const tr = document.createElement('tr');
@@ -27857,7 +27896,9 @@ function switchMainTab(name, btn) {
       return true;
     });
 
-    filtered.forEach(r=>{r.maturSel=r.matur28; r.giorni=28;}); // giorni usato solo nel PDF
+    // la maturazione mostrata segue i giorni scelti (7 o 28), come il PDF
+    const _gg=getGiorni();
+    filtered.forEach(r=>{ r.giorni=_gg; r.maturSel=(_gg===7 ? (r.matur7||r.matur28) : r.matur28); });
     // Applica ordinamento corrente
     applySort();
     labGroups={};
@@ -27874,6 +27915,12 @@ function switchMainTab(name, btn) {
     if(d<=16) return '<span class="urg-7">'+d+'gg</span>';
     return '<span class="urg-ok">'+d+'gg</span>';
   }
+
+  // cambiando 7/28 giorni la tabella si riaggiorna (date di maturazione e urgenze)
+  ['vcls-g7','vcls-g28'].forEach(function(id){
+    const el=$(id); if(!el || el._ggBound) return; el._ggBound=true;
+    el.addEventListener('change',function(){ try{ if(typeof wb!=='undefined' && wb) analizza(); }catch(_){} });
+  });
 
   function renderPreview(){
     const wrap=$('vcls-preview-wrap'), emptyEl=$('vcls-empty-msg'), ab=$('vcls-action-bar');
@@ -33119,7 +33166,18 @@ setTool("erase");
     box.style.display = issues.length ? '' : 'none';
   }
   // DDT: suggerimenti dai DDT già inseriti + avviso se già presente
-  function distinctDdt(){ const set={}; db.entries.forEach(e=>{ const d=(e.ddt||'').trim(); if(d)set[d]=1; }); return Object.keys(set).sort(); }
+  // Suggerimenti DDT: solo i 10 più recenti (prima erano TUTTI quelli mai inseriti,
+  // e la tendina diventava lunghissima). Servono da riferimento sulla numerazione in corso.
+  function distinctDdt(){
+    // su mobile la tendina nativa si apre tra il campo e la tastiera: ne bastano pochissimi
+    const isMobile = (window.matchMedia && window.matchMedia('(max-width:640px)').matches);
+    const MAX = isMobile ? 4 : 10;
+    const seen={}, out=[];
+    db.entries.slice()
+      .sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')))   // dal più recente
+      .forEach(e=>{ const d=(e.ddt||'').trim(); if(d && !seen[d]){ seen[d]=1; out.push(d); } });
+    return out.slice(0,MAX);
+  }
   function refreshDdtList(){ const dl=$('reg-ddt-list'); if(!dl)return; dl.innerHTML=distinctDdt().map(d=>'<option value="'+esc(d)+'"></option>').join(''); }
   // Il numero di DDT deve essere UNICO in tutto il registro: qualsiasi laboratorio, qualsiasi WBS.
   // Restituisce le righe che usano già quel numero (escludendo quella in modifica).
@@ -34199,7 +34257,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 12.0';
+  window.APP_VERSION = 'Versione 12.5';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
