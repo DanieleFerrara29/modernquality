@@ -829,6 +829,11 @@ tr.new-row{animation:rowIn .2s ease both;}
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Scegli quali campi non possono restare vuoti quando si salva una registrazione. La regola vale per tutti i laboratori e per tutti gli utenti (il campo compare con un <b style="color:var(--red);">*</b> rosso nel form).</div>
       <div id="ra-required" style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--text);"></div>
 
+      <!-- DDT duplicati -->
+      <div class="admin-section-title" style="margin-top:24px;">🔁 DDT duplicati</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Numeri di DDT usati da più righe (in qualunque laboratorio e WBS). Il salvataggio ora li impedisce, ma le righe già registrate vanno corrette a mano.</div>
+      <div id="ra-ddt-dup"><div style="color:var(--muted);font-size:11px;">—</div></div>
+
       <!-- Ultimo prelievo per WBS -->
       <div class="admin-section-title" style="margin-top:24px;">📋 Ultimo prelievo per WBS</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Per ogni WBS, l'ultimo verbale assegnato. Le WBS con righe incomplete (senza DDT o senza mix) sono evidenziate in arancione.</div>
@@ -2502,10 +2507,23 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-f.reg-missing-wrap select,
 #tab-registro .reg-f.reg-missing-wrap textarea{ border-color:var(--red)!important; box-shadow:0 0 0 2px rgba(224,90,90,.18)!important; }
 #tab-registro .reg-f.reg-missing-wrap::after{ content:'⚠ Campo obbligatorio'; display:block; margin-top:4px; font-size:11px; color:var(--red); font-weight:600; letter-spacing:.02em; }
+/* --- campi mantenuti dalla registrazione precedente (lampeggio breve) --- */
+#tab-registro .reg-f.reg-kept > label{ color:var(--accent); }
+#tab-registro .reg-f.reg-kept input,
+#tab-registro .reg-f.reg-kept select{ border-color:var(--accent)!important; transition:border-color .4s; }
+#tab-registro .reg-f.reg-kept::after{ content:'↺ mantenuto'; display:block; margin-top:3px; font-size:10.5px; color:var(--accent); font-weight:600; }
 /* --- pulsante Salva in modalità "non salvato" --- */
+#tab-registro #reg-save{ white-space:normal; line-height:1.3; }   /* consenti wrap su schermi stretti */
 #tab-registro #reg-save.reg-save-failed{ background:var(--red)!important; border-color:var(--red)!important; color:#fff!important; }
 #tab-registro #reg-save.reg-save-failed:hover{ background:var(--red-dark)!important; border-color:var(--red-dark)!important; }
 #tab-registro #reg-save.reg-save-shake{ animation:reg-save-shake .55s cubic-bezier(.36,.07,.19,.97) both; }
+@media (max-width:640px){
+  #tab-registro #reg-save{ font-size:15px; padding-top:12px; padding-bottom:12px; }
+  #tab-registro .reg-f.reg-missing-wrap::after{ font-size:12px; }
+  /* Campi obbligatori in Admin: pastiglie più grandi da dito */
+  #ra-required label{ min-width:calc(50% - 8px)!important; padding:10px 12px!important; font-size:14px!important; }
+  #ra-required input[type=checkbox]{ width:18px; height:18px; }
+}
 @keyframes reg-save-shake{ 10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);} 30%,50%,70%{transform:translateX(-8px);} 40%,60%{transform:translateX(8px);} }
 #tab-registro table.wrep td{min-width:96px;}
 #tab-registro table.wrep td.wrep-tot .wrep-mc{color:var(--accent);}
@@ -2837,6 +2855,15 @@ input[type="date"]{ color-scheme:dark; }
           <select id="reg-forn"></select>
           <input type="text" id="reg-forn-other" placeholder="scrivi il fornitore" style="display:none;margin-top:8px;" autocomplete="off"/>
         </div>
+        <div class="reg-f">
+          <label>Mix (miscela CLS)</label>
+          <div class="reg-mixrow">
+            <select id="reg-mix"></select>
+            <button class="reg-mini" id="reg-mix-add" title="Aggiungi nuova miscela">+</button>
+          </div>
+          <input type="text" id="reg-mix-other" placeholder="scrivi la miscela" style="display:none;margin-top:8px;" autocomplete="off"/>
+        </div>
+        <div class="reg-f"><label>Metri cubi (m³)</label><input type="text" inputmode="decimal" id="reg-mc" placeholder="es. 9,50" autocomplete="off"/></div>
         <div class="reg-f"><label>Impresa esecutrice</label>
           <select id="reg-impresa"></select>
           <input type="text" id="reg-impresa-other" placeholder="scrivi l'impresa" style="display:none;margin-top:8px;" autocomplete="off"/>
@@ -2849,33 +2876,20 @@ input[type="date"]{ color-scheme:dark; }
         <div class="reg-f"><label>Parte d'opera</label><input type="text" id="reg-parte" autocomplete="off"/></div>
       </section>
 
-      <section class="reg-sec">
-        <div class="reg-sec-t">2 · Calcestruzzo</div>
-        <div class="reg-f">
-          <label>Mix (miscela CLS)</label>
-          <div class="reg-mixrow">
-            <select id="reg-mix"></select>
-            <button class="reg-mini" id="reg-mix-add" title="Aggiungi nuova miscela">+</button>
-          </div>
-          <input type="text" id="reg-mix-other" placeholder="scrivi la miscela" style="display:none;margin-top:8px;" autocomplete="off"/>
-        </div>
-        <div class="reg-f"><label>Metri cubi (m³)</label><input type="text" inputmode="decimal" id="reg-mc" placeholder="es. 9,50" autocomplete="off"/></div>
-        <div class="reg-f"><label>Temperatura ambiente (°C)</label><input type="text" inputmode="decimal" id="reg-temp-amb" placeholder="es. 22" autocomplete="off"/></div>
-        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="text" inputmode="decimal" id="reg-temp-cls" placeholder="es. 18" autocomplete="off"/><div class="reg-fieldwarn" id="reg-tcls-hint"></div></div>
-      </section>
-
       <div class="reg-guide" id="reg-guide" style="display:none;"></div>
       <div class="reg-rangewarn" id="reg-range-warn" style="display:none !important;"></div>
 
       <section class="reg-sec reg-tests">
-        <div class="reg-sec-t">3 · Prove eseguite</div>
+        <div class="reg-sec-t">2 · Prove eseguite</div>
         <div class="reg-sec-hint">Spunta quelle effettuate e inserisci il valore.</div>
+        <div class="reg-f"><label>Temperatura ambiente (°C)</label><input type="text" inputmode="decimal" id="reg-temp-amb" placeholder="es. 22" autocomplete="off"/></div>
+        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="text" inputmode="decimal" id="reg-temp-cls" placeholder="es. 18" autocomplete="off"/><div class="reg-fieldwarn" id="reg-tcls-hint"></div></div>
         <div class="reg-tests-grid" id="reg-tests-grid"></div>
         <div class="reg-fieldwarn" id="reg-tests-hint"></div>
       </section>
 
       <section class="reg-sec reg-verbblock">
-        <div class="reg-sec-t">4 · Prelievo <span style="font-weight:400;color:var(--muted);font-size:12px;">(facoltativo)</span></div>
+        <div class="reg-sec-t">3 · Prelievo <span style="font-weight:400;color:var(--muted);font-size:12px;">(facoltativo)</span></div>
         <div class="reg-sec-hint">Il numero parte dalla WBS. Quello definitivo viene assegnato al salvataggio dal sistema, senza rischio di doppioni anche se più persone salvano insieme.</div>
         <div class="reg-verbrow">
           <label class="reg-prel-toggle"><input type="checkbox" id="reg-prel-done" autocomplete="off"/> <span>Prelievo eseguito</span></label>
@@ -2892,7 +2906,7 @@ input[type="date"]{ color-scheme:dark; }
       </section>
 
       <section class="reg-sec">
-        <div class="reg-sec-t">5 · Altro</div>
+        <div class="reg-sec-t">4 · Altro</div>
         <div class="reg-f">
           <label>N° cubetti realizzati</label>
           <div class="reg-chips" id="reg-cubetti-chips">
@@ -8768,17 +8782,17 @@ var __async = (__this, __arguments, generator) => {
     function utf8CheckExtraBytes(self2, buf, p) {
       if ((buf[0] & 192) !== 128) {
         self2.lastNeed = 0;
-        return " ";
+        return "�";
       }
       if (self2.lastNeed > 1 && buf.length > 1) {
         if ((buf[1] & 192) !== 128) {
           self2.lastNeed = 1;
-          return " ";
+          return "�";
         }
         if (self2.lastNeed > 2 && buf.length > 2) {
           if ((buf[2] & 192) !== 128) {
             self2.lastNeed = 2;
-            return " ";
+            return "�";
           }
         }
       }
@@ -8804,7 +8818,7 @@ var __async = (__this, __arguments, generator) => {
     }
     function utf8End(buf) {
       var r = buf && buf.length ? this.write(buf) : "";
-      if (this.lastNeed) return r + " ";
+      if (this.lastNeed) return r + "�";
       return r;
     }
     function utf16Text(buf, i) {
@@ -25919,6 +25933,22 @@ function renderRequired(){
     });
   });
 }
+function renderDdtDup(){
+  const box=document.getElementById('ra-ddt-dup'); if(!box) return;
+  const RA=window.RegAdmin; if(!RA||!RA.ddtDupReport){ box.innerHTML=''; return; }
+  const rows=RA.ddtDupReport();
+  if(!rows.length){ box.innerHTML='<div style="color:var(--green);font-size:11px;">✓ Nessun DDT duplicato.</div>'; return; }
+  let h='<div style="font-size:12px;color:var(--red);margin-bottom:8px;"><b>'+rows.length+'</b> '+(rows.length===1?'numero di DDT usato':'numeri di DDT usati')+' da più righe:</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:6px;">';
+  rows.slice(0,40).forEach(r=>{
+    h+='<div style="background:var(--bg);border:1px solid var(--red);border-radius:6px;padding:7px 10px;font-size:12px;">'
+      +'<b style="font-family:monospace;">'+escHtml(r.ddt)+'</b> <span style="color:var(--muted);">— '+r.n+' righe</span>'
+      +'<div style="color:var(--muted);font-size:11px;margin-top:3px;">'+r.dove.map(d=>escHtml(d)).join('<br>')+'</div></div>';
+  });
+  h+='</div>';
+  if(rows.length>40) h+='<div style="color:var(--muted);font-size:11px;margin-top:6px;">… e altri '+(rows.length-40)+'.</div>';
+  box.innerHTML=h;
+}
 function renderWbsReport(){
   const box=document.getElementById('ra-wbs-report'); if(!box) return;
   const RA=window.RegAdmin; if(!RA||!RA.wbsReport){ box.innerHTML=''; return; }
@@ -25940,6 +25970,7 @@ function renderWbsReport(){
 function renderRegAdmin(){
   const RA=window.RegAdmin; if(!RA) return;
   renderRequired();
+  renderDdtDup();
   renderWbsReport();
   // elenco laboratori
   const labWrap=document.getElementById('ra-lab-list');
@@ -32240,7 +32271,8 @@ setTool("erase");
     if(c.width && c.width!==db.cfg.width){ db.cfg.width=c.width; changed=true; }
     if(c.labUsers&&typeof c.labUsers==='object'){ if(JSON.stringify(c.labUsers)!==JSON.stringify(db.labUsers||{})){db.labUsers=c.labUsers;changed=true;} }
     if(Array.isArray(c.deleted)&&c.deleted.length){ if(tombMerge(c.deleted)) changed=true; }   // cancellazioni condivise dagli altri dispositivi
-    if(c.required && typeof c.required==='object'){ if(JSON.stringify(c.required)!==JSON.stringify(db.cfg.required||{})){ db.cfg.required=Object.assign({}, c.required); changed=true; } }
+    if(c.required && typeof c.required==='object'){ if(!db.cfg||typeof db.cfg!=='object') db.cfg={mid:'-CZ-',width:5};
+      if(JSON.stringify(c.required)!==JSON.stringify(db.cfg.required||{})){ db.cfg.required=Object.assign({}, c.required); changed=true; } }
     return changed;
   }
   async function sbConfigGet(){
@@ -32336,10 +32368,21 @@ setTool("erase");
     // campi obbligatori (condivisi via config)
     getRequired:()=> Object.assign({}, reqCfg()),
     getRequiredFields:()=> REQ_FIELDS_DEF.map(f=>({key:f.key,label:f.label})),
-    setRequiredField:(key,on)=>{ db.cfg.required = Object.assign({}, reqCfg()); db.cfg.required[key]=!!on;
+    setRequiredField:(key,on)=>{ if(!db.cfg||typeof db.cfg!=='object') db.cfg={mid:'-CZ-',width:5};
+      db.cfg.required = Object.assign({}, reqCfg()); db.cfg.required[key]=!!on;
       if(!on) delete db.cfg.required[key];  // pulizia: le chiavi false non servono
       pushConfig(); applyRequiredMarkers(); return Object.assign({}, reqCfg()); },
     syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); },
+    // elenco dei numeri di DDT usati da più di una riga (in tutto il registro)
+    ddtDupReport:()=>{
+      const by={};
+      db.entries.forEach(e=>{ const d=String(e.ddt||'').trim(); if(!d) return;
+        const k=d.toLowerCase(); (by[k]=by[k]||{ddt:d,rows:[]}).rows.push(e); });
+      return Object.values(by).filter(g=>g.rows.length>1)
+        .map(g=>({ ddt:g.ddt, n:g.rows.length,
+                   dove:g.rows.map(e=>[ (e.lab||'').trim(), (e.data?fmtIt(e.data):''), (e.wbs||'').trim(), (e.verbale||'').trim() ].filter(Boolean).join(' · ')) }))
+        .sort((a,b)=> b.n-a.n || natCmp(a.ddt,b.ddt));
+    },
     // report: per ogni WBS, ultimo DDT, ultima data e ULTIMO VERBALE ASSEGNATO (le righe senza verbale non contano) + incompleti
     wbsReport:()=>{
       const byW={};
@@ -32457,16 +32500,28 @@ setTool("erase");
     keys.forEach(k=>{ const w=fieldWrapperOf(k); if(!w) return; w.classList.add('reg-missing-wrap'); if(!first) first=w; });
     if(first){
       try{ first.scrollIntoView({behavior:'smooth',block:'center'}); }catch(_){ }
-      const inp=first.querySelector('input:not([type=hidden]),select,textarea');
-      if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 300);
+      // su mobile evito il focus automatico: aprirebbe la tastiera mentre l'utente sta ancora leggendo dove salire
+      const isMobile = (window.matchMedia && window.matchMedia('(max-width:640px)').matches);
+      if(!isMobile){
+        const inp=first.querySelector('input:not([type=hidden]),select,textarea');
+        if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 300);
+      }
     }
     markSaveFailed(keys.length);
   }
+  // testo del bottone in modalità fallito: versione corta su schermi piccoli
+  function _failText(n, custom){
+    const isMobile = (window.matchMedia && window.matchMedia('(max-width:640px)').matches);
+    if(custom) return '⚠ NON SALVATO — '+custom;
+    return isMobile
+      ? '⚠ NON SALVATO'+(n?(' ('+n+' da compilare)'):'')
+      : '⚠ NON SALVATO — compila i campi obbligatori'+(n?(' ('+n+')'):'');
+  }
   // pulsante Salva: modalità "non salvato" (rossa) e ritorno alla normalità
-  function markSaveFailed(nMissing){
+  function markSaveFailed(nMissing, custom){
     const btn=document.getElementById('reg-save'); if(!btn) return;
     if(!btn._origText) btn._origText=btn.textContent;
-    btn.textContent='⚠ NON SALVATO — compila i campi obbligatori'+(nMissing?(' ('+nMissing+')'):'');
+    btn.textContent=_failText(nMissing, custom);
     btn.classList.add('reg-save-failed');
     // rianima lo shake ogni volta
     btn.classList.remove('reg-save-shake'); void btn.offsetWidth; btn.classList.add('reg-save-shake');
@@ -32489,7 +32544,7 @@ setTool("erase");
           // aggiorna anche il bottone: se non restano campi da evidenziare, ripristina; altrimenti aggiorna il contatore
           const left=document.querySelectorAll('#tab-registro .reg-f.reg-missing-wrap').length;
           if(!left) restoreSaveButton();
-          else { const btn=document.getElementById('reg-save'); if(btn&&btn.classList.contains('reg-save-failed')) btn.textContent='⚠ NON SALVATO — compila i campi obbligatori ('+left+')'; }
+          else { const btn=document.getElementById('reg-save'); if(btn&&btn.classList.contains('reg-save-failed')) btn.textContent=_failText(left); }
         };
         inp.addEventListener('input',clear);
         inp.addEventListener('change',clear);
@@ -32879,33 +32934,35 @@ setTool("erase");
     d.setDate(d.getDate()-wd);
     return isoLocal(d);
   }
-  function entriesToday(wbs,mix){ const t=($('reg-data')?$('reg-data').value:'')||todayISO(); return db.entries.filter(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId); }
+  // confronto tra miscele tollerante a spazi in più e maiuscole/minuscole:
+  // le righe importate da Excel possono avere spazi accidentali e non verrebbero riconosciute
+  function mixEq(a,b){ return String(a==null?'':a).trim().toLowerCase()===String(b==null?'':b).trim().toLowerCase(); }
+  function entriesToday(wbs,mix){ const t=($('reg-data')?$('reg-data').value:'')||todayISO(); return db.entries.filter(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && mixEq(e.mix,mix) && (e.data||'')===t && e.id!==editId); }
   function mcToday(wbs,mix){ return entriesToday(wbs,mix).reduce((s,e)=>s+num(e.mc),0); }
   function mcMonth(mix){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const ym=String(t).slice(0,7);
-    return db.entries.filter(e=>(e.lab||'')===curLab && (e.mix||'')===mix && String(e.data||'').slice(0,7)===ym && e.id!==editId).reduce((s,e)=>s+num(e.mc),0);
+    return db.entries.filter(e=>(e.lab||'')===curLab && mixEq(e.mix,mix) && String(e.data||'').slice(0,7)===ym && e.id!==editId).reduce((s,e)=>s+num(e.mc),0);
   }
   function countToday(wbs,mix){ return entriesToday(wbs,mix).filter(isPrelievo).length; }
-  function ariaDoneToday(mix){
-    const t=($('reg-data')?$('reg-data').value:'')||todayISO();
-    return db.entries.some(e=>(e.lab||'')===curLab && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId && e.tests && e.tests.aria && e.tests.aria.on);
-  }
+  // UNICA definizione dei contatori: le viste del laboratorio chiamano le stesse funzioni
+  // usate dall'admin, cambia solo QUALE laboratorio. Così i numeri non possono divergere.
+  function ariaDoneToday(mix){ return ariaDoneLab(curLab, mix); }
   // varianti "per laboratorio" (tutte le WBS) usate nei riepiloghi
   function weeklyDoneLab(lab,mix){
     const cfg=mixCfgOf(mix); if(!cfg.sett) return false;
     const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const wk=mondayOf(t);
-    return db.entries.some(e=>(e.lab||'')===lab && (e.mix||'')===mix && e.id!==editId && mondayOf(e.data||'')===wk && (isSettMark(e)||parseInt(e.cubetti,10)===cfg.sett));
+    return db.entries.some(e=>(e.lab||'')===lab && mixEq(e.mix,mix) && e.id!==editId && mondayOf(e.data||'')===wk && (isSettMark(e)||parseInt(e.cubetti,10)===cfg.sett));
   }
   function ariaDoneLab(lab,mix){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
-    return db.entries.some(e=>(e.lab||'')===lab && (e.mix||'')===mix && (e.data||'')===t && e.id!==editId && e.tests && e.tests.aria && e.tests.aria.on);
+    return db.entries.some(e=>(e.lab||'')===lab && mixEq(e.mix,mix) && (e.data||'')===t && e.id!==editId && e.tests && e.tests.aria && e.tests.aria.on);
   }
   // riepilogo di oggi per un laboratorio, su TUTTE le WBS
   function guideLabToday(lab){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
     const map={};
     db.entries.forEach(e=>{ if((e.lab||'')===lab && (e.data||'')===t && e.id!==editId){
-      const m=e.mix||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0}; map[m].mc+=num(e.mc); if(isPrelievo(e)) map[m].cnt++; } });
+      const m=String(e.mix||'').trim()||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0}; map[m].mc+=num(e.mc); if(isPrelievo(e)) map[m].cnt++; } });
     Object.keys(map).forEach(m=>{ map[m].aria=ariaDoneLab(lab,m); map[m].sett=weeklyDoneLab(lab,m); map[m].hasSett=mixCfgOf(m).sett>0; });
     return map;
   }
@@ -32916,7 +32973,7 @@ setTool("erase");
   }
   function prelDetailHtml(lab,mix,wbs){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
-    const list=db.entries.filter(e=>(e.lab||'')===lab && (e.mix||'(senza mix)')===mix && (e.data||'')===t
+    const list=db.entries.filter(e=>(e.lab||'')===lab && mixEq(String(e.mix||'').trim()||'(senza mix)', mix) && (e.data||'')===t
       && (!wbs || (e.wbs||'')===wbs) && e.id!==editId && isPrelievo(e))
       .sort((a,b)=>String(a.verbale||'').localeCompare(String(b.verbale||''),'it',{numeric:true}));
     if(!list.length) return '<div class="reg-preldet"><i>Nessun prelievo.</i></div>';
@@ -32939,11 +32996,11 @@ setTool("erase");
   // il prelievo settimanale viene CONTRASSEGNATO al salvataggio: così resta valido
   // anche se in seguito cambiano i cubetti previsti dal protocollo
   function isSettMark(e){ return !!(e && e.tests && e.tests.__sett); }
-  function weeklyDone(wbs,mix){    const cfg=mixCfgOf(mix); if(!cfg.sett) return false;
-    const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const wk=mondayOf(t);
-    return db.entries.some(e=>(e.lab||'')===curLab && (e.wbs||'')===wbs && (e.mix||'')===mix && e.id!==editId && mondayOf(e.data||'')===wk
-      && (isSettMark(e) || parseInt(e.cubetti,10)===cfg.sett));   // contrassegno, oppure righe vecchie per numero cubetti
-  }
+  // Il prelievo settimanale vale per laboratorio + mix, in QUALSIASI WBS
+  // (stessa regola dell'aria, e coerente con il prospetto settimanale):
+  // se il settimanale di quel mix è già stato fatto in un'altra WBS, non va rifatto.
+  // Chiama la stessa funzione dei riepiloghi admin: un solo calcolo, nessuna divergenza.
+  function weeklyDone(wbs,mix){ return weeklyDoneLab(curLab, mix); }
   function suggestSampling(wbs,mix){
     const cfg=mixCfgOf(mix); const cnt=countToday(wbs,mix); const wDone=weeklyDone(wbs,mix);
     if(cfg.sett>0 && !wDone && cnt===0) return {n:cfg.sett, tipo:'settimanale (vale come 1° del giorno)', weeklyPending:true};
@@ -32954,7 +33011,7 @@ setTool("erase");
   function guideMixesToday(wbs){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
     const map={};
-    db.entries.forEach(e=>{ if((e.lab||'')===curLab && (e.wbs||'')===wbs && (e.data||'')===t && e.id!==editId){ const m=e.mix||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0,aria:false}; map[m].mc+=num(e.mc); if(isPrelievo(e)) map[m].cnt++; } });
+    db.entries.forEach(e=>{ if((e.lab||'')===curLab && (e.wbs||'')===wbs && (e.data||'')===t && e.id!==editId){ const m=String(e.mix||'').trim()||'(senza mix)'; if(!map[m])map[m]={mc:0,cnt:0,aria:false}; map[m].mc+=num(e.mc); if(isPrelievo(e)) map[m].cnt++; } });
     Object.keys(map).forEach(m=>{ map[m].aria=ariaDoneToday(m); });  // aria: per mix/giorno, qualsiasi WBS
     return map;
   }
@@ -33044,17 +33101,27 @@ setTool("erase");
   // DDT: suggerimenti dai DDT già inseriti + avviso se già presente
   function distinctDdt(){ const set={}; db.entries.forEach(e=>{ const d=(e.ddt||'').trim(); if(d)set[d]=1; }); return Object.keys(set).sort(); }
   function refreshDdtList(){ const dl=$('reg-ddt-list'); if(!dl)return; dl.innerHTML=distinctDdt().map(d=>'<option value="'+esc(d)+'"></option>').join(''); }
+  // Il numero di DDT deve essere UNICO in tutto il registro: qualsiasi laboratorio, qualsiasi WBS.
+  // Restituisce le righe che usano già quel numero (escludendo quella in modifica).
+  function ddtDuplicates(v, exceptId){
+    const s=String(v==null?'':v).trim().toLowerCase();
+    if(!s) return [];
+    return db.entries.filter(e=> e.id!==exceptId && String(e.ddt||'').trim().toLowerCase()===s );
+  }
+  function ddtDupLabel(e){
+    return [ (e.lab||'').trim(), (e.data?fmtIt(e.data):''), (e.wbs||'').trim(), (e.verbale||'').trim() ]
+      .filter(Boolean).join(' · ');
+  }
   function updateDdtHint(){
     const h=$('reg-ddt-hint'); if(!h)return;
     const v=($('reg-ddt')?$('reg-ddt').value:'').trim();
     if(!v){ h.innerHTML=''; return; }
-    let matches=db.entries.filter(e=>String(e.ddt||'').trim().toLowerCase()===v.toLowerCase() && e.id!==editId);
-    if(curLab && curLab!=='__ALL__') matches=matches.filter(e=>(e.lab||'')===curLab);
+    // controllo su TUTTO il registro: il DDT è unico a prescindere da laboratorio e WBS
+    const matches=ddtDuplicates(v, editId);
     if(!matches.length){ h.innerHTML=''; return; }
-    let mcTot=0; const perMix={};
-    matches.forEach(e=>{ const q=num(e.mc); mcTot+=q; const m=(e.mix||'').trim()||'(senza mix)'; perMix[m]=(perMix[m]||0)+q; });
-    const mixStr=Object.keys(perMix).map(m=>esc(m)+' '+perMix[m]+' m³').join(' · ');
-    h.innerHTML='<span style="color:var(--accent);">↺ DDT già inserito · '+mixStr+' · totale <b>'+mcTot+' m³</b> ('+matches.length+' '+(matches.length===1?'riga':'righe')+')</span>';
+    const dove=matches.slice(0,3).map(e=>esc(ddtDupLabel(e))).join(' · ');
+    const altri=matches.length>3 ? (' e altre '+(matches.length-3)+' righe') : '';
+    h.innerHTML='<span class="reg-guide-warn">⚠ DDT <b>'+esc(v)+'</b> duplicato — '+dove+altri+'</span>';
   }
 
   /* ---------- UI: form ---------- */
@@ -33178,7 +33245,17 @@ setTool("erase");
     const day=String(d.getDate()).padStart(2,'0');
     return d.getFullYear()+'-'+m+'-'+day;
   }
-  function clearForm(){
+  // clearForm(keepGetto): con keepGetto=true mantiene i campi del getto
+  // (fornitore, impresa, WBS, opera, parte d'opera, mix) per velocizzare più DDT di seguito.
+  function clearForm(keepGetto){
+    const keep = keepGetto ? {
+      forn:   comboVal('reg-forn','reg-forn-other'),
+      impresa:comboVal('reg-impresa','reg-impresa-other'),
+      wbs:    comboVal('reg-wbs','reg-wbs-other'),
+      mix:    comboVal('reg-mix','reg-mix-other'),
+      opera:  ($('reg-opera')?$('reg-opera').value:''),
+      parte:  ($('reg-parte')?$('reg-parte').value:'')
+    } : null;
     ['reg-data','reg-ddt','reg-opera','reg-parte','reg-mc','reg-verbale','reg-cubetti','reg-note','reg-temp-amb','reg-temp-cls'].forEach(id=>{ if($(id))$(id).value=''; });
     if($('reg-num'))$('reg-num').value='';
     setCubetti(''); cubettiManual=false;
@@ -33186,9 +33263,28 @@ setTool("erase");
     refreshMix(''); setTests(null); editId=null;
     setPrel(false); verbaleManual=false; setCubettiEnabled(false);
     if($('reg-data')) $('reg-data').value=todayISO();   // data di oggi, modificabile
+    // ripristina i campi del getto per la registrazione successiva
+    if(keep){
+      if(keep.forn)    setCombo('reg-forn','reg-forn-other',keep.forn);
+      if(keep.impresa) setCombo('reg-impresa','reg-impresa-other',keep.impresa);
+      if(keep.wbs)     setCombo('reg-wbs','reg-wbs-other',keep.wbs);
+      if(keep.mix)     refreshMix(keep.mix);
+      if(keep.opera && $('reg-opera')) $('reg-opera').value=keep.opera;
+      if(keep.parte && $('reg-parte')) $('reg-parte').value=keep.parte;
+      // segnala visivamente che i campi sono stati mantenuti apposta
+      try{
+        const ids=['reg-forn','reg-impresa','reg-wbs','reg-mix','reg-opera','reg-parte'];
+        ids.forEach(id=>{ const el=$(id); if(!el) return; const w=el.closest('.reg-f'); if(!w) return;
+          w.classList.add('reg-kept'); setTimeout(()=>w.classList.remove('reg-kept'), 2600); });
+      }catch(_){}
+    }
     composeVerbale(); updateDdtHint(); updateGuide();
     $('reg-cancel-edit').style.display='none';
     $('reg-save').textContent='＋ Salva riga';
+    // il bottone potrebbe essere rimasto in stato "NON SALVATO" (rosso) da un tentativo precedente
+    $('reg-save')._origText='＋ Salva riga';
+    $('reg-save').classList.remove('reg-save-failed','reg-save-shake');
+    clearMissingHighlight();
     renderForm();
   }
   function loadIntoForm(e){
@@ -33211,6 +33307,8 @@ setTool("erase");
     composeVerbale();
     $('reg-cancel-edit').style.display='';
     $('reg-save').textContent='✓ Salva modifiche';
+    $('reg-save')._origText='✓ Salva modifiche';   // se poi il salvataggio fallisce, il ripristino torna a questa etichetta
+    $('reg-save').classList.remove('reg-save-failed','reg-save-shake');
     renderLabs(); renderForm(); updateGuide();
     clearMissingHighlight();
     $('tab-registro').scrollIntoView({behavior:'smooth',block:'start'});
@@ -33298,14 +33396,14 @@ setTool("erase");
     const autoVerbale = prel && !verbaleManual && !editId;
     if(autoVerbale){
       pushEntryAuto(entry, verbalePrefix(entry.wbs, entry.mix), db.cfg.width||5);
-      clearForm(); renderTable();
+      clearForm(!editId); renderTable();
       return;
     }
     pushEntry(entry);
     if(entry.ripetuto) toast('Salvato. ⚠ Verbale ripetuto: '+entry.verbale);
     else toast(editId?'Modifica salvata.':'Registrazione salvata.');
     setTimeout(()=>{ _dbSizeAt=Date.now(); updateDbSize(); },1500);   // mostra subito l'effetto sullo spazio
-    clearForm();
+    clearForm(!editId);   // dopo un NUOVO inserimento mantiene i campi del getto; dopo una modifica pulisce tutto
     renderTable();
   }
 
@@ -33731,10 +33829,12 @@ setTool("erase");
         });
         rows.forEach((e,i)=>{
           const r=ws.addRow(EXPORT_COLS.map(c=>c.get(e)));
+          const prel=isPrelievo(e);                       // riga con verbale = prelievo vero
           r.eachCell({includeEmpty:true},cell=>{
             cell.border=border;
-            cell.alignment={vertical:'middle',horizontal:'left'};
-            if(i%2===1) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF1F8'}};  // righe alterne azzurrine
+            cell.alignment={vertical:'middle',horizontal:'center',wrapText:true};   // tutte le celle centrate
+            if(prel) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD8F0D8'}};        // prelievo: verde chiaro
+            else if(i%2===1) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF1F8'}}; // righe alterne azzurrine
           });
         });
         ws.autoFilter={from:{row:1,column:1},to:{row:1,column:EXPORT_COLS.length}};
@@ -33752,6 +33852,12 @@ setTool("erase");
     const aoa=[HEAD].concat(rows.map(rowArr));
     const ws=XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols']=EXPORT_COLS.map(c=>({wch:c.w}));
+    // anche qui tutte le celle centrate
+    Object.keys(ws).forEach(ref=>{
+      if(ref[0]==='!') return;
+      const cell=ws[ref]; if(!cell) return;
+      cell.s=Object.assign({}, cell.s, {alignment:{horizontal:'center',vertical:'center',wrapText:true}});
+    });
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Registro Prelievi');
     XLSX.writeFile(wb,fname);
@@ -33846,6 +33952,20 @@ setTool("erase");
       // righe da cancellare = quelle nello scopo che il file NON riporta
       const toDelete=[]; db.entries.forEach((x,idx)=>{ if(inScope(x) && !seenIdx.has(idx)) toDelete.push(x); });
       const scopeLabel = scope ? ('del laboratorio "'+scope+'"') : 'di TUTTI i laboratori';
+      // PROTEZIONE 1: un file senza righe valide è quasi sempre un file sbagliato -> mai cancellare tutto
+      if(!entries.length){
+        alert('Il file non contiene righe leggibili.\n\nLa sincronizzazione è stata annullata per sicurezza: '
+          +'con un file vuoto verrebbe cancellato l\'intero registro '+scopeLabel+'.\n\n'
+          +'Controlla di aver scelto il file giusto (e che i nomi delle colonne siano quelli dell\'export).');
+        return;
+      }
+      // PROTEZIONE 2: se la sincronizzazione cancellerebbe la gran parte del registro, avvisa in modo esplicito
+      const inScopeCount = db.entries.filter(inScope).length;
+      if(toDelete.length && inScopeCount && (toDelete.length/inScopeCount) >= 0.5){
+        const perc=Math.round(toDelete.length/inScopeCount*100);
+        if(!confirm('⚠ ATTENZIONE\n\nQuesta sincronizzazione cancellerebbe '+toDelete.length+' righe su '+inScopeCount
+          +' ('+perc+'% del registro '+scopeLabel+').\n\nDi solito significa che il file scelto è incompleto o sbagliato.\n\nVuoi comunque continuare e vedere il dettaglio?')) return;
+      }
       // anteprima delle cancellazioni (max 12) per la conferma
       const fmtRow=r=>[r.data||'—', (r.wbs||'').trim()||'—', (r.ddt||'').trim()||'—', (r.verbale||'').trim()||'—'].join('  ·  ');
       const antep = toDelete.slice(0,12).map(fmtRow).join('\n');
@@ -33932,7 +34052,7 @@ setTool("erase");
     }
     $('reg-save').onclick=saveEntry;
     $('reg-clear').onclick=clearForm;
-    $('reg-cancel-edit').onclick=clearForm;
+    $('reg-cancel-edit').onclick=()=>clearForm(false);   // annulla = pulizia totale (l'evento non deve valere come "mantieni")
     $('reg-prel-done').addEventListener('change',()=>{
       const on=prelChecked();
       setPrel(on);
@@ -34059,7 +34179,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 10.8';
+  window.APP_VERSION = 'Versione 11.8';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
