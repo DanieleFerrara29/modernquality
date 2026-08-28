@@ -32948,11 +32948,19 @@ setTool("erase");
   // usate dall'admin, cambia solo QUALE laboratorio. Così i numeri non possono divergere.
   function ariaDoneToday(mix){ return ariaDoneLab(curLab, mix); }
   // varianti "per laboratorio" (tutte le WBS) usate nei riepiloghi
-  function weeklyDoneLab(lab,mix){
-    const cfg=mixCfgOf(mix); if(!cfg.sett) return false;
+  // Restituisce la RIGA del prelievo settimanale di quel mix (o null): serve per dire
+  // su quale WBS e in che data è stato fatto. Unica implementazione, usata da tutte le viste.
+  function weeklyRowLab(lab,mix){
+    const cfg=mixCfgOf(mix); if(!cfg.sett) return null;
     const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const wk=mondayOf(t);
-    return db.entries.some(e=>(e.lab||'')===lab && mixEq(e.mix,mix) && e.id!==editId && mondayOf(e.data||'')===wk && (isSettMark(e)||parseInt(e.cubetti,10)===cfg.sett));
+    const list=db.entries.filter(e=>(e.lab||'')===lab && mixEq(e.mix,mix) && e.id!==editId && mondayOf(e.data||'')===wk
+      && (isSettMark(e)||parseInt(e.cubetti,10)===cfg.sett));
+    if(!list.length) return null;
+    // il primo in ordine di data (il settimanale è quello che "apre" la settimana)
+    return list.sort((a,b)=>String(a.data||'').localeCompare(String(b.data||'')))[0];
   }
+  function weeklyDoneLab(lab,mix){ return !!weeklyRowLab(lab,mix); }
+  function weeklyRow(mix){ return weeklyRowLab(curLab, mix); }
   function ariaDoneLab(lab,mix){
     const t=($('reg-data')?$('reg-data').value:'')||todayISO();
     return db.entries.some(e=>(e.lab||'')===lab && mixEq(e.mix,mix) && (e.data||'')===t && e.id!==editId && e.tests && e.tests.aria && e.tests.aria.on);
@@ -33001,6 +33009,18 @@ setTool("erase");
   // se il settimanale di quel mix è già stato fatto in un'altra WBS, non va rifatto.
   // Chiama la stessa funzione dei riepiloghi admin: un solo calcolo, nessuna divergenza.
   function weeklyDone(wbs,mix){ return weeklyDoneLab(curLab, mix); }
+  // versione testuale breve, usata nei riepiloghi (stessa fonte dati per admin e laboratorio)
+  // testo "· WBS xxx · 24/08 · verbale" da mettere accanto al ✓ del settimanale
+  // (usato SOLO nella guida: prospetto e riepiloghi restano per mix + laboratorio)
+  function weeklyWhere(mix, wbsCorrente){
+    const r=weeklyRow(mix); if(!r) return '';
+    const w=(r.wbs||'').trim();
+    const parti=[];
+    if(w) parti.push(w===String(wbsCorrente||'').trim() ? ('WBS '+esc(w)+' (questa)') : ('WBS '+esc(w)));
+    if(r.data) parti.push(esc(fmtIt(r.data)));
+    if((r.verbale||'').trim()) parti.push(esc(r.verbale.trim()));
+    return parti.length ? (' — '+parti.join(' · ')) : '';
+  }
   function suggestSampling(wbs,mix){
     const cfg=mixCfgOf(mix); const cnt=countToday(wbs,mix); const wDone=weeklyDone(wbs,mix);
     if(cfg.sett>0 && !wDone && cnt===0) return {n:cfg.sett, tipo:'settimanale (vale come 1° del giorno)', weeklyPending:true};
@@ -33059,7 +33079,7 @@ setTool("erase");
         + '<br>m³ oggi (questa WBS): <b>'+round1(mcT)+'</b>'
         + (cur>0 ? ('<br><span style="color:var(--accent);">+ questo prelievo '+round1(cur)+' m³ → oggi <b>'+round1(mcT+cur)+'</b></span>') : '')
         + ((mcT+cur)>=100 ? '<br><span class="reg-guide-warn">⚠ superati 100 m³ oggi per questo mix</span>' : ((mcT+cur)>=90 ? '<br><span class="reg-guide-warn">⚠ vicino ai 100 m³ oggi</span>' : ''))
-        + (weeklyOk ? '<br><span class="reg-guide-ok">✓ prelievo settimanale già eseguito questa settimana</span>' : (s.weeklyPending?'<br><span class="reg-guide-warn">⚠ prelievo settimanale DA FARE</span>':''))
+        + (weeklyOk ? ('<br><span class="reg-guide-ok">✓ prelievo settimanale già eseguito questa settimana'+weeklyWhere(mix,wbs)+'</span>') : (s.weeklyPending?'<br><span class="reg-guide-warn">⚠ prelievo settimanale DA FARE</span>':''))
         + (!ariaOk?'<br><span class="reg-guide-warn">⚠ contenuto d\'aria DA FARE oggi</span>':'')
         + '</div>';
       if(!editId && !cubettiManual && prelChecked() && s.n>0){ setCubetti(String(s.n)); }
@@ -34179,7 +34199,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 11.8';
+  window.APP_VERSION = 'Versione 12.0';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
