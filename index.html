@@ -2429,8 +2429,8 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-btn.ghost:hover{color:var(--text);border-color:var(--text);}
 #tab-registro .reg-btn.excel{background:var(--excel);color:#fff;}
 #tab-registro .reg-btn.excel:hover{filter:brightness(1.08);}
-#tab-registro .reg-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
-#tab-registro .reg-count{font-size:12px;color:var(--muted);margin-right:auto;}
+#tab-registro .reg-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;justify-content:center;}
+#tab-registro .reg-count{font-size:12px;color:var(--muted);}
 #tab-registro .reg-count b{color:var(--text);}
 #tab-registro .reg-tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
 #tab-registro table.reg-table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap;}
@@ -2460,15 +2460,17 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-guide-when i{font-style:normal;color:var(--muted);font-size:11.5px;}
 #tab-registro .reg-guide-when b{color:var(--accent);}
 #tab-registro .reg-gline{padding:2px 0;}
-#tab-registro .reg-dbsize{display:flex;flex-direction:column;gap:2px;line-height:1.35;}
-#tab-registro .dbs-line{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--muted);}
+#tab-registro .reg-dbsize{display:flex;flex-direction:column;gap:2px;line-height:1.35;align-items:center;text-align:center;}
+#tab-registro .dbs-line{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--muted);}
 #tab-registro .dbs-line b{color:var(--text);}
+#tab-registro .reg-toolbar-btns{margin-top:6px;}
+#tab-registro .reg-countrow{text-align:left;margin:10px 0 6px;}
 #tab-registro .dbs-bar{display:inline-block;width:70px;height:7px;background:var(--border2);border-radius:999px;overflow:hidden;vertical-align:middle;}
 #tab-registro .dbs-bar>span{display:block;height:100%;border-radius:999px;transition:width .4s ease;}
+#tab-registro .dbs-line2{font-size:11px;color:var(--muted);}
 #tab-registro .dbs-pct{font-variant-numeric:tabular-nums;}
 #tab-registro .dbs-delta{font-weight:700;animation:dbsflash 1.6s ease;}
 @keyframes dbsflash{0%{opacity:0;transform:translateY(-3px);}20%{opacity:1;transform:none;}100%{opacity:1;}}
-#tab-registro .dbs-line2{font-size:11px;color:var(--muted);}
 #tab-registro .dbs-est b{color:var(--accent);}
 
 #tab-registro .reg-prelbtn{background:rgba(var(--accent-rgb),.14);border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
@@ -2509,6 +2511,16 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-f.reg-missing-wrap select,
 #tab-registro .reg-f.reg-missing-wrap textarea{ border-color:var(--red)!important; box-shadow:0 0 0 2px rgba(224,90,90,.18)!important; }
 #tab-registro .reg-f.reg-missing-wrap::after{ content:'⚠ Campo obbligatorio'; display:block; margin-top:4px; font-size:11px; color:var(--red); font-weight:600; letter-spacing:.02em; }
+/* --- da pk / a pk: affiancati su schermo largo, uno sotto l'altro su mobile --- */
+#tab-registro .reg-f-half{ display:inline-block; width:calc(50% - 6px); vertical-align:top; }
+#tab-registro .reg-f-half + .reg-f-half{ margin-left:10px; }
+#tab-registro .reg-f-half input{ font-variant-numeric:tabular-nums; }
+@media (max-width:640px){ #tab-registro .reg-f-half{ display:block; width:100%; } #tab-registro .reg-f-half + .reg-f-half{ margin-left:0; } }
+/* --- campi compilati automaticamente dalla miscela --- */
+#tab-registro .reg-f.reg-automix > label{ color:var(--green); }
+#tab-registro .reg-f.reg-automix input,
+#tab-registro .reg-f.reg-automix select{ border-color:var(--green)!important; transition:border-color .4s; }
+#tab-registro .reg-f.reg-automix::after{ content:'⤓ dalla miscela'; display:block; margin-top:3px; font-size:10.5px; color:var(--green); font-weight:600; }
 /* --- campi mantenuti dalla registrazione precedente (lampeggio breve) --- */
 #tab-registro .reg-f.reg-kept > label{ color:var(--accent); }
 #tab-registro .reg-f.reg-kept input,
@@ -2594,7 +2606,7 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro .reg-btn.primary{width:100%;order:-1;}
   #tab-registro .reg-toolbar{gap:8px;}
   #tab-registro .reg-toolbar .reg-btn{flex:1 1 45%;text-align:center;}
-  #tab-registro .reg-count{flex:1 1 100%;margin:0 0 4px;}
+  #tab-registro .reg-count{flex:1 1 100%;margin:0 0 4px;text-align:left;}
   /* la tabella larga diventa un elenco di SCHEDE */
   #tab-registro .reg-tablewrap{overflow:visible;border:none;border-radius:0;}
   #tab-registro table.reg-table{white-space:normal;}
@@ -2643,7 +2655,6 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro .reg-report-head{padding:14px 14px;font-size:15px;}
   /* barra strumenti: esporta ben visibile, indicatore spazio su riga propria */
   #tab-registro .reg-toolbar{flex-wrap:wrap;}
-  #tab-registro .reg-dbsize{flex:1 1 100%;order:3;margin-top:2px;}
   #tab-registro .reg-toolbar .reg-btn.excel{flex:1 1 100%;}
   /* guida prelievi: più compatta ma leggibile */
   #tab-registro .reg-guide{padding:12px 13px;font-size:13px;border-radius:12px;}
@@ -2848,6 +2859,15 @@ input[type="date"]{ color-scheme:dark; }
       <section class="reg-sec">
         <div class="reg-sec-t">1 · Dati generali</div>
         <div class="reg-f"><label>Data</label><input type="date" id="reg-data" autocomplete="off"/></div>
+        <div class="reg-f">
+          <label>Mix (miscela CLS)</label>
+          <div class="reg-mixrow">
+            <select id="reg-mix"></select>
+            <button class="reg-mini" id="reg-mix-add" title="Aggiungi nuova miscela">+</button>
+          </div>
+          <input type="text" id="reg-mix-other" placeholder="scrivi la miscela" style="display:none;margin-top:8px;" autocomplete="off"/>
+          <div class="reg-verbhint" id="reg-mix-hint" style="margin-top:4px;"></div>
+        </div>
         <div class="reg-f"><label>DDT</label>
           <input type="text" id="reg-ddt" placeholder="n° DDT" list="reg-ddt-list" autocomplete="off"/>
           <datalist id="reg-ddt-list"></datalist>
@@ -2856,14 +2876,6 @@ input[type="date"]{ color-scheme:dark; }
         <div class="reg-f"><label>Fornitore CLS</label>
           <select id="reg-forn"></select>
           <input type="text" id="reg-forn-other" placeholder="scrivi il fornitore" style="display:none;margin-top:8px;" autocomplete="off"/>
-        </div>
-        <div class="reg-f">
-          <label>Mix (miscela CLS)</label>
-          <div class="reg-mixrow">
-            <select id="reg-mix"></select>
-            <button class="reg-mini" id="reg-mix-add" title="Aggiungi nuova miscela">+</button>
-          </div>
-          <input type="text" id="reg-mix-other" placeholder="scrivi la miscela" style="display:none;margin-top:8px;" autocomplete="off"/>
         </div>
         <div class="reg-f"><label>Metri cubi (m³)</label><input type="text" inputmode="decimal" id="reg-mc" placeholder="es. 9,50" autocomplete="off"/></div>
         <div class="reg-f"><label>Impresa esecutrice</label>
@@ -2876,6 +2888,8 @@ input[type="date"]{ color-scheme:dark; }
         </div>
         <div class="reg-f"><label>Opera</label><input type="text" id="reg-opera" autocomplete="off"/></div>
         <div class="reg-f"><label>Parte d'opera</label><input type="text" id="reg-parte" autocomplete="off"/></div>
+        <div class="reg-f reg-f-half"><label>da pk</label><input type="text" id="reg-pkda" placeholder="es. 14+834,60" autocomplete="off" inputmode="text"/></div>
+        <div class="reg-f reg-f-half"><label>a pk</label><input type="text" id="reg-pka" placeholder="es. 14+853,80" autocomplete="off" inputmode="text"/></div>
       </section>
 
       <div class="reg-guide" id="reg-guide" style="display:none;"></div>
@@ -2932,14 +2946,17 @@ input[type="date"]{ color-scheme:dark; }
 
     <!-- Tabella + strumenti database -->
     <div class="reg-toolbar">
-      <span class="reg-count" id="reg-count">0 prelievi</span>
       <span class="reg-dbsize" id="reg-dbsize" title="Spazio usato del database su Supabase (limite 500 MB nel piano gratuito)" style="display:none;font-size:11px;color:var(--muted);"></span>
+    </div>
+    <div class="reg-toolbar reg-toolbar-btns">
       <button class="reg-btn excel" id="reg-exp-go">⬇ Esporta in Excel</button>
+      <button class="reg-btn ghost" id="reg-scad-go" title="Elenco dei cubetti da provare: scaduti, in scadenza questa settimana e la prossima (7 e 28 giorni)">⏰ Scadenze prove</button>
       <button class="reg-btn ghost" id="reg-imp-btn">⬆ Carica / aggiorna da Excel</button>
       <button class="reg-btn ghost" id="reg-sync-btn" title="Confronta l'Excel con il registro: aggiunge le nuove, aggiorna le modificate, CANCELLA quelle che nel file non ci sono più (con anteprima e conferma)">⇄ Sincronizza da Excel</button>
       <input type="file" id="reg-imp-file" accept=".xlsx,.xls" style="display:none;" autocomplete="off"/>
       <input type="file" id="reg-sync-file" accept=".xlsx,.xls" style="display:none;" autocomplete="off"/>
     </div>
+    <div class="reg-countrow"><span class="reg-count" id="reg-count">0 prelievi</span></div>
     <div class="reg-quickbar">
       <button type="button" class="reg-qbtn danger" id="reg-f-clear" title="Rimuove tutti i filtri attivi sulle colonne">✕ Togli tutti i filtri</button>
       <span class="reg-qinfo" id="reg-f-count"></span>
@@ -25309,7 +25326,10 @@ function tgGet(method, params){
 }
 
 function sendTelegram(msg){
-  const txt=msg.replace(/<[^>]+>/g,'').trim();
+  const txt=String(msg==null?'':msg).replace(/<[^>]+>/g,'').trim();
+  // Protezione: non inviare messaggi vuoti o ridotti a soli separatori/punteggiatura
+  // (è così che in passato è finito su Telegram un messaggio con il solo "·").
+  if(!txt || !/[\p{L}\p{N}]/u.test(txt)){ console.warn('Telegram: messaggio scartato perché privo di contenuto:',JSON.stringify(msg)); return Promise.resolve({ok:false,skipped:true}); }
   return tgGet('sendMessage',{chat_id:'1244091857',text:txt});
 }
 
@@ -26073,6 +26093,19 @@ function renderRegAdmin(){
       const saveCfg=()=>{ if(RA.setMixCfg) RA.setMixCfg(m,{sett:iS.value, g1:i1.value, g2:i2.value}); };
       [iS,i1,i2].forEach(inp=>inp.addEventListener('change',saveCfg));
       [iS.parentNode,i1.parentNode,i2.parentNode].forEach(w=>row.appendChild(w));
+      // Fornitore e Rck collegati alla miscela: vengono compilati in automatico dai laboratori
+      const mkTxt=(lbl,val,key,ph,wd)=>{
+        const wrap=document.createElement('label');
+        wrap.style.cssText='display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);';
+        wrap.appendChild(document.createTextNode(lbl));
+        const inp=document.createElement('input'); inp.type='text'; inp.value=(val==null?'':val); inp.placeholder=ph||'—';
+        inp.title=lbl+' associato a questa miscela — verrà inserito automaticamente nel registro';
+        inp.style.cssText='width:'+(wd||120)+'px;background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:3px 6px;font-size:12px;';
+        inp.addEventListener('change',()=>{ const p={}; p[key]=inp.value; if(RA.setMixCfg) RA.setMixCfg(m,p); renderRegAdmin(); });
+        wrap.appendChild(inp); return wrap;
+      };
+      row.appendChild(mkTxt('Fornitore',cfg.forn,'forn','fornitore CLS',150));
+      row.appendChild(mkTxt('Rck',cfg.rck,'rck','es. 30',80));
       const acts=document.createElement('div'); acts.style.cssText='display:flex;gap:6px;align-items:center;';
       const gear=document.createElement('button'); gear.textContent='⚙'; gear.title='Limiti slump / spandimento / temperatura'; gear.style.cssText='border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px;';
       const ren=document.createElement('button'); ren.textContent='✎'; ren.title='Rinomina'; ren.style.cssText='border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px;'; ren.onclick=()=>raRename('la miscela', m, RA.renameMix);
@@ -32061,7 +32094,10 @@ setTool("erase");
     return {
       id:e.id, lab:e.lab||'', data:e.data||'', ddt:e.ddt||'', impresa:e.impresa||'', fornitore:e.fornitore||'',
       wbs:e.wbs||'', opera:e.opera||'', parte:e.parte||'', mix:e.mix||'', mc:e.mc||'',
-      tests:e.tests||{}, prelievo:!!e.prelievo, verbale:e.verbale||'', ripetuto:!!e.ripetuto,
+      // Rck e progressive hanno le loro colonne su Supabase; "tests" torna a contenere solo le prove
+      tests:(function(){ const t=Object.assign({}, e.tests||{}); delete t.__rck; delete t.__pkda; delete t.__pka; return t; })(),
+      rck:e.rck||'', pk_da:e.pkDa||'', pk_a:e.pkA||'',
+      prelievo:!!e.prelievo, verbale:e.verbale||'', ripetuto:!!e.ripetuto,
       cubetti:e.cubetti||'', note:e.note||'', temp_amb:e.tempAmb||'', temp_cls:e.tempCls||'',
       inserito_da:e.by||'', inserito_il:e.at||'',
       updated_at:e.updated_at||new Date().toISOString()
@@ -32072,6 +32108,10 @@ setTool("erase");
       id:String(r.id), lab:r.lab||'', data:r.data||'', ddt:r.ddt||'', impresa:r.impresa||'', fornitore:r.fornitore||'',
       wbs:r.wbs||'', opera:r.opera||'', parte:r.parte||'', mix:r.mix||'', mc:r.mc||'',
       tests:(r.tests&&typeof r.tests==='object')?r.tests:{}, prelievo:(r.prelievo!=null?!!r.prelievo:!!(r.verbale&&String(r.verbale).trim())), verbale:r.verbale||'', ripetuto:!!r.ripetuto,
+      // legge la colonna vera; se vuota ripiega sul vecchio posto, così le righe già salvate non perdono nulla
+      rck: (r.rck!=null&&r.rck!=='') ? String(r.rck) : ((r.tests&&r.tests.__rck)||''),
+      pkDa:(r.pk_da!=null&&r.pk_da!=='') ? String(r.pk_da) : ((r.tests&&r.tests.__pkda)||''),
+      pkA: (r.pk_a!=null&&r.pk_a!=='')  ? String(r.pk_a)  : ((r.tests&&r.tests.__pka)||''),
       cubetti:r.cubetti||'', note:r.note||'', tempAmb:r.temp_amb||'', tempCls:r.temp_cls||'', by:r.inserito_da||'', at:r.inserito_il||'',
       updated_at:r.updated_at||''
     };
@@ -32110,6 +32150,19 @@ setTool("erase");
     try{
       const rows=await sbRpc('registro_add',{ p_entry:toRow(e), p_auto:true, p_prefix:prefix, p_width:width });
       const row=Array.isArray(rows)?rows[0]:rows;
+      // La funzione registro_add vive su Supabase e conosce solo le colonne originali:
+      // Rck e progressive non le scriverebbe. Le completiamo subito dopo l'inserimento.
+      try{
+        const extra={};
+        if(e.rck)  extra.rck  = e.rck;
+        if(e.pkDa) extra.pk_da= e.pkDa;
+        if(e.pkA)  extra.pk_a = e.pkA;
+        if(Object.keys(extra).length){
+          const rid=(row&&row.id)?row.id:e.id;
+          await sbFetch('registro?id=eq.'+encodeURIComponent(rid),
+            {method:'PATCH', headers:{'Prefer':'return=minimal'}, body:JSON.stringify(extra)});
+        }
+      }catch(err2){ console.warn('completamento colonne Rck/pk',err2); }
       if(row && row.verbale){
         const idx=db.entries.findIndex(x=>x.id===e.id);
         if(idx>=0){ db.entries[idx].verbale=row.verbale; db.entries[idx].ripetuto=!!row.ripetuto; }
@@ -32408,6 +32461,10 @@ setTool("erase");
       ['sett','g1','g2'].forEach(k=>{ if(patch[k]!==undefined) merged[k]=Math.max(0,parseInt(patch[k],10)||0); });
       if(patch.malta!==undefined) merged.malta=!!patch.malta;
       ['slumpMin','slumpMax','spandMin','spandMax','tclsMin','tclsMax'].forEach(k=>{ if(patch[k]!==undefined){ const v=String(patch[k]).trim().replace(',','.'); merged[k]=(v===''||isNaN(parseFloat(v)))?'':parseFloat(v); } });
+      // fornitore e Rck della miscela (testo libero: l'Rck può essere "C25/30", "30", ecc.)
+      ['forn','rck'].forEach(k=>{ if(patch[k]!==undefined) merged[k]=String(patch[k]).trim(); });
+      // se il fornitore indicato non è ancora in elenco, aggiungilo (così resta selezionabile)
+      if(merged.forn && Array.isArray(db.fornitori) && !db.fornitori.includes(merged.forn)) db.fornitori.push(merged.forn);
       db.mixCfg[mix]=merged; pushConfig(); refreshAll(); return merged; },
     setUserLab:(username,lab)=>{ if(!username)return; db.labUsers=db.labUsers||{}; if(lab)db.labUsers[username]=lab; else delete db.labUsers[username]; pushConfig(); return Object.assign({},db.labUsers); },
     setFormat:(mid,width,midM)=>{ db.cfg.mid=(mid!=null?mid:db.cfg.mid); if(midM!=null) db.cfg.midMalta=midM; db.cfg.width=Math.max(1,Math.min(8,parseInt(width,10)||db.cfg.width||5)); pushConfig(); refreshAll(); return {mid:midPart(),midMalta:midMalta(),width:db.cfg.width}; },
@@ -32497,6 +32554,8 @@ setTool("erase");
     {key:'wbs',       label:'WBS',               inputId:'reg-wbs'},
     {key:'opera',     label:'Opera',             inputId:'reg-opera'},
     {key:'parte',     label:"Parte d'opera",     inputId:'reg-parte'},
+    {key:'pkDa',      label:'da pk',             inputId:'reg-pkda'},
+    {key:'pkA',       label:'a pk',              inputId:'reg-pka'},
     {key:'mix',       label:'Mix',               inputId:'reg-mix'},
     {key:'mc',        label:'Metri cubi (m³)',   inputId:'reg-mc'},
     {key:'cubetti',   label:'N° cubetti (se prelievo)', inputId:'reg-cubetti'},
@@ -32511,6 +32570,7 @@ setTool("erase");
       case 'fornitore': return entry.fornitore; case 'impresa': return entry.impresa;
       case 'wbs': return entry.wbs; case 'opera': return entry.opera; case 'parte': return entry.parte;
       case 'mix': return entry.mix; case 'mc': return entry.mc;
+      case 'pkDa': return entry.pkDa; case 'pkA': return entry.pkA;
       case 'cubetti': return entry.cubetti; case 'note': return entry.note;
       case 'tempAmb': return entry.tempAmb; case 'tempCls': return entry.tempCls;
       default: return '';
@@ -32966,6 +33026,7 @@ setTool("erase");
     const c=(db.mixCfg||{})[mix]||{};
     const r=(k)=>(c[k]!=null?c[k]:'');
     return {sett:(c.sett||0), g1:(c.g1||4), g2:(c.g2||4), malta:!!c.malta,
+      forn:String(c.forn||''), rck:String(c.rck||''),   // fornitore e Rck collegati alla miscela
       slumpMin:r('slumpMin'), slumpMax:r('slumpMax'),
       spandMin:r('spandMin'), spandMax:r('spandMax'),
       tclsMin:r('tclsMin'), tclsMax:r('tclsMax')};
@@ -33325,6 +33386,46 @@ setTool("erase");
   }
   // clearForm(keepGetto): con keepGetto=true mantiene i campi del getto
   // (fornitore, impresa, WBS, opera, parte d'opera, mix) per velocizzare più DDT di seguito.
+  // Compila in automatico Fornitore e Rck a partire dalla miscela scelta.
+  // I valori li imposta l'admin (Pannello Admin → Laboratori e Miscele) e viaggiano
+  // nella configurazione condivisa, così tutti i laboratori compilano allo stesso modo.
+  // Il laboratorio può comunque correggere a mano: se un campo è già stato scritto
+  // diversamente dal valore della miscela, non viene sovrascritto senza avviso.
+  function applyMixDefaults(force){
+    const mix=comboVal('reg-mix','reg-mix-other');
+    if(!mix) return;
+    const cfg=mixCfgOf(mix);
+    // L'Rck non si digita: viene ricavato dalla miscela al salvataggio e finisce nell'Excel.
+    // Qui si compila solo il Fornitore, che il laboratorio può comunque correggere.
+    // Fornitore: combo con voce "scrivi tu"
+    if(cfg.forn){
+      const attuale=comboVal('reg-forn','reg-forn-other');
+      if(force || !attuale) setCombo('reg-forn','reg-forn-other',cfg.forn);
+      else if(attuale!==cfg.forn) setCombo('reg-forn','reg-forn-other',cfg.forn);
+    }
+    markMixFilled(!!(cfg.rck||cfg.forn));
+  }
+  // segnale visivo: i campi compilati dalla miscela lampeggiano un attimo
+  function markMixFilled(on){
+    if(!on) return;
+    ['reg-forn'].forEach(id=>{
+      const el=$(id); if(!el) return; const w=el.closest('.reg-f'); if(!w) return;
+      w.classList.add('reg-automix'); setTimeout(()=>w.classList.remove('reg-automix'),2200);
+    });
+  }
+  // Progressiva chilometrica: porta l'inserimento al formato "14+834,60".
+  // Riconosce "14+834,6", "14+834.60", "14+834" e anche il metraggio puro "14834,60".
+  // Se il testo non è riconoscibile viene lasciato com'è (niente dati stravolti).
+  function normPk(v){
+    let s=String(v==null?'':v).trim().replace(/\s+/g,'');
+    if(!s) return '';
+    let m=s.match(/^(\d+)\+(\d{1,3})(?:[.,](\d{1,2}))?$/);
+    if(m) return m[1]+'+'+m[2].padStart(3,'0')+','+((m[3]||'00').padEnd(2,'0'));
+    m=s.match(/^(\d+)(?:[.,](\d{1,2}))?$/);
+    if(m){ const tot=parseInt(m[1],10);
+      return Math.floor(tot/1000)+'+'+String(tot%1000).padStart(3,'0')+','+((m[2]||'00').padEnd(2,'0')); }
+    return s;
+  }
   function clearForm(keepGetto){
     const keep = keepGetto ? {
       forn:   comboVal('reg-forn','reg-forn-other'),
@@ -33334,7 +33435,7 @@ setTool("erase");
       opera:  ($('reg-opera')?$('reg-opera').value:''),
       parte:  ($('reg-parte')?$('reg-parte').value:'')
     } : null;
-    ['reg-data','reg-ddt','reg-opera','reg-parte','reg-mc','reg-verbale','reg-cubetti','reg-note','reg-temp-amb','reg-temp-cls'].forEach(id=>{ if($(id))$(id).value=''; });
+    ['reg-data','reg-ddt','reg-opera','reg-parte','reg-mc','reg-verbale','reg-cubetti','reg-note','reg-temp-amb','reg-temp-cls','reg-pkda','reg-pka'].forEach(id=>{ if($(id))$(id).value=''; });
     if($('reg-num'))$('reg-num').value='';
     setCubetti(''); cubettiManual=false;
     setCombo('reg-wbs','reg-wbs-other',''); setCombo('reg-impresa','reg-impresa-other',''); setCombo('reg-forn','reg-forn-other','');
@@ -33370,6 +33471,7 @@ setTool("erase");
     $('reg-data').value=e.data||''; $('reg-ddt').value=e.ddt||'';
     updateDdtHint();
     $('reg-opera').value=e.opera||''; $('reg-parte').value=e.parte||'';
+    if($('reg-pkda')) $('reg-pkda').value=e.pkDa||''; if($('reg-pka')) $('reg-pka').value=e.pkA||'';
     $('reg-mc').value=e.mc||''; $('reg-verbale').value=e.verbale||''; $('reg-note').value=e.note||'';
     refreshWbs(); setCombo('reg-wbs','reg-wbs-other', e.wbs||'');
     refreshImprese(); setCombo('reg-impresa','reg-impresa-other', e.impresa||'');
@@ -33411,7 +33513,10 @@ setTool("erase");
       wbs: comboVal('reg-wbs','reg-wbs-other'),
       opera: ($('reg-opera').value||'').trim(),
       parte: ($('reg-parte').value||'').trim(),
+      pkDa: normPk($('reg-pkda')&&$('reg-pkda').value),
+      pkA:  normPk($('reg-pka') &&$('reg-pka').value),
       mix: comboVal('reg-mix','reg-mix-other'),
+      rck: mixCfgOf(comboVal('reg-mix','reg-mix-other')).rck||'',   // ricavato dalla miscela (non digitabile)
       mc: vir(($('reg-mc').value||'').trim()),
       tests: readTests(),
       prelievo: prel,
@@ -33811,6 +33916,38 @@ setTool("erase");
   }
   // ordine colonne richiesto per l'esportazione
   const xnum=(v)=>{ const s=String(v==null?'':v).trim().replace(',','.'); if(s==='')return ''; const n=parseFloat(s); return isNaN(n)?vir(v):n; };
+  // ── Maturazione e settimana di spedizione (solo per i prelievi veri) ──
+  // Maturazione = data prelievo + 28 (o + 7) giorni.
+  // Settimana di spedizione = la settimana lun–dom che contiene "maturazione − 7 giorni":
+  // è la settimana in cui i cubetti vanno spediti per arrivare in tempo.
+  function _plusDays(iso,n){
+    if(!iso) return null;
+    const d=new Date(String(iso).slice(0,10)+'T00:00:00');
+    if(isNaN(d)) return null;
+    d.setDate(d.getDate()+n);
+    return d;
+  }
+  // ATTENZIONE: qui NON si può usare toISOString(), che converte in UTC e in Italia
+  // sposta la data indietro di un giorno. Si usa isoLocal come nel resto dell'app.
+  function _isoOf(d){ return d? isoLocal(d) : ''; }
+  // La maturazione a 7 giorni riguarda solo i prelievi da 8 cubetti
+  // (è lì che una parte dei provini viene rotta a 7 giorni).
+  function _ha7gg(e){ return parseInt(e.cubetti,10)===8; }
+  function maturDate(e,gg){
+    if(!isPrelievo(e)) return null;
+    if(gg===7 && !_ha7gg(e)) return null;
+    return _plusDays(e.data,gg);
+  }
+  function shipWeek(e,gg){                 // testo "17/08–23/08"
+    const m=maturDate(e,gg); if(!m) return '';
+    const lun=mondayOf(_isoOf(_plusDays(_isoOf(m),-7))); if(!lun) return '';
+    const dom=_plusDays(lun,6);
+    return fmtIt(lun).slice(0,5)+'–'+fmtIt(_isoOf(dom)).slice(0,5);
+  }
+  function shipWeekMonday(e,gg){           // lunedì della settimana di spedizione (per il colore)
+    const m=maturDate(e,gg); if(!m) return '';
+    return mondayOf(_isoOf(_plusDays(_isoOf(m),-7)));
+  }
   const EXPORT_COLS=[
     {h:'Inserito da',            w:18, get:e=>e.by||''},
     {h:'Data inserimento',       w:18, get:e=>e.at||''},
@@ -33822,7 +33959,10 @@ setTool("erase");
     {h:'WBS',                    w:10, get:e=>e.wbs||''},
     {h:'Opera',                  w:16, get:e=>e.opera||''},
     {h:"Parte d'Opera",          w:16, get:e=>e.parte||''},
+    {h:'da pk',                  w:13, get:e=>e.pkDa||'', text:true},
+    {h:'a pk',                   w:13, get:e=>e.pkA||'',  text:true},
     {h:'Mix',                    w:22, get:e=>e.mix||''},
+    {h:'Rck',                    w:10, get:e=>xnum(e.rck||mixCfgOf(e.mix||'').rck||'')},
     {h:'m³',                     w:8,  get:e=>xnum(e.mc)},
     {h:'Slump [cm]',             w:11, get:e=>xnum(tval(e,'slump'))},
     {h:'Spandimento [cm]',       w:14, get:e=>xnum(tval(e,'spand'))},
@@ -33834,6 +33974,10 @@ setTool("erase");
     {h:'Temp. CLS [°C]',         w:14, get:e=>xnum(e.tempCls)},
     {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
     {h:'N° cubetti',             w:10, get:e=>xnum(e.cubetti)},
+    {h:'Maturazione 28 gg',      w:16, get:e=>{const d=maturDate(e,28); return d?fmtIt(_isoOf(d)):'';}},
+    {h:'Maturazione 7 gg',       w:15, get:e=>{const d=maturDate(e,7);  return d?fmtIt(_isoOf(d)):'';}},
+    {h:'Settimana spedizione 28 gg', w:20, get:e=>shipWeek(e,28)},
+    {h:'Settimana spedizione 7 gg',  w:19, get:e=>shipWeek(e,7)},
     {h:'Note',                   w:24, get:e=>e.note||''},
     {h:'ID (tecnico)',           w:16, get:e=>e.id||''}
   ];
@@ -33885,6 +34029,112 @@ setTool("erase");
     return natCmp(a.verbale,b.verbale);
   }
   function sortForExport(rows){ return rows.slice().sort(sortRegistro); }
+  // ── File SCADENZE: cosa va provato la settimana prossima ──
+  // Elenca i prelievi la cui maturazione (7 o 28 giorni) cade nella settimana successiva,
+  // più quelli già scaduti e non ancora provati. Pensato da mandare ai laboratori.
+  function scadenzeList(rows){
+    const oggi=isoLocal(new Date());   // data locale: toISOString sposterebbe il giorno
+    const lunProssima=mondayOf(_isoOf(_plusDays(mondayOf(oggi),7)));
+    const out=[];
+    rows.forEach(e=>{
+      if(!isPrelievo(e)) return;
+      [28,7].forEach(gg=>{
+        const m=maturDate(e,gg); if(!m) return;
+        const iso=_isoOf(m);
+        const lun=mondayOf(iso);
+        let stato='';
+        if(iso<oggi) stato='SCADUTO';
+        else if(lun===lunProssima) stato='SETTIMANA PROSSIMA';
+        else if(lun===mondayOf(oggi)) stato='QUESTA SETTIMANA';
+        if(!stato) return;
+        const gr=Math.round((new Date(iso)-new Date(oggi))/86400000);
+        out.push({lab:e.lab||'', prova:gg+' giorni', matur:iso, stato, giorni:gr,
+                  verbale:e.verbale||'', data:e.data||'', ddt:e.ddt||'', wbs:e.wbs||'', mix:e.mix||'', rck:e.rck||mixCfgOf(e.mix||'').rck||'',
+                  cubetti:e.cubetti||'', impresa:e.impresa||'', fornitore:e.fornitore||'',
+                  opera:e.opera||'', parte:e.parte||'', mc:e.mc||'',
+                  slump:tval(e,'slump'), spand:tval(e,'spand'), aria:tval(e,'aria'), ac:tval(e,'ac'),
+                  essud:tval(e,'essud'), massa:tval(e,'massa'),
+                  tempAmb:e.tempAmb||'', tempCls:e.tempCls||'',
+                  note:e.note||'', by:e.by||'', id:e.id||''});
+      });
+    });
+    // prima le più urgenti
+    const rank={'SCADUTO':0,'QUESTA SETTIMANA':1,'SETTIMANA PROSSIMA':2};
+    out.sort((a,b)=> (rank[a.stato]-rank[b.stato]) || a.matur.localeCompare(b.matur) || natCmp(a.verbale,b.verbale));
+    return out;
+  }
+  async function exportScadenze(rows,fname){
+    const list=scadenzeList(rows);
+    if(!list.length){ toast('Nessun cubetto in scadenza questa settimana o la prossima.'); return; }
+    const COLS=[
+      {h:'Stato',                w:20, get:r=>r.stato},
+      {h:'Prova',                w:11, get:r=>r.prova},
+      {h:'Data maturazione',     w:17, get:r=>fmtIt(r.matur)},
+      {h:'Giorni mancanti',      w:14, get:r=>r.giorni},
+      {h:'Verbale di prelievo',  w:20, get:r=>r.verbale, text:true},
+      {h:'N° cubetti',           w:11, get:r=>xnum(r.cubetti)},
+      {h:'Laboratorio',          w:14, get:r=>r.lab},
+      {h:'Data prelievo',        w:14, get:r=>fmtIt(r.data)},
+      {h:'DDT',                  w:12, get:r=>String(r.ddt||'').trim().replace(/^'+/,''), text:true},
+      {h:'Fornitore CLS',        w:20, get:r=>r.fornitore},
+      {h:'Impresa Esecutrice',   w:20, get:r=>r.impresa},
+      {h:'WBS',                  w:10, get:r=>r.wbs},
+      {h:'Opera',                w:18, get:r=>r.opera},
+      {h:"Parte d'Opera",        w:18, get:r=>r.parte},
+      {h:'Mix',                  w:26, get:r=>r.mix},
+      {h:'Rck',                  w:10, get:r=>xnum(r.rck||'')},
+      {h:'m³',                   w:9,  get:r=>xnum(r.mc)},
+      {h:'Slump [cm]',           w:11, get:r=>xnum(r.slump)},
+      {h:'Spandimento [cm]',     w:15, get:r=>xnum(r.spand)},
+      {h:'Aria [%]',             w:10, get:r=>xnum(r.aria)},
+      {h:'Rapporto A/C',         w:13, get:r=>xnum(r.ac)},
+      {h:'Acqua essudata',       w:14, get:r=>r.essud},
+      {h:'Massa volumica [kg/m³]',w:19, get:r=>xnum(r.massa)},
+      {h:'Temp. ambiente [°C]',  w:17, get:r=>xnum(r.tempAmb)},
+      {h:'Temp. CLS [°C]',       w:15, get:r=>xnum(r.tempCls)},
+      {h:'Note',                 w:24, get:r=>r.note},
+      {h:'Inserito da',          w:16, get:r=>r.by},
+      {h:'ID (tecnico)',         w:16, get:r=>r.id}
+    ];
+    if(typeof ExcelJS!=='undefined'){
+      try{
+        const wb=new ExcelJS.Workbook();
+        const ws=wb.addWorksheet('Scadenze',{views:[{state:'frozen',ySplit:1}]});
+        ws.columns=COLS.map(c=>({header:c.h,key:c.h,width:c.w}));
+        const bd={style:'thin',color:{argb:'FFB8CCE4'}}; const border={top:bd,left:bd,bottom:bd,right:bd};
+        const hr=ws.getRow(1); hr.height=26;
+        hr.eachCell(cell=>{ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F4E79'}};
+          cell.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
+          cell.alignment={vertical:'middle',horizontal:'center',wrapText:true}; cell.border=border; });
+        const COL={'SCADUTO':'FFF4B8B8','QUESTA SETTIMANA':'FFFFD08A','SETTIMANA PROSSIMA':'FFFFE9A8'};
+        list.forEach(r=>{
+          const row=ws.addRow(COLS.map(c=>c.get(r)));
+          row.eachCell({includeEmpty:true},cell=>{
+            cell.border=border;
+            cell.alignment={vertical:'middle',horizontal:'center',wrapText:true};
+            cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:COL[r.stato]||'FFFFFFFF'}};
+          });
+          row.getCell(1).font={bold:true};
+          row.getCell(3).font={bold:true};
+        });
+        ws.autoFilter={from:{row:1,column:1},to:{row:1,column:COLS.length}};
+        COLS.forEach((c,i)=>{ if(c.text) ws.getColumn(i+1).numFmt='@'; });   // DDT e verbale come TESTO
+        let buf=await wb.xlsx.writeBuffer();
+        try{ buf=await applyQuotePrefix(buf, COLS); }catch(_){}
+        const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
+        setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+        toast(list.length+' prove da programmare — file scaricato.');
+        return;
+      }catch(err){ console.warn('Scadenze ExcelJS',err); }
+    }
+    const aoa=[COLS.map(c=>c.h)].concat(list.map(r=>COLS.map(c=>c.get(r))));
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=COLS.map(c=>({wch:c.w}));
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Scadenze');
+    XLSX.writeFile(wb,fname);
+    toast(list.length+' prove da programmare — file scaricato.');
+  }
   async function exportRows(rows,fname){
     if(!rows.length){ toast('Nessun dato da esportare.'); return; }
     rows=sortForExport(rows);
@@ -33905,6 +34155,22 @@ setTool("erase");
           cell.alignment={vertical:'middle',horizontal:'center',wrapText:true};
           cell.border=border;
         });
+        // colore del CODICE verbale in base alla spedizione:
+        //  arancione = da spedire questa settimana · rosso = maturazione già passata
+        // colore sulle DATE di maturazione:
+        //  giallo = matura la settimana prossima (i cubetti vanno preparati/spediti ora)
+        //  rosso  = maturazione già passata
+        const _oggiISO=isoLocal(new Date());   // data locale: toISOString sposterebbe il giorno
+        const _settProssima=mondayOf(_isoOf(_plusDays(mondayOf(_oggiISO),7)));
+        const _col28=EXPORT_COLS.findIndex(c=>c.h==='Maturazione 28 gg')+1;
+        const _col7 =EXPORT_COLS.findIndex(c=>c.h==='Maturazione 7 gg')+1;
+        function _statoData(e,gg){
+          const m=maturDate(e,gg); if(!m) return '';
+          const iso=_isoOf(m);
+          if(iso < _oggiISO) return 'scaduto';
+          if(mondayOf(iso)===_settProssima) return 'prossima';
+          return '';
+        }
         rows.forEach((e,i)=>{
           const r=ws.addRow(EXPORT_COLS.map(c=>c.get(e)));
           const prel=isPrelievo(e);                       // riga con verbale = prelievo vero
@@ -33913,6 +34179,13 @@ setTool("erase");
             cell.alignment={vertical:'middle',horizontal:'center',wrapText:true};   // tutte le celle centrate
             if(prel) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD8F0D8'}};        // prelievo: verde chiaro
             else if(i%2===1) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF1F8'}}; // righe alterne azzurrine
+          });
+          [[28,_col28],[7,_col7]].forEach(([gg,col])=>{
+            if(col<=0) return;
+            const st=_statoData(e,gg); if(!st) return;
+            const c=r.getCell(col);
+            c.fill={type:'pattern',pattern:'solid',fgColor:{argb: st==='scaduto'?'FFF4B8B8':'FFFFE08A'}};
+            c.font={bold:true};
           });
         });
         ws.autoFilter={from:{row:1,column:1},to:{row:1,column:EXPORT_COLS.length}};
@@ -33965,7 +34238,8 @@ setTool("erase");
         lab: onlyLab || String(g('Laboratorio')||curLab||db.labs[0]||'Laboratorio 1'),
         data:toISODate(g('Data')), ddt:String(g('DDT')), fornitore:String(g('Fornitore CLS','Fornitore')), impresa:String(g('Impresa Esecutrice','Impresa')),
         wbs:String(g('WBS')), opera:String(g('Opera')), parte:String(g("Parte d'Opera",'Parte')),
-        mix:String(g('Mix')), mc:String(g('m³','m3','mc')),
+        mix:String(g('Mix')), rck:String(g('Rck','Rck / classe')), mc:String(g('m³','m3','mc')),
+        pkDa:normPk(g('da pk','Da pk','DA PK')), pkA:normPk(g('a pk','A pk','A PK')),
         tests:{
           slump:pickTest(g('Slump [cm]','Slump')), spand:pickTest(g('Spandimento [cm]','Spandimento')),
           aria:pickTest(g('Aria [%]','Aria')), ac:pickTest(g('Rapporto A/C','A/C')),
@@ -34142,12 +34416,14 @@ setTool("erase");
     // menù a tendina con "Altro": mostra il campo manuale quando serve
     if($('reg-wbs')) $('reg-wbs').addEventListener('change',()=>{ comboOtherToggle('reg-wbs','reg-wbs-other',true); suggestNumber(); updateGuide(); });
     if($('reg-wbs-other')) $('reg-wbs-other').addEventListener('input',()=>{ suggestNumber(); updateGuide(); });
-    if($('reg-mix')) $('reg-mix').addEventListener('change',()=>{ comboOtherToggle('reg-mix','reg-mix-other',true); updateGuide(); suggestNumber(); });
-    if($('reg-mix-other')) $('reg-mix-other').addEventListener('input',()=>{ updateGuide(); });
+    if($('reg-mix')) $('reg-mix').addEventListener('change',()=>{ comboOtherToggle('reg-mix','reg-mix-other',true); applyMixDefaults(); updateGuide(); suggestNumber(); });
+    if($('reg-mix-other')) $('reg-mix-other').addEventListener('input',()=>{ applyMixDefaults(); updateGuide(); });
     if($('reg-impresa')) $('reg-impresa').addEventListener('change',()=>{ comboOtherToggle('reg-impresa','reg-impresa-other',true); });
     if($('reg-forn')) $('reg-forn').addEventListener('change',()=>{ comboOtherToggle('reg-forn','reg-forn-other',true); });
     if($('reg-data')) $('reg-data').addEventListener('change',()=>{ updateGuide(); suggestNumber(); });
     if($('reg-mc')) $('reg-mc').addEventListener('input',updateGuide);
+    ['reg-pkda','reg-pka'].forEach(function(id){ const el=$(id); if(!el) return;
+      el.addEventListener('blur',function(){ el.value=normPk(el.value); }); });
     // clic su «N prel.» → apre/chiude il dettaglio (verbale, data, cubetti)
     if($('reg-guide')) $('reg-guide').addEventListener('click',ev=>{
       const b=ev.target && ev.target.closest ? ev.target.closest('.reg-prelbtn') : null;
@@ -34203,6 +34479,13 @@ setTool("erase");
       const tag=(all?'CONGIUNTI':curLab).replace(/[^\w]+/g,'_');
       exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
     };
+    if($('reg-scad-go')) $('reg-scad-go').onclick=()=>{
+      const all=(curLab==='__ALL__');
+      const rows= all ? db.entries.slice() : db.entries.filter(e=>(e.lab||'')===curLab);
+      if(!rows.length){ toast('Nessun dato disponibile.'); return; }
+      const tag=(all?'CONGIUNTI':curLab).replace(/[^\w]+/g,'_');
+      exportScadenze(rows,'Scadenze_prove_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+    };
     applyViewerUI();
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
@@ -34257,7 +34540,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 12.5';
+  window.APP_VERSION = 'Versione 14.2';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
