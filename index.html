@@ -831,11 +831,10 @@ tr.new-row{animation:rowIn .2s ease both;}
 
       <!-- Manutenzione dati -->
       <div class="admin-section-title" style="margin-top:24px;">🧰 Manutenzione dati</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Completa le righe vecchie a cui manca l'<b>Rck</b>, prendendolo dalla miscela. Non modifica nessun altro campo e non tocca le righe già complete. Va usato una volta sola, dopo aver impostato l'Rck delle miscele qui sopra.</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Contrassegna come <b>settimanali</b> i prelievi già registrati che hanno il numero di cubetti previsto dalla loro miscela. Serve una volta sola, sulle righe inserite prima che questa funzione esistesse. Aggiunge soltanto: non toglie mai un contrassegno esistente.</div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-        <button class="btn btn-sm" id="ra-fill-btn" style="background:var(--bg);border:1px solid var(--border2);color:var(--text);">🧰 Completa Rck mancanti</button>
-        <button class="btn btn-sm" id="ra-tidy-btn" title="Riscrive tutte le righe mettendo ogni informazione nella sua colonna. Non cambia nessun valore." style="background:var(--bg);border:1px solid var(--border2);color:var(--text);">🧹 Riordina dati su Supabase</button>
-        <span id="ra-fill-msg" style="font-size:12px;color:var(--muted);"></span>
+        <button class="btn btn-sm" id="ra-sett-btn" style="background:var(--bg);border:1px solid var(--border2);color:var(--text);">📌 Contrassegna i settimanali già registrati</button>
+        <span id="ra-sett-msg" style="font-size:12px;color:var(--muted);"></span>
       </div>
 
       <!-- Prove in scadenza -->
@@ -2446,10 +2445,28 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;justify-content:center;}
 #tab-registro .reg-count{font-size:12px;color:var(--muted);}
 #tab-registro .reg-count b{color:var(--text);}
-#tab-registro .reg-tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
-#tab-registro table.reg-table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap;}
-#tab-registro table.reg-table th{background:var(--header-bg);color:var(--muted);text-align:left;padding:9px 10px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;position:sticky;top:0;border-bottom:2px solid var(--accent);}
+#tab-registro .reg-tablewrap{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:8px;}
+/* separate + spacing 0: identico all'occhio, ma l'intestazione fissa funziona in modo affidabile */
+#tab-registro table.reg-table{border-collapse:separate;border-spacing:0;width:100%;font-size:12px;white-space:nowrap;}
+#tab-registro table.reg-table th{background:var(--header-bg);color:var(--muted);text-align:left;padding:9px 10px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;position:sticky;top:0;z-index:5;border-bottom:2px solid var(--accent);}
 #tab-registro table.reg-table th.reg-th{cursor:pointer;user-select:none;white-space:nowrap;}
+/* intestazione: titolo + imbuto del filtro + maniglia, tutto su una riga sola */
+/* Struttura semplice: testo, freccia, maniglia. Niente contenitori flex:
+   dentro una cella di tabella facevano collassare il titolo a larghezza zero. */
+/* ATTENZIONE: qui serve sticky, non relative. Questa regola è più specifica di quella
+   su th e la sovrascrive: con relative l'intestazione smetteva di restare fissa.
+   sticky fa comunque da riferimento per la maniglia posizionata in modo assoluto. */
+#tab-registro table.reg-table th.reg-th{position:sticky;top:0;z-index:5;padding-right:20px;white-space:nowrap;}
+#tab-registro table.reg-table th .reg-thlab{cursor:pointer;}
+#tab-registro table.reg-table th .reg-fbtn{display:inline-block;margin-left:6px;vertical-align:middle;
+  background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:11px;line-height:1;padding:2px 4px;border-radius:3px;}
+#tab-registro table.reg-table th .reg-fbtn:hover{color:var(--text);background:var(--bg);}
+#tab-registro table.reg-table th .reg-fbtn.on{color:var(--accent);background:rgba(var(--accent-rgb),.15);}
+#tab-registro table.reg-table th .reg-resz{position:absolute;top:0;right:0;width:6px;height:100%;cursor:col-resize;user-select:none;}
+#tab-registro table.reg-table th .reg-resz:hover{background:var(--accent);opacity:.55;}
+/* il testo è scritto per intero: lo taglia la colonna, così allargando ricompare */
+#tab-registro table.reg-table td{max-width:240px;overflow:hidden;}
+#tab-registro table.reg-table td .reg-cell{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #tab-registro .reg-sort-ar{color:var(--accent);font-size:10px;margin-left:4px;}
 /* pannello filtri a selezione multipla (stile Excel) */
 .reg-fbtn{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:3px 6px;font-size:11px;font-weight:400;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -2574,7 +2591,6 @@ tr.new-row{animation:rowIn .2s ease both;}
 @media (max-width:640px){#tab-registro .reg-guide-when{flex-direction:column;gap:6px;} #tab-registro .reg-guide-when span{justify-content:flex-start;}}
 .reg-fpanel-f button.sec{background:var(--bg);border:1px solid var(--border2);color:var(--muted);font-weight:400;}
 @media (max-width:640px){ .reg-fpanel{min-width:min(88vw,300px);max-width:92vw;} .reg-fpanel-l{max-height:46vh;} .reg-fpanel-l label{padding:9px 6px;font-size:15px;} }
-#tab-registro table.reg-table th.reg-fth{padding:2px 4px;background:var(--surface);}
 #tab-registro .reg-col-filter{width:100%;min-width:52px;box-sizing:border-box;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:4px;padding:3px 5px;font-size:11px;font-weight:400;}
 #tab-registro .reg-col-filter::placeholder{color:var(--muted);opacity:.6;}
 #tab-registro table.reg-table th.reg-th:hover{color:var(--text);}
@@ -2998,7 +3014,6 @@ input[type="date"]{ color-scheme:dark; }
       <table class="reg-table">
         <thead>
           <tr id="reg-thead-row"></tr>
-          <tr id="reg-filter-row"></tr>
         </thead>
         <tbody id="reg-tbody"></tbody>
       </table>
@@ -26037,38 +26052,22 @@ function renderScadenze(){
   if(rows.length>60) h+='<div style="color:var(--muted);font-size:11px;margin-top:6px;">… e altre '+(rows.length-60)+' righe (scaricabili con «Scadenze prove» nel registro).</div>';
   box.innerHTML=h;
 }
-// pulsante di manutenzione: completa l'Rck mancante sulle righe vecchie
+// pulsante: contrassegna i prelievi settimanali già registrati
 (function(){
   function bind(){
-    const t=document.getElementById('ra-tidy-btn');
-    if(t && !t._bound){ t._bound=true;
-      t.addEventListener('click', async ()=>{
-        const RA=window.RegAdmin, msg=document.getElementById('ra-fill-msg');
-        if(!RA||!RA.riordinaCloud) return;
-        if(!confirm('Riscrivere tutte le righe su Supabase mettendo ogni informazione nella sua colonna?\n\nNessun valore viene modificato: cambia solo dove è scritto.')) return;
-        t.disabled=true; const old=t.textContent;
-        try{
-          const r=await RA.riordinaCloud((fatte,tot)=>{ t.textContent='⏳ '+fatte+'/'+tot; });
-          msg.style.color='var(--green)';
-          msg.textContent='✓ '+r.righe+' righe riordinate'+(r.colonnaSett?'':' · la colonna "settimanale" non esiste ancora su Supabase: quel dato è rimasto dov\'era');
-          if(typeof addLog==='function'){ addLog('Riordino dati su Supabase: '+r.righe+' righe'); renderAdminLog(); }
-        }catch(err){ msg.style.color='var(--red)'; msg.textContent='Errore: '+((err&&err.message)||err); }
-        t.disabled=false; t.textContent=old;
-      });
-    }
-    const b=document.getElementById('ra-fill-btn'); if(!b||b._bound) return; b._bound=true;
+    const b=document.getElementById('ra-sett-btn'); if(!b||b._bound) return; b._bound=true;
     b.addEventListener('click', async ()=>{
-      const RA=window.RegAdmin, msg=document.getElementById('ra-fill-msg');
-      if(!RA||!RA.completaColonne) return;
-      if(!confirm("Completare l'Rck delle righe che ne sono prive, prendendolo dalla miscela?\n\nNessun altro campo viene modificato.")) return;
-      b.disabled=true; const old=b.textContent; b.textContent='⏳ In corso...';
+      const RA=window.RegAdmin, msg=document.getElementById('ra-sett-msg');
+      if(!RA||!RA.marcaSettimanali) return;
+      if(!confirm('Contrassegnare come settimanali i prelievi che hanno il numero di cubetti previsto dalla loro miscela?\n\nNessun contrassegno esistente viene tolto.')) return;
+      b.disabled=true; const old=b.textContent;
       try{
-        const r=await RA.completaColonne();
-        msg.style.color = r.aggiornate ? 'var(--green)' : 'var(--muted)';
-        msg.textContent = r.aggiornate
-          ? ('✓ '+r.aggiornate+' righe completate'+(r.restano?(' · '+r.restano+' senza Rck: miscela non configurata'):''))
-          : (r.restano ? (r.restano+" righe senza Rck: manca l'Rck sulle loro miscele") : "Tutte le righe hanno già l'Rck.");
-        if(typeof addLog==='function' && r.aggiornate){ addLog('Completate '+r.aggiornate+" righe con l'Rck della miscela"); renderAdminLog(); }
+        const r=await RA.marcaSettimanali((fatte,tot)=>{ b.textContent='⏳ '+fatte+'/'+tot; });
+        msg.style.color = r.marcate ? 'var(--green)' : 'var(--muted)';
+        msg.textContent = (r.marcate ? ('✓ '+r.marcate+' prelievi contrassegnati') : 'Nessuna riga da contrassegnare')
+          + (r.senzaCfg ? (' · '+r.senzaCfg+' prelievi su miscele senza settimanale configurato') : '')
+          + (r.colonnaSett ? '' : ' · la colonna "settimanale" non esiste su Supabase');
+        if(typeof addLog==='function' && r.marcate){ addLog('Contrassegnati '+r.marcate+' prelievi settimanali'); renderAdminLog(); }
       }catch(err){ msg.style.color='var(--red)'; msg.textContent='Errore: '+((err&&err.message)||err); }
       b.disabled=false; b.textContent=old;
     });
@@ -32579,39 +32578,34 @@ setTool("erase");
       pushConfig(); applyRequiredMarkers(); return Object.assign({}, reqCfg()); },
     syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); },
     // elenco dei numeri di DDT usati da più di una riga (in tutto il registro)
-    // Completa le righe vecchie a cui manca l'Rck, prendendolo dalla miscela.
-    // Non tocca le righe che ce l'hanno già né altri campi. Dice quante ne ha aggiornate.
-    completaColonne: async ()=>{
-      const daFare=db.entries.filter(e=>!String(e.rck||'').trim() && String(mixCfgOf(e.mix||'').rck||'').trim());
-      if(daFare.length){
-        daFare.forEach(e=>{ e.rck=mixCfgOf(e.mix||'').rck; });
-        save();
-        if(cloudOn()){
-          try{ await sbRegUpsertMany(daFare); lastSig=''; }
-          catch(err){ console.warn('completaColonne',err); daFare.forEach(e=>e._pending=true); save(); throw err; }
-        }
-        refreshAll();
-      }
-      const restano=db.entries.filter(e=>!String(e.rck||'').trim()).length;
-      return {aggiornate:daFare.length, restano};
-    },
-    scadenzeReport:()=> scadenzeList(db.entries),
-    // Riscrive tutte le righe su Supabase nella forma corretta: sposta Rck, progressive e
-    // contrassegno settimanale nelle loro colonne e ripulisce il campo delle prove.
-    // Non cambia NESSUN valore: cambia solo dove sono scritti.
-    riordinaCloud: async (onProgress)=>{
+    // Contrassegna come settimanali le righe già registrate: prelievo con un numero di
+    // cubetti pari a quello configurato per la sua miscela. Solo AGGIUNGE il contrassegno,
+    // non lo toglie mai, per non cancellare marcature storiche fatte con altri protocolli.
+    marcaSettimanali: async (onProgress)=>{
       if(!cloudOn()) throw new Error('Sei offline: riprova quando la connessione è attiva.');
       await verificaColonnaSett();
-      const tutte=db.entries.slice();
-      if(!tutte.length) return {righe:0, colonnaSett:_colSett===true};
-      const BLOCCO=200;
-      for(let i=0;i<tutte.length;i+=BLOCCO){
-        await sbRegUpsertMany(tutte.slice(i,i+BLOCCO));
-        if(typeof onProgress==='function') onProgress(Math.min(i+BLOCCO,tutte.length), tutte.length);
+      const daMarcare=db.entries.filter(e=>{
+        if(isSettMark(e)) return false;                       // ce l'ha già
+        if(!isPrelievo(e)) return false;                      // non è un prelievo
+        const cfg=mixCfgOf(e.mix||''); if(!(cfg.sett>0)) return false;
+        return parseInt(e.cubetti,10)===cfg.sett;
+      });
+      if(!daMarcare.length){
+        const senzaCfg=db.entries.filter(e=>isPrelievo(e) && !(mixCfgOf(e.mix||'').sett>0)).length;
+        return {marcate:0, senzaCfg, colonnaSett:_colSett===true};
       }
-      lastSig='';
-      return {righe:tutte.length, colonnaSett:_colSett===true};
+      daMarcare.forEach(e=>{ e.tests=e.tests||{}; e.tests.__sett=true; });
+      save();
+      const BLOCCO=200;
+      for(let i=0;i<daMarcare.length;i+=BLOCCO){
+        await sbRegUpsertMany(daMarcare.slice(i,i+BLOCCO));
+        if(typeof onProgress==='function') onProgress(Math.min(i+BLOCCO,daMarcare.length), daMarcare.length);
+      }
+      lastSig=''; refreshAll();
+      const senzaCfg=db.entries.filter(e=>isPrelievo(e) && !(mixCfgOf(e.mix||'').sett>0)).length;
+      return {marcate:daMarcare.length, senzaCfg, colonnaSett:_colSett===true};
     },
+    scadenzeReport:()=> scadenzeList(db.entries),
     ddtDupReport:()=>{
       const by={};
       db.entries.forEach(e=>{ const d=String(e.ddt||'').trim(); if(!d) return;
@@ -33731,29 +33725,43 @@ setTool("erase");
   }
   /* ---------- colonne configurabili + riordinabili ---------- */
   const COLORDER_KEY='mq_reg_colorder_v1';
+  // Testo lungo: mostra i primi N caratteri e il resto nel suggerimento del mouse,
+  // così le colonne restano leggibili e allineate.
+  // Il testo viene scritto PER INTERO: a tagliarlo è il CSS della colonna.
+  // Così allargando la colonna il testo ricompare davvero.
+  function cut(s){
+    s=String(s==null?'':s);
+    if(!s) return {v:'',empty:true};
+    return {html:'<span class="reg-cell" title="'+esc(s)+'">'+esc(s)+'</span>'};
+  }
+  // Stesse colonne dell'Excel, nello stesso ordine.
   const COLS=[
+    {key:'by',      label:'Compilato da', get:e=>cut(e.by)},
     {key:'data',    label:'Data',     get:e=>({v:fmtIt(e.data)})},
     {key:'ddt',     label:'DDT',      get:e=>({v:e.ddt})},
-    {key:'fornitore',label:'Fornitore CLS', get:e=>({v:e.fornitore})},
-    {key:'impresa', label:'Impresa',  get:e=>({v:e.impresa})},
+    {key:'fornitore',label:'Fornitore CLS', get:e=>cut(e.fornitore)},
+    {key:'impresa', label:'Impresa',  get:e=>cut(e.impresa)},
     {key:'wbs',     label:'WBS',      get:e=>({v:e.wbs})},
-    {key:'opera',   label:'Opera',    get:e=>({v:e.opera})},
-    {key:'parte',   label:'Parte',    get:e=>({v:e.parte})},
-    {key:'mix',     label:'Mix',      get:e=>({v:e.mix})},
+    {key:'opera',   label:'Opera',    get:e=>cut(e.opera)},
+    {key:'parte',   label:"Parte d'opera", get:e=>cut(e.parte)},
+    {key:'pkDa',    label:'da pk',    get:e=>({v:e.pkDa||''})},
+    {key:'pkA',     label:'a pk',     get:e=>({v:e.pkA||''})},
+    {key:'mix',     label:'Mix',      get:e=>cut(e.mix)},
+    {key:'rck',     label:'Rck',      get:e=>({v:e.rck||mixCfgOf(e.mix||'').rck||''})},
     {key:'mc',      label:'m³',       get:e=>({v:vir(e.mc)})},
-    {key:'tempAmb', label:'T.amb °C', get:e=>({v:vir(e.tempAmb)})},
-    {key:'tempCls', label:'T.CLS °C', get:e=>({v:vir(e.tempCls)})},
     {key:'slump',   label:'Slump',    get:e=>({v:tval(e,'slump')})},
     {key:'spand',   label:'Spand.',   get:e=>({v:tval(e,'spand')})},
     {key:'aria',    label:'Aria%',    get:e=>({v:tval(e,'aria')})},
     {key:'ac',      label:'A/C',      get:e=>({v:tval(e,'ac')})},
     {key:'essud',   label:'Essud.',   get:e=>({v:tval(e,'essud')})},
     {key:'massa',   label:'M.vol.',   get:e=>({v:tval(e,'massa')})},
+    {key:'tempAmb', label:'T.amb °C', get:e=>({v:vir(e.tempAmb)})},
+    {key:'tempCls', label:'T.CLS °C', get:e=>({v:vir(e.tempCls)})},
     {key:'verbale', label:'Verbale',  get:e=>({html:(e.prelievo&&String(e.verbale||'').trim())?('<b>'+esc(e.verbale)+'</b>'):'', empty:!(e.prelievo&&String(e.verbale||'').trim())})},
-    {key:'ripetuto',label:'Rip.',     get:e=>({html:(e.ripetuto?'<span class="reg-badge">RIP.</span>':''), empty:!e.ripetuto})},
     {key:'cubetti', label:'Cubetti',  get:e=>({v:e.cubetti})},
-    {key:'note',    label:'Note',     get:e=>{const n=e.note||'';return {html:(n?('<span title="'+esc(n)+'">'+esc(n.slice(0,40))+(n.length>40?'…':'')+'</span>'):''), empty:!n};}},
-    {key:'by',      label:'Compilato da', get:e=>({v:e.by})}
+    {key:'sett',    label:'Settim.',  get:e=>({html:(isSettMark(e)?'<span class="reg-badge">SÌ</span>':''), empty:!isSettMark(e)})},
+    {key:'ripetuto',label:'Rip.',     get:e=>({html:(e.ripetuto?'<span class="reg-badge">RIP.</span>':''), empty:!e.ripetuto})},
+    {key:'note',    label:'Note',     get:e=>{const n=e.note||''; return n?cut(n):{v:'',empty:true};}}
   ];
   function loadColOrder(){
     try{
@@ -33776,11 +33784,22 @@ setTool("erase");
   let _dragKey=null;
   const colFilters={};
   function colText(c,e){
+    // Per filtri e ordinamento serve il valore COMPLETO, non quello troncato a schermo:
+    // le colonne con testo lungo restituiscono html invece di v, e senza questa mappa
+    // il filtro le leggerebbe come vuote.
+    switch(c.key){
+      case 'fornitore': return String(e.fornitore||'');
+      case 'impresa':   return String(e.impresa||'');
+      case 'opera':     return String(e.opera||'');
+      case 'parte':     return String(e.parte||'');
+      case 'mix':       return String(e.mix||'');
+      case 'note':      return String(e.note||'');
+      case 'verbale':   return String(e.verbale||'');
+      case 'ripetuto':  return e.ripetuto?'rip':'';
+      case 'sett':      return isSettMark(e)?'sì':'';
+    }
     const r=c.get(e);
     if(r && r.v!=null) return String(r.v);
-    if(c.key==='verbale') return String(e.verbale||'');
-    if(c.key==='ripetuto') return e.ripetuto?'rip':'';
-    if(c.key==='note') return String(e.note||'');
     return '';
   }
   function distinctColValues(c){
@@ -33850,14 +33869,13 @@ setTool("erase");
     document.addEventListener('keydown',_fpanelEsc,true);
     if(srch) srch.focus();
   }
+  // Il filtro ora vive dentro l'intestazione (come in Excel): la riga separata sparisce.
   function renderFilterRow(){
-    const fr=$('reg-filter-row'); if(!fr)return;
-    fr.innerHTML=COLS.map(c=>{
-      const on=!!(colFilters[c.key]&&colFilters[c.key].length);
-      return '<th class="reg-fth"><button type="button" class="reg-fbtn'+(on?' on':'')+'" data-fkey="'+c.key+'" title="Filtra '+esc(c.label)+'">'+esc(filterLabel(c.key))+' ▾</button></th>';
-    }).join('')+'<th class="reg-fth"></th>';
-    fr.querySelectorAll('button[data-fkey]').forEach(btn=>{
-      btn.addEventListener('click',ev=>{ ev.stopPropagation(); openFilterPanel(btn.dataset.fkey,btn); });
+    const tr=$('reg-thead-row'); if(!tr) return;
+    tr.querySelectorAll('button[data-fkey]').forEach(btn=>{
+      btn.addEventListener('click',ev=>{ ev.stopPropagation(); ev.preventDefault(); openFilterPanel(btn.dataset.fkey,btn); });
+      btn.addEventListener('mousedown',ev=>ev.stopPropagation());
+      btn.setAttribute('draggable','false');
     });
   }
   let sortKey='data', sortDir=1, _suppressSortClick=false;   // ordine iniziale: Data crescente
@@ -33896,14 +33914,59 @@ setTool("erase");
       return natCmp(a.verbale,b.verbale);
     });
   }
+  // Larghezza delle colonne scelta dall'utente (resta salvata sul dispositivo)
+  const COLW_KEY='mq_reg_colw_v1';
+  let colWidths={};
+  try{ colWidths=JSON.parse(localStorage.getItem(COLW_KEY)||'{}')||{}; }catch(_){ colWidths={}; }
+  function saveColWidths(){ try{ localStorage.setItem(COLW_KEY,JSON.stringify(colWidths)); }catch(_){ } }
+  function applyColWidth(key,px){
+    if(px==null){ delete colWidths[key]; } else { colWidths[key]=Math.max(50,Math.round(px)); }
+    saveColWidths();
+    const idx=COLS.findIndex(c=>c.key===key); if(idx<0) return;
+    const w=colWidths[key];
+    const th=document.querySelector('#reg-thead-row th[data-key="'+key+'"]');
+    if(th){ th.style.width=w?w+'px':''; th.style.minWidth=w?w+'px':''; th.style.maxWidth=w?w+'px':'';
+            th.style.overflow=w?'hidden':''; }
+    document.querySelectorAll('#reg-tbody tr').forEach(tr=>{
+      const td=tr.children[idx]; if(!td) return;
+      td.style.width=w?w+'px':''; td.style.maxWidth=w?w+'px':'';
+    });
+  }
+  function installResizers(tr){
+    tr.querySelectorAll('th[data-key] .reg-resz').forEach(hnd=>{
+      const th=hnd.parentElement, key=th.dataset.key;
+      hnd.addEventListener('mousedown',ev=>{
+        ev.preventDefault(); ev.stopPropagation();
+        const x0=ev.clientX, w0=th.getBoundingClientRect().width;
+        const move=e2=>applyColWidth(key, w0+(e2.clientX-x0));
+        const up=()=>{ document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up);
+          _suppressSortClick=true; setTimeout(()=>{_suppressSortClick=false;},120); };
+        document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+      });
+      // doppio clic: torna alla larghezza automatica
+      hnd.addEventListener('dblclick',ev=>{ ev.preventDefault(); ev.stopPropagation(); applyColWidth(key,null); renderBody(); });
+      hnd.addEventListener('click',ev=>ev.stopPropagation());
+    });
+  }
   function renderThead(){
     const tr=$('reg-thead-row'); if(!tr)return;
     tr.innerHTML=COLS.map(c=>{
       const ar=(sortKey===c.key)?('<span class="reg-sort-ar">'+(sortDir>0?'▲':'▼')+'</span>'):'';
-      return '<th draggable="true" data-key="'+c.key+'" class="reg-th" title="Clic per ordinare · trascina per spostare">'+esc(c.label)+ar+'</th>';
+      const w=colWidths[c.key];
+      const st=w?(' style="width:'+w+'px;min-width:'+w+'px;max-width:'+w+'px;"'):'';
+      const on=!!(colFilters[c.key]&&colFilters[c.key].length);
+      return '<th draggable="true" data-key="'+c.key+'" class="reg-th"'+st+'>'
+        + '<span class="reg-thlab" title="Clic per ordinare · trascina per spostare">'+esc(c.label)+ar+'</span>'
+        + '<button type="button" class="reg-fbtn'+(on?' on':'')+'" data-fkey="'+c.key+'" title="Filtra '+esc(c.label)+'">▾</button>'
+        + '<span class="reg-resz" title="Trascina per allargare · doppio clic per adattare"></span></th>';
     }).join('')+'<th></th>';
     tr.querySelectorAll('th[data-key]').forEach(th=>{
-      th.addEventListener('click',()=>{ if(_suppressSortClick)return; const k=th.dataset.key; if(sortKey===k)sortDir=-sortDir; else {sortKey=k;sortDir=1;} renderThead(); renderBody(); });
+      th.addEventListener('click',ev=>{
+        if(_suppressSortClick) return;
+        if(ev.target.closest('.reg-fbtn')||ev.target.closest('.reg-resz')) return;   // freccia e maniglia non ordinano
+        const k=th.dataset.key; if(sortKey===k)sortDir=-sortDir; else {sortKey=k;sortDir=1;}
+        renderThead(); renderBody();
+      });
       th.addEventListener('dragstart',ev=>{ _dragKey=th.dataset.key; th.classList.add('drag'); try{ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',_dragKey);}catch(_){}});
       th.addEventListener('dragend',()=>{ th.classList.remove('drag'); tr.querySelectorAll('th').forEach(x=>x.classList.remove('over')); _suppressSortClick=true; setTimeout(()=>{_suppressSortClick=false;},80); });
       th.addEventListener('dragover',ev=>{ ev.preventDefault(); th.classList.add('over'); });
@@ -33916,6 +33979,7 @@ setTool("erase");
         saveColOrder(); renderThead(); renderBody();
       });
     });
+    installResizers(tr);
     renderFilterRow();
   }
   function applyFilters(rows){
@@ -33996,6 +34060,8 @@ setTool("erase");
     tb.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
       const e=db.entries.find(x=>x.id===b.dataset.edit); if(e)loadIntoForm(e);
     });
+    // riapplica le larghezze scelte dall'utente alle righe appena disegnate
+    Object.keys(colWidths).forEach(k=>applyColWidth(k, colWidths[k]));
   }
 
   /* ---------- Excel export ---------- */
@@ -34237,9 +34303,9 @@ setTool("erase");
         const ws=wb.addWorksheet('Scadenze',{views:[{state:'frozen',ySplit:1}]});
         ws.columns=COLS.map(c=>({header:c.h,key:c.h,width:c.w}));
         const bd={style:'thin',color:{argb:'FFB8CCE4'}}; const border={top:bd,left:bd,bottom:bd,right:bd};
-        const hr=ws.getRow(1); hr.height=26;
+        const hr=ws.getRow(1); hr.height=38;                      // intestazione ben visibile
         hr.eachCell(cell=>{ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F4E79'}};
-          cell.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
+          cell.font={bold:true,color:{argb:'FFFFFFFF'},size:12};
           cell.alignment={vertical:'middle',horizontal:'center',wrapText:true}; cell.border=border; });
         const COL={'SCADUTO':'FFF4B8B8','QUESTA SETTIMANA':'FFFFD08A','SETTIMANA PROSSIMA':'FFFFE9A8'};
         list.forEach(r=>{
@@ -34309,9 +34375,11 @@ setTool("erase");
         rows.forEach((e,i)=>{
           const r=ws.addRow(EXPORT_COLS.map(c=>c.get(e)));
           const prel=isPrelievo(e);                       // riga con verbale = prelievo vero
+          r.height=15;                                             // righe compatte, altezza fissa
           r.eachCell({includeEmpty:true},cell=>{
             cell.border=border;
-            cell.alignment={vertical:'middle',horizontal:'center',wrapText:true};   // tutte le celle centrate
+            // niente a capo nelle righe dati: manterrebbe le righe alte il doppio
+            cell.alignment={vertical:'middle',horizontal:'center',wrapText:false};
             if(prel) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD8F0D8'}};        // prelievo: verde chiaro
             else if(i%2===1) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF1F8'}}; // righe alterne azzurrine
           });
@@ -34373,7 +34441,7 @@ setTool("erase");
       verbale:['Verbale di prelievo','Verbale'], cubetti:['N° cubetti','N cubetti','Cubetti'],
       note:['Note'], tempAmb:['Temp. ambiente [°C]','Temp ambiente','Temperatura ambiente'],
       tempCls:['Temp. CLS [°C]','Temp CLS','Temperatura CLS'],
-      by:['Inserito da'], at:['Data inserimento'] };
+      by:['Inserito da'], at:['Data inserimento'], sett:['Settimanale'] };
     const campiPresenti=new Set(Object.keys(FONTI).filter(k=>presente.apply(null,FONTI[k])));
     const proveNelFile = presente('Slump [cm]','Slump','Spandimento [cm]','Spandimento','Aria [%]','Aria','Rapporto A/C','A/C','Acqua essudata','Massa volumica [kg/m³]','Massa volumica');
     const onlyLab = isManager() ? '' : (myLab()||curLab||'');
@@ -34415,14 +34483,32 @@ setTool("erase");
   // le cui colonne esistono nel file. Le colonne assenti lasciano il dato com'era.
   function fondiRiga(vecchia, nuova, campiPresenti, proveNelFile){
     const m=Object.assign({}, vecchia);
-    campiPresenti.forEach(k=>{ m[k]=nuova[k]; });
+    campiPresenti.forEach(k=>{ if(k!=='sett') m[k]=nuova[k]; });
     if(proveNelFile){
       m.tests=Object.assign({}, nuova.tests||{});
-      // i contrassegni interni non stanno nelle colonne: si conservano sempre
+      // i contrassegni interni non hanno una colonna: si conservano
       Object.keys(vecchia.tests||{}).forEach(k=>{ if(k.indexOf('__')===0 && m.tests[k]===undefined) m.tests[k]=vecchia.tests[k]; });
     }
-    if(nuova.tests && nuova.tests.__sett){ m.tests=m.tests||{}; m.tests.__sett=true; }
+    // Colonna "Settimanale": se c'è nel file comanda lei, sia per METTERE sia per TOGLIERE
+    // il contrassegno. Se la colonna manca, il valore resta quello di prima.
+    if(campiPresenti.has('sett')){
+      m.tests=Object.assign({}, m.tests||{});
+      if(nuova.tests && nuova.tests.__sett) m.tests.__sett=true; else delete m.tests.__sett;
+    }
     if(campiPresenti.has('verbale')) m.prelievo=nuova.prelievo;
+    // Stessa regola del salvataggio dal sito: il numero di cubetti decide se è il settimanale.
+    // Si applica quando il file porta i cubetti e NON porta la colonna "Settimanale"
+    // (se quella colonna c'è, comanda lei, come deciso sopra).
+    if(campiPresenti.has('cubetti') && !campiPresenti.has('sett')){
+      try{
+        const cfg=mixCfgOf(m.mix||''); const n=parseInt(m.cubetti,10);
+        if(cfg.sett>0){
+          m.tests=Object.assign({}, m.tests||{});
+          if(isPrelievo(m) && n===cfg.sett) m.tests.__sett=true;
+          else if(n!==cfg.sett) delete m.tests.__sett;
+        }
+      }catch(_){}
+    }
     m.id=vecchia.id;
     return m;
   }
@@ -34709,7 +34795,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 14.8';
+  window.APP_VERSION = 'Versione 16.1';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
