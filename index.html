@@ -829,6 +829,20 @@ tr.new-row{animation:rowIn .2s ease both;}
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Scegli quali campi non possono restare vuoti quando si salva una registrazione. La regola vale per tutti i laboratori e per tutti gli utenti (il campo compare con un <b style="color:var(--red);">*</b> rosso nel form).</div>
       <div id="ra-required" style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--text);"></div>
 
+      <!-- Manutenzione dati -->
+      <div class="admin-section-title" style="margin-top:24px;">🧰 Manutenzione dati</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Completa le righe vecchie a cui manca l'<b>Rck</b>, prendendolo dalla miscela. Non modifica nessun altro campo e non tocca le righe già complete. Va usato una volta sola, dopo aver impostato l'Rck delle miscele qui sopra.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <button class="btn btn-sm" id="ra-fill-btn" style="background:var(--bg);border:1px solid var(--border2);color:var(--text);">🧰 Completa Rck mancanti</button>
+        <button class="btn btn-sm" id="ra-tidy-btn" title="Riscrive tutte le righe mettendo ogni informazione nella sua colonna. Non cambia nessun valore." style="background:var(--bg);border:1px solid var(--border2);color:var(--text);">🧹 Riordina dati su Supabase</button>
+        <span id="ra-fill-msg" style="font-size:12px;color:var(--muted);"></span>
+      </div>
+
+      <!-- Prove in scadenza -->
+      <div class="admin-section-title" style="margin-top:24px;">⏰ Prove in scadenza</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Cubetti da provare a 7 e 28 giorni, di tutti i laboratori. La maturazione è calcolata sulla <b>data del prelievo</b>.</div>
+      <div id="ra-scadenze"><div style="color:var(--muted);font-size:11px;">—</div></div>
+
       <!-- DDT duplicati -->
       <div class="admin-section-title" style="margin-top:24px;">🔁 DDT duplicati</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Numeri di DDT usati da più righe (in qualunque laboratorio e WBS). Il salvataggio ora li impedisce, ma le righe già registrate vanno corrette a mano.</div>
@@ -25992,6 +26006,76 @@ function renderRequired(){
     });
   });
 }
+function renderScadenze(){
+  const box=document.getElementById('ra-scadenze'); if(!box) return;
+  const RA=window.RegAdmin; if(!RA||!RA.scadenzeReport){ box.innerHTML=''; return; }
+  const rows=RA.scadenzeReport();
+  if(!rows.length){ box.innerHTML='<div style="color:var(--green);font-size:11px;">✓ Nessuna prova in scadenza nei prossimi giorni.</div>'; return; }
+  const COL={'SCADUTO':'var(--red)','QUESTA SETTIMANA':'var(--orange)','SETTIMANA PROSSIMA':'var(--accent)'};
+  const cont={}; rows.forEach(r=>{ cont[r.stato]=(cont[r.stato]||0)+1; });
+  const fmtD=s=>{ if(!s) return '—'; const p=String(s).slice(0,10).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
+  let h='<div style="font-size:12px;margin-bottom:8px;">'
+    + ['SCADUTO','QUESTA SETTIMANA','SETTIMANA PROSSIMA'].filter(k=>cont[k])
+        .map(k=>'<b style="color:'+COL[k]+';">'+cont[k]+'</b> '+k.toLowerCase()).join(' · ') + '</div>';
+  h+='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">'
+    +'<thead><tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border2);">'
+    +'<th style="padding:6px 8px;">Stato</th><th style="padding:6px 8px;">Prova</th><th style="padding:6px 8px;">Maturazione</th>'
+    +'<th style="padding:6px 8px;">Verbale</th><th style="padding:6px 8px;">Lab.</th><th style="padding:6px 8px;">Data prelievo</th>'
+    +'<th style="padding:6px 8px;">Cub.</th><th style="padding:6px 8px;">WBS</th></tr></thead><tbody>';
+  rows.slice(0,60).forEach(r=>{
+    h+='<tr style="border-bottom:1px solid var(--border);">'
+      +'<td style="padding:6px 8px;color:'+(COL[r.stato]||'var(--text)')+';font-weight:700;white-space:nowrap;">'+escHtml(r.stato)+'</td>'
+      +'<td style="padding:6px 8px;white-space:nowrap;">'+escHtml(r.prova)+'</td>'
+      +'<td style="padding:6px 8px;font-weight:600;white-space:nowrap;">'+fmtD(r.matur)+'</td>'
+      +'<td style="padding:6px 8px;font-family:monospace;">'+(escHtml(r.verbale)||'—')+'</td>'
+      +'<td style="padding:6px 8px;color:var(--muted);">'+(escHtml(r.lab)||'—')+'</td>'
+      +'<td style="padding:6px 8px;">'+fmtD(r.data)+'</td>'
+      +'<td style="padding:6px 8px;">'+(escHtml(r.cubetti)||'—')+'</td>'
+      +'<td style="padding:6px 8px;">'+(escHtml(r.wbs)||'—')+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  if(rows.length>60) h+='<div style="color:var(--muted);font-size:11px;margin-top:6px;">… e altre '+(rows.length-60)+' righe (scaricabili con «Scadenze prove» nel registro).</div>';
+  box.innerHTML=h;
+}
+// pulsante di manutenzione: completa l'Rck mancante sulle righe vecchie
+(function(){
+  function bind(){
+    const t=document.getElementById('ra-tidy-btn');
+    if(t && !t._bound){ t._bound=true;
+      t.addEventListener('click', async ()=>{
+        const RA=window.RegAdmin, msg=document.getElementById('ra-fill-msg');
+        if(!RA||!RA.riordinaCloud) return;
+        if(!confirm('Riscrivere tutte le righe su Supabase mettendo ogni informazione nella sua colonna?\n\nNessun valore viene modificato: cambia solo dove è scritto.')) return;
+        t.disabled=true; const old=t.textContent;
+        try{
+          const r=await RA.riordinaCloud((fatte,tot)=>{ t.textContent='⏳ '+fatte+'/'+tot; });
+          msg.style.color='var(--green)';
+          msg.textContent='✓ '+r.righe+' righe riordinate'+(r.colonnaSett?'':' · la colonna "settimanale" non esiste ancora su Supabase: quel dato è rimasto dov\'era');
+          if(typeof addLog==='function'){ addLog('Riordino dati su Supabase: '+r.righe+' righe'); renderAdminLog(); }
+        }catch(err){ msg.style.color='var(--red)'; msg.textContent='Errore: '+((err&&err.message)||err); }
+        t.disabled=false; t.textContent=old;
+      });
+    }
+    const b=document.getElementById('ra-fill-btn'); if(!b||b._bound) return; b._bound=true;
+    b.addEventListener('click', async ()=>{
+      const RA=window.RegAdmin, msg=document.getElementById('ra-fill-msg');
+      if(!RA||!RA.completaColonne) return;
+      if(!confirm("Completare l'Rck delle righe che ne sono prive, prendendolo dalla miscela?\n\nNessun altro campo viene modificato.")) return;
+      b.disabled=true; const old=b.textContent; b.textContent='⏳ In corso...';
+      try{
+        const r=await RA.completaColonne();
+        msg.style.color = r.aggiornate ? 'var(--green)' : 'var(--muted)';
+        msg.textContent = r.aggiornate
+          ? ('✓ '+r.aggiornate+' righe completate'+(r.restano?(' · '+r.restano+' senza Rck: miscela non configurata'):''))
+          : (r.restano ? (r.restano+" righe senza Rck: manca l'Rck sulle loro miscele") : "Tutte le righe hanno già l'Rck.");
+        if(typeof addLog==='function' && r.aggiornate){ addLog('Completate '+r.aggiornate+" righe con l'Rck della miscela"); renderAdminLog(); }
+      }catch(err){ msg.style.color='var(--red)'; msg.textContent='Errore: '+((err&&err.message)||err); }
+      b.disabled=false; b.textContent=old;
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();
+  setTimeout(bind,1500);
+})();
 function renderDdtDup(){
   const box=document.getElementById('ra-ddt-dup'); if(!box) return;
   const RA=window.RegAdmin; if(!RA||!RA.ddtDupReport){ box.innerHTML=''; return; }
@@ -26029,6 +26113,7 @@ function renderWbsReport(){
 function renderRegAdmin(){
   const RA=window.RegAdmin; if(!RA) return;
   renderRequired();
+  renderScadenze();
   renderDdtDup();
   renderWbsReport();
   // elenco laboratori
@@ -32090,14 +32175,27 @@ setTool("erase");
   let lastSig='';        // firma dello stato per rilevare i cambiamenti
   let syncTimer=null;
   const cloudOn=()=>typeof sbFetch==='function';   // sbFetch è definito nell'app principale
+  // La colonna "settimanale" potrebbe non esistere ancora su Supabase.
+  // L'app la cerca una volta sola: se c'è la usa, altrimenti resta al vecchio posto.
+  // Così caricare il file prima o dopo l'SQL non fa differenza.
+  let _colSett=null;
+  async function verificaColonnaSett(){
+    if(_colSett!==null) return _colSett;
+    try{ await sbFetch('registro?select=settimanale&limit=1'); _colSett=true; }
+    catch(_){ _colSett=false; }
+    return _colSett;
+  }
   function toRow(e){
     return {
       id:e.id, lab:e.lab||'', data:e.data||'', ddt:e.ddt||'', impresa:e.impresa||'', fornitore:e.fornitore||'',
       wbs:e.wbs||'', opera:e.opera||'', parte:e.parte||'', mix:e.mix||'', mc:e.mc||'',
       // Rck e progressive hanno le loro colonne su Supabase; "tests" torna a contenere solo le prove
-      tests:(function(){ const t=Object.assign({}, e.tests||{}); delete t.__rck; delete t.__pkda; delete t.__pka; return t; })(),
+      tests:(function(){ const t=Object.assign({}, e.tests||{}); delete t.__rck; delete t.__pkda; delete t.__pka;
+              if(_colSett===true) delete t.__sett;   // ha la sua colonna: fuori dalle prove
+              return t; })(),
       rck:e.rck||'', pk_da:e.pkDa||'', pk_a:e.pkA||'',
       prelievo:!!e.prelievo, verbale:e.verbale||'', ripetuto:!!e.ripetuto,
+      ...(_colSett===true ? {settimanale: !!(e.tests && e.tests.__sett)} : {}),
       cubetti:e.cubetti||'', note:e.note||'', temp_amb:e.tempAmb||'', temp_cls:e.tempCls||'',
       inserito_da:e.by||'', inserito_il:e.at||'',
       updated_at:e.updated_at||new Date().toISOString()
@@ -32107,7 +32205,9 @@ setTool("erase");
     return {
       id:String(r.id), lab:r.lab||'', data:r.data||'', ddt:r.ddt||'', impresa:r.impresa||'', fornitore:r.fornitore||'',
       wbs:r.wbs||'', opera:r.opera||'', parte:r.parte||'', mix:r.mix||'', mc:r.mc||'',
-      tests:(r.tests&&typeof r.tests==='object')?r.tests:{}, prelievo:(r.prelievo!=null?!!r.prelievo:!!(r.verbale&&String(r.verbale).trim())), verbale:r.verbale||'', ripetuto:!!r.ripetuto,
+      tests:(function(){ const t=(r.tests&&typeof r.tests==='object')?Object.assign({},r.tests):{};
+              if(r.settimanale===true) t.__sett=true;    // colonna vera
+              return t; })(), prelievo:(r.prelievo!=null?!!r.prelievo:!!(r.verbale&&String(r.verbale).trim())), verbale:r.verbale||'', ripetuto:!!r.ripetuto,
       // legge la colonna vera; se vuota ripiega sul vecchio posto, così le righe già salvate non perdono nulla
       rck: (r.rck!=null&&r.rck!=='') ? String(r.rck) : ((r.tests&&r.tests.__rck)||''),
       pkDa:(r.pk_da!=null&&r.pk_da!=='') ? String(r.pk_da) : ((r.tests&&r.tests.__pkda)||''),
@@ -32200,6 +32300,7 @@ setTool("erase");
   let cfgLoaded=false;
   async function cloudSync(){
     if(!cloudOn()){ setStatus('local'); return; }
+    await verificaColonnaSett();   // una volta sola: c'è la colonna "settimanale"?
     try{
       // 0) configurazione condivisa (laboratori, miscele, formato, utenti→lab)
       let cfgChanged=false;
@@ -32478,6 +32579,39 @@ setTool("erase");
       pushConfig(); applyRequiredMarkers(); return Object.assign({}, reqCfg()); },
     syncConfig: async ()=>{ save(); if(!cloudOn()) throw new Error('offline'); await sbConfigSave(); return currentConfig(); },
     // elenco dei numeri di DDT usati da più di una riga (in tutto il registro)
+    // Completa le righe vecchie a cui manca l'Rck, prendendolo dalla miscela.
+    // Non tocca le righe che ce l'hanno già né altri campi. Dice quante ne ha aggiornate.
+    completaColonne: async ()=>{
+      const daFare=db.entries.filter(e=>!String(e.rck||'').trim() && String(mixCfgOf(e.mix||'').rck||'').trim());
+      if(daFare.length){
+        daFare.forEach(e=>{ e.rck=mixCfgOf(e.mix||'').rck; });
+        save();
+        if(cloudOn()){
+          try{ await sbRegUpsertMany(daFare); lastSig=''; }
+          catch(err){ console.warn('completaColonne',err); daFare.forEach(e=>e._pending=true); save(); throw err; }
+        }
+        refreshAll();
+      }
+      const restano=db.entries.filter(e=>!String(e.rck||'').trim()).length;
+      return {aggiornate:daFare.length, restano};
+    },
+    scadenzeReport:()=> scadenzeList(db.entries),
+    // Riscrive tutte le righe su Supabase nella forma corretta: sposta Rck, progressive e
+    // contrassegno settimanale nelle loro colonne e ripulisce il campo delle prove.
+    // Non cambia NESSUN valore: cambia solo dove sono scritti.
+    riordinaCloud: async (onProgress)=>{
+      if(!cloudOn()) throw new Error('Sei offline: riprova quando la connessione è attiva.');
+      await verificaColonnaSett();
+      const tutte=db.entries.slice();
+      if(!tutte.length) return {righe:0, colonnaSett:_colSett===true};
+      const BLOCCO=200;
+      for(let i=0;i<tutte.length;i+=BLOCCO){
+        await sbRegUpsertMany(tutte.slice(i,i+BLOCCO));
+        if(typeof onProgress==='function') onProgress(Math.min(i+BLOCCO,tutte.length), tutte.length);
+      }
+      lastSig='';
+      return {righe:tutte.length, colonnaSett:_colSett===true};
+    },
     ddtDupReport:()=>{
       const by={};
       db.entries.forEach(e=>{ const d=String(e.ddt||'').trim(); if(!d) return;
@@ -33974,6 +34108,7 @@ setTool("erase");
     {h:'Temp. CLS [°C]',         w:14, get:e=>xnum(e.tempCls)},
     {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
     {h:'N° cubetti',             w:10, get:e=>xnum(e.cubetti)},
+    {h:'Settimanale',            w:12, get:e=>isSettMark(e)?'Sì':''},
     {h:'Maturazione 28 gg',      w:16, get:e=>{const d=maturDate(e,28); return d?fmtIt(_isoOf(d)):'';}},
     {h:'Maturazione 7 gg',       w:15, get:e=>{const d=maturDate(e,7);  return d?fmtIt(_isoOf(d)):'';}},
     {h:'Settimana spedizione 28 gg', w:20, get:e=>shipWeek(e,28)},
@@ -34225,6 +34360,22 @@ setTool("erase");
     const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
     const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    // Intestazioni realmente presenti nel file: una colonna assente significa
+    // "non ho informazioni su questo campo", NON "svuotalo".
+    const intestazioni=new Set();
+    if(rows.length) Object.keys(rows[0]).forEach(k=>intestazioni.add(String(k).trim()));
+    const presente=(...keys)=>keys.some(k=>intestazioni.has(k));
+    // per ogni campo della riga, quali colonne dell'Excel lo alimentano
+    const FONTI={ data:['Data'], ddt:['DDT'], fornitore:['Fornitore CLS','Fornitore'],
+      impresa:['Impresa Esecutrice','Impresa'], wbs:['WBS'], opera:['Opera'], parte:["Parte d'Opera",'Parte'],
+      mix:['Mix'], rck:['Rck','Rck / classe'], mc:['m³','m3','mc'],
+      pkDa:['da pk','Da pk','DA PK'], pkA:['a pk','A pk','A PK'],
+      verbale:['Verbale di prelievo','Verbale'], cubetti:['N° cubetti','N cubetti','Cubetti'],
+      note:['Note'], tempAmb:['Temp. ambiente [°C]','Temp ambiente','Temperatura ambiente'],
+      tempCls:['Temp. CLS [°C]','Temp CLS','Temperatura CLS'],
+      by:['Inserito da'], at:['Data inserimento'] };
+    const campiPresenti=new Set(Object.keys(FONTI).filter(k=>presente.apply(null,FONTI[k])));
+    const proveNelFile = presente('Slump [cm]','Slump','Spandimento [cm]','Spandimento','Aria [%]','Aria','Rapporto A/C','A/C','Acqua essudata','Massa volumica [kg/m³]','Massa volumica');
     const onlyLab = isManager() ? '' : (myLab()||curLab||'');
     const out=[]; let skipped=0;
     rows.forEach(r=>{
@@ -34253,10 +34404,27 @@ setTool("erase");
         tempCls:String(g('Temp. CLS [°C]','Temp CLS','Temperatura CLS'))
       };
       e.prelievo = (g('Prelievo eseguito','Prelievo')!=='') ? truthy(g('Prelievo eseguito','Prelievo')) : !!(e.verbale && e.verbale.trim());
+      // contrassegno del prelievo settimanale: ora c'è anche nell'Excel, quindi si ricarica
+      if(truthy(g('Settimanale'))){ e.tests=e.tests||{}; e.tests.__sett=true; }
       if(!e.prelievo){ e.verbale=''; e.ripetuto=false; }
       out.push(e);
     });
-    return {entries:out, skipped, onlyLab};
+    return {entries:out, skipped, onlyLab, campiPresenti, proveNelFile};
+  }
+  // Fonde la riga letta dall'Excel su quella già presente: tocca SOLO i campi
+  // le cui colonne esistono nel file. Le colonne assenti lasciano il dato com'era.
+  function fondiRiga(vecchia, nuova, campiPresenti, proveNelFile){
+    const m=Object.assign({}, vecchia);
+    campiPresenti.forEach(k=>{ m[k]=nuova[k]; });
+    if(proveNelFile){
+      m.tests=Object.assign({}, nuova.tests||{});
+      // i contrassegni interni non stanno nelle colonne: si conservano sempre
+      Object.keys(vecchia.tests||{}).forEach(k=>{ if(k.indexOf('__')===0 && m.tests[k]===undefined) m.tests[k]=vecchia.tests[k]; });
+    }
+    if(nuova.tests && nuova.tests.__sett){ m.tests=m.tests||{}; m.tests.__sett=true; }
+    if(campiPresenti.has('verbale')) m.prelievo=nuova.prelievo;
+    m.id=vecchia.id;
+    return m;
   }
   // trova la riga esistente che corrisponde a quella importata (id, poi verbale, poi lab+data+ddt+mix)
   function findExisting(e){
@@ -34268,14 +34436,15 @@ setTool("erase");
   }
   async function importFile(file){
     try{
-      const {entries, skipped, onlyLab} = await readEntriesFromFile(file);
+      const {entries, skipped, onlyLab, campiPresenti, proveNelFile} = await readEntriesFromFile(file);
       let added=0, updated=0, skipLab=skipped;
       entries.forEach(e=>{
         if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
         if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
         const i=findExisting(e);
         if(i>=0 && onlyLab && (db.entries[i].lab||'').toLowerCase()!==onlyLab.toLowerCase()){ skipLab++; return; }
-        if(i>=0){ e.id=db.entries[i].id; db.entries[i]=e; updated++; } else { db.entries.push(e); added++; }
+        if(i>=0){ db.entries[i]=fondiRiga(db.entries[i], e, campiPresenti, proveNelFile); updated++; }
+        else { db.entries.push(e); added++; }
       });
       // ricalcola flag ripetuto sull'intero database
       const seen={};
@@ -34291,7 +34460,7 @@ setTool("erase");
   // Mostra un'anteprima con conteggi + elenco delle cancellazioni, e procede solo se l'utente conferma.
   async function syncFile(file){
     try{
-      const {entries, skipped, onlyLab} = await readEntriesFromFile(file);
+      const {entries, skipped, onlyLab, campiPresenti, proveNelFile} = await readEntriesFromFile(file);
       // scopo del confronto = laboratorio corrente (o solo il proprio, se non admin). Le altre righe NON vengono toccate.
       const scope = onlyLab || (curLab && curLab!=='__ALL__' ? curLab : '');
       const inScope = e => scope ? ((e.lab||'').toLowerCase()===scope.toLowerCase()) : true;
@@ -34339,7 +34508,7 @@ setTool("erase");
       // esegui: aggiorna, aggiungi, cancella (con lapide → propagata a tutti i dispositivi)
       toUpdate.forEach(({e,i})=>{ if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
         if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
-        e.id=db.entries[i].id; db.entries[i]=e; });
+        db.entries[i]=fondiRiga(db.entries[i], e, campiPresenti, proveNelFile); });
       toAdd.forEach(e=>{ if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
         if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
         db.entries.push(e); });
@@ -34540,7 +34709,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 14.2';
+  window.APP_VERSION = 'Versione 14.8';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
