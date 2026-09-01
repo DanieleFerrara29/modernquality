@@ -2542,11 +2542,14 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-f.reg-missing-wrap select,
 #tab-registro .reg-f.reg-missing-wrap textarea{ border-color:var(--red)!important; box-shadow:0 0 0 2px rgba(224,90,90,.18)!important; }
 #tab-registro .reg-f.reg-missing-wrap::after{ content:'⚠ Campo obbligatorio'; display:block; margin-top:4px; font-size:11px; color:var(--red); font-weight:600; letter-spacing:.02em; }
-/* --- da pk / a pk: affiancati su schermo largo, uno sotto l'altro su mobile --- */
-#tab-registro .reg-f-half{ display:inline-block; width:calc(50% - 6px); vertical-align:top; }
-#tab-registro .reg-f-half + .reg-f-half{ margin-left:10px; }
-#tab-registro .reg-f-half input{ font-variant-numeric:tabular-nums; }
-@media (max-width:640px){ #tab-registro .reg-f-half{ display:block; width:100%; } #tab-registro .reg-f-half + .reg-f-half{ margin-left:0; } }
+/* --- due campi affiancati (da pk / a pk); su telefono tornano uno sotto l'altro --- */
+#tab-registro .reg-frow{ display:flex; gap:12px; margin-top:16px; }
+#tab-registro .reg-frow > .reg-f{ flex:1 1 0; min-width:0; margin-top:0; }
+#tab-registro .reg-frow input{ font-variant-numeric:tabular-nums; }
+@media (max-width:640px){ #tab-registro .reg-frow{ flex-direction:column; gap:16px; } }
+/* --- temperature: stesso aspetto delle prove, senza casella da spuntare --- */
+#tab-registro .reg-test-plain{ margin-bottom:10px; }
+#tab-registro .reg-test-plain input[type=text]{ opacity:1; }
 /* --- campi compilati automaticamente dalla miscela --- */
 #tab-registro .reg-f.reg-automix > label{ color:var(--green); }
 #tab-registro .reg-f.reg-automix input,
@@ -2642,20 +2645,26 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro table.reg-table{white-space:normal;}
   #tab-registro table.reg-table thead{display:none;}
   #tab-registro table.reg-table,#tab-registro table.reg-table tbody{display:block;width:100%;}
-  #tab-registro table.reg-table tr{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;padding:6px 12px;}
+  #tab-registro table.reg-table tr{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;padding:4px 12px 10px;position:relative;}
   #tab-registro table.reg-table tr.rip{border-color:var(--red);}
-  #tab-registro table.reg-table td{display:flex;justify-content:space-between;align-items:center;gap:12px;border:none;border-bottom:1px solid var(--border);padding:9px 0;text-align:right;}
+  #tab-registro table.reg-table tr.reg-open{border-color:var(--accent);}
+  /* riga compatta: etichetta a sinistra, valore a destra */
+  #tab-registro table.reg-table td{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    border:none;border-bottom:1px dotted var(--border);padding:6px 0;text-align:right;font-size:13px;line-height:1.25;}
   #tab-registro table.reg-table tr td:last-child{border-bottom:none;}
-  #tab-registro table.reg-table td::before{content:attr(data-label);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;flex:0 0 42%;font-weight:600;}
+  #tab-registro table.reg-table td::before{content:attr(data-label);font-size:9.5px;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--muted);text-align:left;flex:0 0 38%;font-weight:600;}
+  #tab-registro table.reg-table td .reg-cell{white-space:normal;overflow:visible;text-overflow:clip;}
   #tab-registro table.reg-table td[data-empty]{display:none;}
   /* scheda compatta: solo le voci principali, il resto con "Dettagli" */
   #tab-registro table.reg-table tr:not(.reg-open) td:not(.k-primary):not(.reg-actions-cell){display:none;}
-  #tab-registro table.reg-table tr{position:relative;}
-  #tab-registro table.reg-table tr.reg-open{border-color:var(--accent);}
-  #tab-registro .reg-more{border-color:var(--border2);color:var(--accent);margin-right:auto;}
-  #tab-registro table.reg-table td.reg-actions-cell{justify-content:flex-end;gap:10px;padding-top:12px;}
+  /* pulsanti: tre uguali, a tutta larghezza, sempre dentro la scheda */
+  #tab-registro table.reg-table td.reg-actions-cell{display:flex;flex-wrap:wrap;justify-content:center;
+    gap:8px;padding:10px 0 2px;margin-top:4px;border-top:1px solid var(--border);white-space:normal;}
   #tab-registro table.reg-table td.reg-actions-cell::before{display:none;}
-  #tab-registro table.reg-table td.reg-actions-cell .reg-del{padding:9px 16px;font-size:14px;}
+  #tab-registro table.reg-table td.reg-actions-cell .reg-del{flex:1 1 0;min-width:0;margin:0;
+    padding:10px 6px;font-size:13px;text-align:center;justify-content:center;}
+  #tab-registro .reg-more{border-color:var(--border2);color:var(--accent);}
   #tab-registro .reg-empty{padding:24px 10px;}
   #tab-registro .reg-toast{left:12px;right:12px;transform:none;text-align:center;bottom:14px;}
   /* strumenti mobile: ordina + filtri */
@@ -2664,6 +2673,8 @@ tr.new-row{animation:rowIn .2s ease both;}
 }
 /* il pulsante "Dettagli" serve solo alle schede su telefono */
 #tab-registro .reg-more{display:none;}
+#tab-registro .reg-edit{border-color:var(--border2);color:var(--muted);margin-right:4px;}
+#tab-registro td.reg-actions-cell{white-space:nowrap;}
 @media (max-width:640px){ #tab-registro .reg-more{display:inline-block;} }
 /* ===== Strumenti mobile (nascosti su desktop) ===== */
 #tab-registro .reg-mtools{display:none;flex-direction:column;gap:8px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;}
@@ -2866,6 +2877,12 @@ input[type="date"]{ color-scheme:dark; }
           <label>WBS <select id="rep-wbs"></select></label>
           <span id="rep-scope" style="align-self:center;color:var(--muted);"></span>
         </div>
+        <div class="reg-wnav" id="rep-nav">
+          <button class="reg-btn ghost" id="rep-prev">◀ Precedente</button>
+          <span class="reg-wnav-lbl" id="rep-nav-lbl"></span>
+          <button class="reg-btn ghost" id="rep-next">Successivo ▶</button>
+          <button class="reg-btn ghost" id="rep-oggi">Oggi</button>
+        </div>
         <div id="rep-total" style="font-size:13px;margin-bottom:12px;"></div>
         <div id="rep-chart"></div>
       </div>
@@ -2926,8 +2943,10 @@ input[type="date"]{ color-scheme:dark; }
         </div>
         <div class="reg-f"><label>Opera</label><input type="text" id="reg-opera" autocomplete="off"/></div>
         <div class="reg-f"><label>Parte d'opera</label><input type="text" id="reg-parte" autocomplete="off"/></div>
-        <div class="reg-f reg-f-half"><label>da pk</label><input type="text" id="reg-pkda" placeholder="es. 14+834,60" autocomplete="off" inputmode="text"/></div>
-        <div class="reg-f reg-f-half"><label>a pk</label><input type="text" id="reg-pka" placeholder="es. 14+853,80" autocomplete="off" inputmode="text"/></div>
+        <div class="reg-frow">
+          <div class="reg-f"><label>da pk</label><input type="text" id="reg-pkda" placeholder="es. 14+834,60" autocomplete="off" inputmode="text"/></div>
+          <div class="reg-f"><label>a pk</label><input type="text" id="reg-pka" placeholder="es. 14+853,80" autocomplete="off" inputmode="text"/></div>
+        </div>
       </section>
 
       <div class="reg-guide" id="reg-guide" style="display:none;"></div>
@@ -2936,8 +2955,15 @@ input[type="date"]{ color-scheme:dark; }
       <section class="reg-sec reg-tests">
         <div class="reg-sec-t">2 · Prove eseguite</div>
         <div class="reg-sec-hint">Spunta quelle effettuate e inserisci il valore.</div>
-        <div class="reg-f"><label>Temperatura ambiente (°C)</label><input type="text" inputmode="decimal" id="reg-temp-amb" placeholder="es. 22" autocomplete="off"/></div>
-        <div class="reg-f"><label>Temperatura CLS (°C)</label><input type="text" inputmode="decimal" id="reg-temp-cls" placeholder="es. 18" autocomplete="off"/><div class="reg-fieldwarn" id="reg-tcls-hint"></div></div>
+        <div class="reg-test reg-test-plain">
+          <span class="rt-lab">Temperatura ambiente <small>[°C]</small></span>
+          <input type="text" inputmode="decimal" id="reg-temp-amb" placeholder="22" autocomplete="off"/>
+        </div>
+        <div class="reg-test reg-test-plain">
+          <span class="rt-lab">Temperatura CLS <small>[°C]</small></span>
+          <input type="text" inputmode="decimal" id="reg-temp-cls" placeholder="18" autocomplete="off"/>
+        </div>
+        <div class="reg-fieldwarn" id="reg-tcls-hint"></div>
         <div class="reg-tests-grid" id="reg-tests-grid"></div>
         <div class="reg-fieldwarn" id="reg-tests-hint"></div>
       </section>
@@ -33573,6 +33599,8 @@ setTool("erase");
   }
   function clearForm(keepGetto){
     const keep = keepGetto ? {
+      pkDa:   (($('reg-pkda')&&$('reg-pkda').value)||''),
+      pkA:    (($('reg-pka') &&$('reg-pka').value)||''),
       forn:   comboVal('reg-forn','reg-forn-other'),
       impresa:comboVal('reg-impresa','reg-impresa-other'),
       wbs:    comboVal('reg-wbs','reg-wbs-other'),
@@ -33593,11 +33621,13 @@ setTool("erase");
       if(keep.impresa) setCombo('reg-impresa','reg-impresa-other',keep.impresa);
       if(keep.wbs)     setCombo('reg-wbs','reg-wbs-other',keep.wbs);
       if(keep.mix)     refreshMix(keep.mix);
+      if(keep.pkDa && $('reg-pkda')) $('reg-pkda').value=keep.pkDa;
+      if(keep.pkA  && $('reg-pka'))  $('reg-pka').value=keep.pkA;
       if(keep.opera && $('reg-opera')) $('reg-opera').value=keep.opera;
       if(keep.parte && $('reg-parte')) $('reg-parte').value=keep.parte;
       // segnala visivamente che i campi sono stati mantenuti apposta
       try{
-        const ids=['reg-forn','reg-impresa','reg-wbs','reg-mix','reg-opera','reg-parte'];
+        const ids=['reg-forn','reg-impresa','reg-wbs','reg-mix','reg-opera','reg-parte','reg-pkda','reg-pka'];
         ids.forEach(id=>{ const el=$(id); if(!el) return; const w=el.closest('.reg-f'); if(!w) return;
           w.classList.add('reg-kept'); setTimeout(()=>w.classList.remove('reg-kept'), 2600); });
       }catch(_){}
@@ -34075,7 +34105,7 @@ setTool("erase");
       COLS.forEach(c=>{ tds+=cellHtml(c.label, c.get(e), c.key); });
       const piu='<button class="reg-del reg-more" data-more="1" title="Mostra tutti i campi">▾<span class="reg-btn-txt"> Dettagli</span></button>';
       tds+= isViewer() ? ('<td class="reg-actions-cell">'+piu+'</td>')
-        : ('<td class="reg-actions-cell" style="white-space:nowrap;">'+piu+'<button class="reg-del" data-edit="'+esc(e.id)+'" style="border-color:var(--border2);color:var(--muted);margin-right:4px;">✎<span class="reg-btn-txt"> Modifica</span></button>'+
+        : ('<td class="reg-actions-cell">'+piu+'<button class="reg-del reg-edit" data-edit="'+esc(e.id)+'">✎<span class="reg-btn-txt"> Modifica</span></button>'+
         '<button class="reg-del" data-del="'+esc(e.id)+'">✕<span class="reg-btn-txt"> Elimina</span></button></td>');
       return '<tr class="'+(e.ripetuto?'rip':'')+'">'+tds+'</tr>';
     }).join('');
@@ -34743,14 +34773,64 @@ setTool("erase");
       b.style.display = open?'':'none';
       if(open){ fillReportFilters(); renderReport(); }
     };
-    ['rep-mese','rep-anno','rep-wbs','rep-data'].forEach(id=>{ if($(id)) $(id).addEventListener('change',renderReport); });
+    ['rep-mese','rep-anno','rep-wbs','rep-data'].forEach(id=>{ if($(id)) $(id).addEventListener('change',()=>{ renderReport(); repNavLabel(); }); });
     if($('rep-periodo')) $('rep-periodo').addEventListener('change',()=>{
       const per=$('rep-periodo').value, mese=(per==='mese');
       if($('rep-mese-w')) $('rep-mese-w').style.display=mese?'':'none';
       if($('rep-anno-w')) $('rep-anno-w').style.display=mese?'':'none';
       if($('rep-data-w')) $('rep-data-w').style.display=mese?'none':'';
-      renderReport();
+      renderReport(); repNavLabel();
     });
+    // Scorrimento del periodo: sposta mese, settimana o giorno secondo quello scelto.
+    function repSposta(passi){
+      const per=($('rep-periodo')?$('rep-periodo').value:'mese');
+      if(per==='mese'){
+        const mSel=$('rep-mese'), aSel=$('rep-anno'); if(!mSel||!aSel) return;
+        let m=parseInt(mSel.value,10)+passi, y=parseInt(aSel.value,10);
+        while(m<1){ m+=12; y--; } while(m>12){ m-=12; y++; }
+        if(!Array.from(aSel.options).some(o=>o.value===String(y))) return;   // fuori dagli anni disponibili
+        mSel.value=String(m); aSel.value=String(y);
+      } else {
+        const dEl=$('rep-data'); if(!dEl) return;
+        const giorni = (per==='sett') ? 7*passi : passi;
+        const base=toISODate(dEl.value||todayISO());
+        const d=new Date(base+'T00:00:00'); if(isNaN(d)) return;
+        d.setDate(d.getDate()+giorni);
+        dEl.value=isoLocal(d);
+      }
+      renderReport(); repNavLabel();
+    }
+    function repOggi(){
+      const per=($('rep-periodo')?$('rep-periodo').value:'mese');
+      const oggi=new Date();
+      if(per==='mese'){
+        const mSel=$('rep-mese'), aSel=$('rep-anno');
+        if(mSel) mSel.value=String(oggi.getMonth()+1);
+        if(aSel && Array.from(aSel.options).some(o=>o.value===String(oggi.getFullYear()))) aSel.value=String(oggi.getFullYear());
+      } else if($('rep-data')) $('rep-data').value=todayISO();
+      renderReport(); repNavLabel();
+    }
+    function repNavLabel(){
+      const el=$('rep-nav-lbl'), btn=$('rep-oggi'); if(!el) return;
+      const per=($('rep-periodo')?$('rep-periodo').value:'mese');
+      if(per==='mese'){
+        const m=$('rep-mese'), a=$('rep-anno');
+        el.textContent=(m&&m.options[m.selectedIndex]?m.options[m.selectedIndex].text:'')+' '+((a&&a.value)||'');
+        if(btn) btn.textContent='Questo mese';
+      } else if(per==='sett'){
+        const base=toISODate(($('rep-data')&&$('rep-data').value)||todayISO());
+        const lun=mondayOf(base); const dom=new Date(lun+'T00:00:00'); dom.setDate(dom.getDate()+6);
+        el.textContent=fmtIt(lun)+' – '+fmtIt(isoLocal(dom));
+        if(btn) btn.textContent='Questa settimana';
+      } else {
+        el.textContent=fmtIt(toISODate(($('rep-data')&&$('rep-data').value)||todayISO()));
+        if(btn) btn.textContent='Oggi';
+      }
+    }
+    if($('rep-prev')) $('rep-prev').onclick=()=>repSposta(-1);
+    if($('rep-next')) $('rep-next').onclick=()=>repSposta(1);
+    if($('rep-oggi')) $('rep-oggi').onclick=repOggi;
+    repNavLabel();
     // prospetto settimanale
     if($('reg-wreport-toggle')) $('reg-wreport-toggle').onclick=()=>{
       const b=$('reg-wreport-body'); if(!b)return;
@@ -34838,7 +34918,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 16.4';
+  window.APP_VERSION = 'Versione 16.7';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
