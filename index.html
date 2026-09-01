@@ -2648,6 +2648,11 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro table.reg-table tr td:last-child{border-bottom:none;}
   #tab-registro table.reg-table td::before{content:attr(data-label);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;flex:0 0 42%;font-weight:600;}
   #tab-registro table.reg-table td[data-empty]{display:none;}
+  /* scheda compatta: solo le voci principali, il resto con "Dettagli" */
+  #tab-registro table.reg-table tr:not(.reg-open) td:not(.k-primary):not(.reg-actions-cell){display:none;}
+  #tab-registro table.reg-table tr{position:relative;}
+  #tab-registro table.reg-table tr.reg-open{border-color:var(--accent);}
+  #tab-registro .reg-more{border-color:var(--border2);color:var(--accent);margin-right:auto;}
   #tab-registro table.reg-table td.reg-actions-cell{justify-content:flex-end;gap:10px;padding-top:12px;}
   #tab-registro table.reg-table td.reg-actions-cell::before{display:none;}
   #tab-registro table.reg-table td.reg-actions-cell .reg-del{padding:9px 16px;font-size:14px;}
@@ -2657,6 +2662,9 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro .reg-mtools{display:flex;}
   #tab-registro .reg-mtools-sel{flex:1;min-width:0;}
 }
+/* il pulsante "Dettagli" serve solo alle schede su telefono */
+#tab-registro .reg-more{display:none;}
+@media (max-width:640px){ #tab-registro .reg-more{display:inline-block;} }
 /* ===== Strumenti mobile (nascosti su desktop) ===== */
 #tab-registro .reg-mtools{display:none;flex-direction:column;gap:8px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;}
 #tab-registro .reg-mtools-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -32250,12 +32258,14 @@ setTool("erase");
       const rows=await sbRpc('registro_add',{ p_entry:toRow(e), p_auto:true, p_prefix:prefix, p_width:width });
       const row=Array.isArray(rows)?rows[0]:rows;
       // La funzione registro_add vive su Supabase e conosce solo le colonne originali:
-      // Rck e progressive non le scriverebbe. Le completiamo subito dopo l'inserimento.
+      // Rck, progressive e contrassegno settimanale non le scriverebbe.
+      // Le completiamo subito dopo l'inserimento.
       try{
         const extra={};
         if(e.rck)  extra.rck  = e.rck;
         if(e.pkDa) extra.pk_da= e.pkDa;
         if(e.pkA)  extra.pk_a = e.pkA;
+        if(_colSett===true && e.tests && e.tests.__sett) extra.settimanale = true;
         if(Object.keys(extra).length){
           const rid=(row&&row.id)?row.id:e.id;
           await sbFetch('registro?id=eq.'+encodeURIComponent(rid),
@@ -33103,7 +33113,7 @@ setTool("erase");
         const c=prel.reduce((s,e)=>s+(parseInt(e.cubetti,10)||0),0);
         const mc=cell.reduce((s,e)=>s+num(e.mc),0);      // m³ gettati quel giorno
         const aria=cell.some(e=>e.tests&&e.tests.aria&&e.tests.aria.on);
-        if(cfg.sett>0 && prel.some(e=>isSettMark(e)||parseInt(e.cubetti,10)===cfg.sett)) settOk=true;
+        if(cfg.sett>0 && prel.some(isSettimanale)) settOk=true;
         tp+=p; tc+=c; tmc+=mc; dayTot[i].p+=p; dayTot[i].c+=c; dayTot[i].mc+=mc; dayTot[i].n+=cell.length;
         if(!cell.length){ tds+='<td class="wrep-empty">–</td>'; return; }
         // codici dei verbali fatti quel giorno per quel mix (i primi 3 in chiaro, gli altri contati)
@@ -33190,7 +33200,7 @@ setTool("erase");
     const cfg=mixCfgOf(mix); if(!cfg.sett) return null;
     const t=($('reg-data')?$('reg-data').value:'')||todayISO(); const wk=mondayOf(t);
     const list=db.entries.filter(e=>(e.lab||'')===lab && mixEq(e.mix,mix) && e.id!==editId && mondayOf(e.data||'')===wk
-      && (isSettMark(e)||parseInt(e.cubetti,10)===cfg.sett));
+      && isSettMark(e));
     if(!list.length) return null;
     // il primo in ordine di data (il settimanale è quello che "apre" la settimana)
     return list.sort((a,b)=>String(a.data||'').localeCompare(String(b.data||'')))[0];
@@ -33240,6 +33250,13 @@ setTool("erase");
   // il prelievo settimanale viene CONTRASSEGNATO al salvataggio: così resta valido
   // anche se in seguito cambiano i cubetti previsti dal protocollo
   function isSettMark(e){ return !!(e && e.tests && e.tests.__sett); }
+  // Regola UNICA usata ovunque (tabella, Excel, prospetto, guida): comanda SOLO il
+  // contrassegno salvato sulla riga. È voluto: il numero di cubetti del settimanale può
+  // cambiare nel tempo, e dedurlo dai cubetti farebbe sparire i settimanali già fatti
+  // il giorno in cui si cambia protocollo. Il contrassegno fotografa quel giorno.
+  // Chi lo mette: il salvataggio dal sito, la colonna "Settimanale" dell'Excel e,
+  // per le righe vecchie, il pulsante in Pannello Admin → Manutenzione dati.
+  function isSettimanale(e){ return isSettMark(e); }
   // Il prelievo settimanale vale per laboratorio + mix, in QUALSIASI WBS
   // (stessa regola dell'aria, e coerente con il prospetto settimanale):
   // se il settimanale di quel mix è già stato fatto in un'altra WBS, non va rifatto.
@@ -33759,7 +33776,7 @@ setTool("erase");
     {key:'tempCls', label:'T.CLS °C', get:e=>({v:vir(e.tempCls)})},
     {key:'verbale', label:'Verbale',  get:e=>({html:(e.prelievo&&String(e.verbale||'').trim())?('<b>'+esc(e.verbale)+'</b>'):'', empty:!(e.prelievo&&String(e.verbale||'').trim())})},
     {key:'cubetti', label:'Cubetti',  get:e=>({v:e.cubetti})},
-    {key:'sett',    label:'Settim.',  get:e=>({html:(isSettMark(e)?'<span class="reg-badge">SÌ</span>':''), empty:!isSettMark(e)})},
+    {key:'sett',    label:'Settim.',  get:e=>({html:(isSettimanale(e)?'<span class="reg-badge">SÌ</span>':''), empty:!isSettimanale(e)})},
     {key:'ripetuto',label:'Rip.',     get:e=>({html:(e.ripetuto?'<span class="reg-badge">RIP.</span>':''), empty:!e.ripetuto})},
     {key:'note',    label:'Note',     get:e=>{const n=e.note||''; return n?cut(n):{v:'',empty:true};}}
   ];
@@ -33776,10 +33793,13 @@ setTool("erase");
   }
   function saveColOrder(){ try{ localStorage.setItem(COLORDER_KEY, JSON.stringify(COLS.map(c=>c.key))); }catch(_){} }
   function resetColOrder(){ try{ localStorage.removeItem(COLORDER_KEY); }catch(_){} location.reload(); }
-  function cellHtml(label, r){
+  // Su telefono la scheda mostra solo queste voci; le altre compaiono toccando "Dettagli".
+  const CHIAVE=new Set(['data','ddt','wbs','mix','verbale','cubetti']);
+  function cellHtml(label, r, key){
     const empty = (r.empty!=null) ? r.empty : (r.html!=null ? false : (r.v==null||r.v===''));
     const inner = (r.html!=null) ? r.html : esc(r.v);
-    return '<td data-label="'+esc(label)+'"'+(empty?' data-empty="1"':'')+'>'+inner+'</td>';
+    const cls = CHIAVE.has(key) ? ' class="k-primary"' : '';
+    return '<td data-label="'+esc(label)+'"'+cls+(empty?' data-empty="1"':'')+'>'+inner+'</td>';
   }
   let _dragKey=null;
   const colFilters={};
@@ -33796,7 +33816,7 @@ setTool("erase");
       case 'note':      return String(e.note||'');
       case 'verbale':   return String(e.verbale||'');
       case 'ripetuto':  return e.ripetuto?'rip':'';
-      case 'sett':      return isSettMark(e)?'sì':'';
+      case 'sett':      return isSettimanale(e)?'sì':'';
     }
     const r=c.get(e);
     if(r && r.v!=null) return String(r.v);
@@ -33862,6 +33882,7 @@ setTool("erase");
       if(act==='ok'){
         const chosen=boxes().filter(b=>b.checked).map(b=>b.value);
         if(!chosen.length || chosen.length===vals.length) delete colFilters[key]; else colFilters[key]=chosen;
+        _limiteMobile=PASSO_MOBILE;
         closeFilterPanel(); renderThead(); renderBody(); renderMobileTools(); updateFilterCount();
       }
     });
@@ -33965,7 +33986,7 @@ setTool("erase");
         if(_suppressSortClick) return;
         if(ev.target.closest('.reg-fbtn')||ev.target.closest('.reg-resz')) return;   // freccia e maniglia non ordinano
         const k=th.dataset.key; if(sortKey===k)sortDir=-sortDir; else {sortKey=k;sortDir=1;}
-        renderThead(); renderBody();
+        _limiteMobile=PASSO_MOBILE; renderThead(); renderBody();
       });
       th.addEventListener('dragstart',ev=>{ _dragKey=th.dataset.key; th.classList.add('drag'); try{ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',_dragKey);}catch(_){}});
       th.addEventListener('dragend',()=>{ th.classList.remove('drag'); tr.querySelectorAll('th').forEach(x=>x.classList.remove('over')); _suppressSortClick=true; setTimeout(()=>{_suppressSortClick=false;},80); });
@@ -34032,21 +34053,29 @@ setTool("erase");
     if(info) info.textContent = n ? (n===1?'1 filtro attivo':n+' filtri attivi') : '';
     if(btn) btn.classList.toggle('on', n>0);
   }
+  // Su telefono le righe diventano schede: mostrarle tutte renderebbe la pagina
+  // interminabile. Se ne caricano poche per volta.
+  const PASSO_MOBILE=25;
+  let _limiteMobile=PASSO_MOBILE;
+  function suMobile(){ return !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches); }
   function renderBody(){
     const allRows=currentRows();
-    const rows=sortRows(applyFilters(allRows));
+    const rowsTutte=sortRows(applyFilters(allRows));
+    const limita = suMobile() && rowsTutte.length>_limiteMobile;
+    const rows = limita ? rowsTutte.slice(0,_limiteMobile) : rowsTutte;
     const tb=$('reg-tbody'); if(!tb)return;
-    const filtered=(rows.length!==allRows.length);
-    $('reg-count').innerHTML=(curLab==='__ALL__'?'Database completo: ':(esc(curLab)+': '))+'<b>'+rows.length+'</b> registrazioni'+(filtered?(' <span style="color:var(--muted);">(filtrate su '+allRows.length+')</span>'):'');
-    if(!rows.length){
+    const filtered=(rowsTutte.length!==allRows.length);
+    $('reg-count').innerHTML=(curLab==='__ALL__'?'Database completo: ':(esc(curLab)+': '))+'<b>'+rowsTutte.length+'</b> registrazioni'+(filtered?(' <span style="color:var(--muted);">(filtrate su '+allRows.length+')</span>'):'');
+    if(!rowsTutte.length){
       tb.innerHTML='<tr><td colspan="'+(COLS.length+1)+'" class="reg-empty">'+(allRows.length?'Nessuna riga per i filtri scelti.':'Nessuna registrazione. Compila il modulo qui sopra e premi «Salva riga».')+'</td></tr>';
       return;
     }
     tb.innerHTML=rows.map(e=>{
       let tds='';
-      COLS.forEach(c=>{ tds+=cellHtml(c.label, c.get(e)); });
-      tds+= isViewer() ? '<td class="reg-actions-cell"></td>'
-        : ('<td class="reg-actions-cell" style="white-space:nowrap;"><button class="reg-del" data-edit="'+esc(e.id)+'" style="border-color:var(--border2);color:var(--muted);margin-right:4px;">✎<span class="reg-btn-txt"> Modifica</span></button>'+
+      COLS.forEach(c=>{ tds+=cellHtml(c.label, c.get(e), c.key); });
+      const piu='<button class="reg-del reg-more" data-more="1" title="Mostra tutti i campi">▾<span class="reg-btn-txt"> Dettagli</span></button>';
+      tds+= isViewer() ? ('<td class="reg-actions-cell">'+piu+'</td>')
+        : ('<td class="reg-actions-cell" style="white-space:nowrap;">'+piu+'<button class="reg-del" data-edit="'+esc(e.id)+'" style="border-color:var(--border2);color:var(--muted);margin-right:4px;">✎<span class="reg-btn-txt"> Modifica</span></button>'+
         '<button class="reg-del" data-del="'+esc(e.id)+'">✕<span class="reg-btn-txt"> Elimina</span></button></td>');
       return '<tr class="'+(e.ripetuto?'rip':'')+'">'+tds+'</tr>';
     }).join('');
@@ -34056,6 +34085,20 @@ setTool("erase");
       db.entries=db.entries.filter(x=>x.id!==b.dataset.del);
       if(editId===b.dataset.del)clearForm();
       save(); deleteCloud(b.dataset.del); renderTable(); toast('Prelievo eliminato.');
+    });
+    if(limita){
+      const restanti=rowsTutte.length-_limiteMobile;
+      const tr=document.createElement('tr'); tr.className='reg-loadmore';
+      tr.innerHTML='<td colspan="'+(COLS.length+1)+'" style="text-align:center;padding:14px 0;">'
+        +'<button class="reg-btn ghost" id="reg-loadmore" style="width:100%;">Mostra altre '+Math.min(PASSO_MOBILE,restanti)+' di '+restanti+'</button></td>';
+      tb.appendChild(tr);
+      const lb=tr.querySelector('#reg-loadmore');
+      if(lb) lb.onclick=()=>{ _limiteMobile+=PASSO_MOBILE; renderBody(); };
+    }
+    tb.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>{
+      const tr=b.closest('tr'); if(!tr) return;
+      const aperta=tr.classList.toggle('reg-open');
+      b.innerHTML=(aperta?'▴':'▾')+'<span class="reg-btn-txt"> Dettagli</span>';
     });
     tb.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
       const e=db.entries.find(x=>x.id===b.dataset.edit); if(e)loadIntoForm(e);
@@ -34174,7 +34217,7 @@ setTool("erase");
     {h:'Temp. CLS [°C]',         w:14, get:e=>xnum(e.tempCls)},
     {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
     {h:'N° cubetti',             w:10, get:e=>xnum(e.cubetti)},
-    {h:'Settimanale',            w:12, get:e=>isSettMark(e)?'Sì':''},
+    {h:'Settimanale',            w:12, get:e=>isSettimanale(e)?'Sì':''},
     {h:'Maturazione 28 gg',      w:16, get:e=>{const d=maturDate(e,28); return d?fmtIt(_isoOf(d)):'';}},
     {h:'Maturazione 7 gg',       w:15, get:e=>{const d=maturDate(e,7);  return d?fmtIt(_isoOf(d)):'';}},
     {h:'Settimana spedizione 28 gg', w:20, get:e=>shipWeek(e,28)},
@@ -34795,7 +34838,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 16.1';
+  window.APP_VERSION = 'Versione 16.4';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
