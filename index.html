@@ -2641,7 +2641,9 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro .reg-toolbar .reg-btn{flex:1 1 45%;text-align:center;}
   #tab-registro .reg-count{flex:1 1 100%;margin:0 0 4px;text-align:left;}
   /* la tabella larga diventa un elenco di SCHEDE */
-  #tab-registro .reg-tablewrap{overflow:visible;border:none;border-radius:0;}
+  /* sul telefono niente area di scorrimento propria: le schede devono scorrere
+     con la pagina, altrimenti vengono tagliate dopo poche righe */
+  #tab-registro .reg-tablewrap{overflow:visible;max-height:none;border:none;border-radius:0;}
   #tab-registro table.reg-table{white-space:normal;}
   #tab-registro table.reg-table thead{display:none;}
   #tab-registro table.reg-table,#tab-registro table.reg-table tbody{display:block;width:100%;}
@@ -34932,7 +34934,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 16.9';
+  window.APP_VERSION = 'Versione 17.0';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
