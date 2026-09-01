@@ -2645,25 +2645,39 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro table.reg-table{white-space:normal;}
   #tab-registro table.reg-table thead{display:none;}
   #tab-registro table.reg-table,#tab-registro table.reg-table tbody{display:block;width:100%;}
-  #tab-registro table.reg-table tr{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;padding:4px 12px 10px;position:relative;}
+  #tab-registro table.reg-table tr{display:block;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:2px 11px 8px;position:relative;}
   #tab-registro table.reg-table tr.rip{border-color:var(--red);}
   #tab-registro table.reg-table tr.reg-open{border-color:var(--accent);}
   /* riga compatta: etichetta a sinistra, valore a destra */
+  /* la larghezza massima serve solo alla tabella su computer: qui va tolta,
+     altrimenti il contenuto resta schiacciato nella metà sinistra della scheda */
   #tab-registro table.reg-table td{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-    border:none;border-bottom:1px dotted var(--border);padding:6px 0;text-align:right;font-size:13px;line-height:1.25;}
+    max-width:none;width:100%;box-sizing:border-box;
+    border:none;border-bottom:1px dotted var(--border);padding:6px 0;text-align:right;font-size:13.5px;line-height:1.3;}
+  #tab-registro table.reg-table td > *{flex:1 1 auto;min-width:0;}
   #tab-registro table.reg-table tr td:last-child{border-bottom:none;}
-  #tab-registro table.reg-table td::before{content:attr(data-label);font-size:9.5px;letter-spacing:.04em;
-    text-transform:uppercase;color:var(--muted);text-align:left;flex:0 0 38%;font-weight:600;}
-  #tab-registro table.reg-table td .reg-cell{white-space:normal;overflow:visible;text-overflow:clip;}
+  #tab-registro table.reg-table td::before{content:attr(data-label);font-size:10px;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--muted);text-align:left;flex:0 0 34%;font-weight:600;align-self:center;}
+  #tab-registro table.reg-table td .reg-cell{white-space:normal;overflow:visible;text-overflow:clip;text-align:right;}
+  /* valori più leggibili delle etichette */
+  #tab-registro table.reg-table td{color:var(--text);font-weight:500;}
+  /* le voci che identificano la riga risaltano */
+  #tab-registro table.reg-table td[data-label="Data"],
+  #tab-registro table.reg-table td[data-label="DDT"],
+  #tab-registro table.reg-table td[data-label="Verbale"]{font-weight:700;font-size:14.5px;}
+  #tab-registro table.reg-table td[data-label="Verbale"]{color:var(--accent);}
+  /* la prima riga della scheda non ha bisogno del separatore sopra */
+  #tab-registro table.reg-table tr td:first-child{padding-top:9px;}
   #tab-registro table.reg-table td[data-empty]{display:none;}
   /* scheda compatta: solo le voci principali, il resto con "Dettagli" */
   #tab-registro table.reg-table tr:not(.reg-open) td:not(.k-primary):not(.reg-actions-cell){display:none;}
   /* pulsanti: tre uguali, a tutta larghezza, sempre dentro la scheda */
-  #tab-registro table.reg-table td.reg-actions-cell{display:flex;flex-wrap:wrap;justify-content:center;
-    gap:8px;padding:10px 0 2px;margin-top:4px;border-top:1px solid var(--border);white-space:normal;}
+  #tab-registro table.reg-table td.reg-actions-cell{display:flex;flex-wrap:nowrap;justify-content:center;
+    gap:6px;padding:8px 0 1px;margin-top:2px;border-top:1px solid var(--border);}
   #tab-registro table.reg-table td.reg-actions-cell::before{display:none;}
   #tab-registro table.reg-table td.reg-actions-cell .reg-del{flex:1 1 0;min-width:0;margin:0;
-    padding:10px 6px;font-size:13px;text-align:center;justify-content:center;}
+    padding:9px 4px;font-size:12.5px;text-align:center;justify-content:center;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   #tab-registro .reg-more{border-color:var(--border2);color:var(--accent);}
   #tab-registro .reg-empty{padding:24px 10px;}
   #tab-registro .reg-toast{left:12px;right:12px;transform:none;text-align:center;bottom:14px;}
@@ -34918,7 +34932,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 16.7';
+  window.APP_VERSION = 'Versione 16.9';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
