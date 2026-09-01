@@ -2634,7 +2634,9 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro .reg-verbinput{min-width:0;width:100%;font-size:16px;padding:12px;}
   #tab-registro .reg-verbcfg{justify-content:space-between;}
   /* pulsanti grandi, azione principale a tutta larghezza */
-  #tab-registro .reg-actions{gap:8px;}
+  /* i due pulsanti secondari: stessa larghezza, centrati sotto quello principale */
+  #tab-registro .reg-actions{gap:8px;justify-content:center;}
+  #tab-registro .reg-actions .reg-btn:not(.primary){flex:1 1 0;min-width:0;text-align:center;}
   #tab-registro .reg-btn{padding:14px 18px;font-size:15px;border-radius:9px;}
   #tab-registro .reg-btn.primary{width:100%;order:-1;}
   #tab-registro .reg-toolbar{gap:8px;}
@@ -2672,7 +2674,12 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro table.reg-table tr td:first-child{padding-top:9px;}
   #tab-registro table.reg-table td[data-empty]{display:none;}
   /* scheda compatta: solo le voci principali, il resto con "Dettagli" */
-  #tab-registro table.reg-table tr:not(.reg-open) td:not(.k-primary):not(.reg-actions-cell){display:none;}
+  #tab-registro table.reg-table tr:not(.reg-open) td:not(.k-primary):not(.reg-actions-cell):not(.reg-loadmore-cell){display:none;}
+  /* il pulsante "Mostra altre" deve restare visibile e a tutta larghezza */
+  #tab-registro table.reg-table tr.reg-loadmore{background:transparent;border:none;padding:0;margin:6px 0 14px;}
+  #tab-registro table.reg-table td.reg-loadmore-cell{display:block;width:100%;border:none;padding:0;}
+  #tab-registro table.reg-table td.reg-loadmore-cell::before{display:none;}
+  #tab-registro table.reg-table td.reg-loadmore-cell .reg-btn{width:100%;padding:14px;font-size:15px;}
   /* pulsanti: tre uguali, a tutta larghezza, sempre dentro la scheda */
   #tab-registro table.reg-table td.reg-actions-cell{display:flex;flex-wrap:nowrap;justify-content:center;
     gap:6px;padding:8px 0 1px;margin-top:2px;border-top:1px solid var(--border);}
@@ -2863,9 +2870,18 @@ input[type="date"]{ color-scheme:dark; }
 #tab-registro .reg-tipo{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:999px;margin-right:8px;}
 #tab-registro .reg-tipo.cls{background:rgba(var(--accent-rgb),.18);color:var(--accent);border:1px solid var(--accent);}
 #tab-registro .reg-tipo.malta{background:rgba(74,163,223,.18);color:#4aa3df;border:1px solid #4aa3df;}
-#tab-registro .reg-vwarn{margin-top:6px;padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.45;}
-#tab-registro .reg-vwarn.dup{background:rgba(224,90,90,.12);border:1px solid var(--red);color:var(--text);}
-#tab-registro .reg-vwarn.skip{background:rgba(var(--accent-rgb),.12);border:1px solid var(--accent);color:var(--text);}
+#tab-registro .reg-vwarn{margin-top:10px;padding:12px 14px;border-radius:10px;font-size:14px;line-height:1.5;font-weight:600;}
+#tab-registro .reg-vwarn .vw-t{display:block;font-size:15px;font-weight:800;letter-spacing:.02em;margin-bottom:3px;}
+#tab-registro .reg-vwarn.dup{background:rgba(224,90,90,.20);border:2px solid var(--red);color:var(--text);
+  box-shadow:0 0 0 3px rgba(224,90,90,.12);animation:vw-pulse 1.2s ease-in-out 3;}
+#tab-registro .reg-vwarn.dup .vw-t{color:var(--red);}
+#tab-registro .reg-vwarn.skip{background:rgba(var(--accent-rgb),.20);border:2px solid var(--accent);color:var(--text);
+  box-shadow:0 0 0 3px rgba(var(--accent-rgb),.10);}
+#tab-registro .reg-vwarn.skip .vw-t{color:var(--accent);}
+@keyframes vw-pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,90,90,.12);}50%{box-shadow:0 0 0 7px rgba(224,90,90,.22);}}
+/* il campo del numero si accende quando il progressivo non torna */
+#tab-registro .reg-verbinput.vw-bad,#tab-registro #reg-num.vw-bad{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(224,90,90,.25)!important;}
+#tab-registro .reg-verbinput.vw-warn,#tab-registro #reg-num.vw-warn{border-color:var(--accent)!important;box-shadow:0 0 0 2px rgba(var(--accent-rgb),.22)!important;}
 #tab-registro .reg-vwarn.back{background:rgba(125,133,144,.12);border:1px solid var(--border2);color:var(--muted);}
 #tab-registro .reg-vwarn b{color:var(--accent);}
 #tab-registro .reg-vwarn.dup b{color:var(--red);}
@@ -33550,20 +33566,35 @@ setTool("erase");
                               : '<span class="reg-tipo cls">CLS · '+esc(midPart().replace(/[-_]/g,''))+'</span>';
     let html = tipo+' Serie <b>'+esc(wbs.trim()||'(vuota)')+esc(midNow(mix))+'</b> · ultimo: <b>'+esc(lastStr)+'</b> · prossimo: <b>'+(last+1)+'</b>';
     // controllo del numero scritto: duplicato oppure salto nella numerazione
+    let stato='';   // 'bad' = numero già usato · 'warn' = salto di numerazione
     const n=currentNum();
     if(n!=null && n>0){
       const full=pf+pad(n,db.cfg.width||5);
       if(isDup(full, editId)){
-        html+='<div class="reg-vwarn dup">⚠ Numero <b>'+n+'</b> già usato in questa serie — il prelievo risulterà <b>RIPETUTO</b>.</div>';
+        stato='bad';
+        html+='<div class="reg-vwarn dup"><span class="vw-t">⛔ NUMERO GIÀ USATO</span>'
+            + 'Il <b>'+n+'</b> esiste già in questa serie ('+esc(full)+'). Salvando così, il prelievo verrà segnato come <b>RIPETUTO</b>. '
+            + 'Il prossimo numero libero è il <b>'+(last+1)+'</b>.</div>';
       } else if(n>last+1){
+        stato='warn';
         const saltati=[]; for(let k=last+1;k<n && saltati.length<12;k++) saltati.push(k);
-        html+='<div class="reg-vwarn skip">⚠ <b>Salto di numerazione</b>: stai usando il <b>'+n+'</b> ma l\'ultimo è il <b>'+last+'</b>. '
-            + 'Restano scoperti: <b>'+saltati.join(', ')+(n-last-1>12?'…':'')+'</b> ('+(n-last-1)+' numer'+((n-last-1)===1?'o':'i')+').</div>';
+        const q=n-last-1;
+        html+='<div class="reg-vwarn skip"><span class="vw-t">⚠ SALTO DI NUMERAZIONE</span>'
+            + 'Stai usando il <b>'+n+'</b> ma l\'ultimo registrato è il <b>'+last+'</b>: '
+            + 'restano scoperti <b>'+q+' numer'+(q===1?'o':'i')+'</b> ('+saltati.join(', ')+(q>12?'…':'')+'). '
+            + 'Il prossimo in ordine sarebbe il <b>'+(last+1)+'</b>.</div>';
       } else if(n<=last && !isDup(full, editId)){
         html+='<div class="reg-vwarn back">↩ Numero <b>'+n+'</b> precedente all\'ultimo (<b>'+last+'</b>): stai recuperando un numero non usato.</div>';
       }
     }
     h.innerHTML=html;
+    // accende anche il campo del numero, così l'errore si vede dove si scrive
+    ['reg-num','reg-verbale'].forEach(id=>{
+      const el=$(id); if(!el) return;
+      el.classList.remove('vw-bad','vw-warn');
+      if(stato==='bad') el.classList.add('vw-bad');
+      else if(stato==='warn') el.classList.add('vw-warn');
+    });
   }
   function todayISO(){
     const d=new Date();
@@ -34135,7 +34166,7 @@ setTool("erase");
     if(limita){
       const restanti=rowsTutte.length-_limiteMobile;
       const tr=document.createElement('tr'); tr.className='reg-loadmore';
-      tr.innerHTML='<td colspan="'+(COLS.length+1)+'" style="text-align:center;padding:14px 0;">'
+      tr.innerHTML='<td class="reg-loadmore-cell" colspan="'+(COLS.length+1)+'" style="text-align:center;padding:14px 0;">'
         +'<button class="reg-btn ghost" id="reg-loadmore" style="width:100%;">Mostra altre '+Math.min(PASSO_MOBILE,restanti)+' di '+restanti+'</button></td>';
       tb.appendChild(tr);
       const lb=tr.querySelector('#reg-loadmore');
@@ -34934,7 +34965,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 17.0';
+  window.APP_VERSION = 'Versione 17.2';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
