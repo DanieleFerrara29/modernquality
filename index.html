@@ -3004,7 +3004,7 @@ input[type="date"]{ color-scheme:dark; }
       </section>
 
       <section class="reg-sec reg-verbblock">
-        <div class="reg-sec-t">3 · Prelievo <span style="font-weight:400;color:var(--muted);font-size:12px;">(facoltativo)</span></div>
+        <div class="reg-sec-t">3 · Prelievo e cubetti <span style="font-weight:400;color:var(--muted);font-size:12px;">(il prelievo è facoltativo)</span></div>
         <div class="reg-sec-hint">Il numero parte dalla WBS. Quello definitivo viene assegnato al salvataggio dal sistema, senza rischio di doppioni anche se più persone salvano insieme.</div>
         <div class="reg-verbrow">
           <label class="reg-prel-toggle"><input type="checkbox" id="reg-prel-done" autocomplete="off"/> <span>Prelievo eseguito</span></label>
@@ -3018,10 +3018,7 @@ input[type="date"]{ color-scheme:dark; }
         <div class="reg-verbpreview" id="reg-verbpreview" style="display:none;"></div>
         <input type="hidden" id="reg-verbale" autocomplete="off"/>
         <div class="reg-verbhint" id="reg-verbhint"></div>
-      </section>
 
-      <section class="reg-sec">
-        <div class="reg-sec-t">4 · Altro</div>
         <div class="reg-f">
           <label>N° cubetti realizzati</label>
           <div class="reg-chips" id="reg-cubetti-chips">
@@ -34729,7 +34726,20 @@ setTool("erase");
     const buf=await file.arrayBuffer();
     const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
-    const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    // L'intestazione NON è per forza la prima riga: sopra ci sono le righe di riepilogo
+    // (data di esportazione, conteggi). La si cerca guardando i titoli noti, altrimenti
+    // ogni riga verrebbe letta come nuova e si creerebbero righe vuote.
+    const rigaIntestazione=(function(){
+      const grezzo=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      const attesi=['ddt','data','verbale di prelievo','mix','wbs','n° cubetti','laboratorio'];
+      for(let i=0;i<Math.min(grezzo.length,30);i++){
+        const cel=(grezzo[i]||[]).map(v=>String(v==null?'':v).trim().toLowerCase());
+        const quanti=attesi.filter(t=>cel.indexOf(t)>=0).length;
+        if(quanti>=2) return i;                    // riga con almeno due titoli noti
+      }
+      return 0;                                    // file vecchio: intestazione in prima riga
+    })();
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:'',range:rigaIntestazione});
     // Intestazioni realmente presenti nel file: una colonna assente significa
     // "non ho informazioni su questo campo", NON "svuotalo".
     const intestazioni=new Set();
@@ -35155,7 +35165,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 19.3';
+  window.APP_VERSION = 'Versione 19.6';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
