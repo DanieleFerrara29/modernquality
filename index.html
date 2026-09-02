@@ -2520,7 +2520,7 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-wlabel{font-weight:700;color:var(--accent);font-size:14px;padding:0 6px;}
 #tab-registro .wrep-lab{font-weight:700;font-size:13px;color:var(--text);margin:14px 0 6px;padding-left:2px;}
 #tab-registro .wrep-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border2);border-radius:10px;}
-#tab-registro table.wrep{width:100%;border-collapse:collapse;font-size:12px;min-width:640px;}
+#tab-registro table.wrep{width:100%;border-collapse:collapse;font-size:12px;min-width:1100px;table-layout:fixed;}
 #tab-registro table.wrep th,#tab-registro table.wrep td{border:1px solid var(--border);padding:7px 8px;text-align:center;vertical-align:middle;}
 #tab-registro table.wrep thead th{background:var(--surface);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;}
 #tab-registro table.wrep thead th small{display:block;color:var(--muted);font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;}
@@ -2818,10 +2818,10 @@ input[type="date"]{ color-scheme:dark; }
 #tab-registro table.rp-tab th,#tab-registro table.rp-tab td{border:1px solid var(--border);}
 #tab-registro table.rp-tab th{background:var(--surface);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;padding:9px 10px;text-align:center;}
 #tab-registro table.rp-tab th.rp-mix,#tab-registro table.rp-tab th.rp-bar-h{text-align:center;vertical-align:middle;white-space:nowrap;}
-#tab-registro th.rp-mix,#tab-registro td.rp-mix{width:250px;}
-#tab-registro th.rp-bar-h,#tab-registro td.rp-barcell{width:210px;}
+/* le larghezze arrivano dal colgroup, così le colonne delle prove sono tutte uguali */
+#tab-registro th.rp-mix,#tab-registro td.rp-mix{white-space:normal;}
 #tab-registro th.rp-labhead{font-size:12px;letter-spacing:.1em;color:var(--accent);background:rgba(var(--accent-rgb),.12);padding:8px 10px;}
-#tab-registro th.rp-th{font-size:9.5px;font-weight:600;color:var(--muted);padding:7px 4px;white-space:normal;line-height:1.25;background:var(--surface);width:96px;min-width:96px;max-width:96px;}
+#tab-registro th.rp-th{font-size:9.5px;font-weight:600;color:var(--muted);padding:7px 4px;white-space:normal;line-height:1.25;background:var(--surface);}
 #tab-registro table.rp-tab td{padding:11px 10px;vertical-align:middle;}
 #tab-registro table.rp-tab tbody tr:hover td{background:rgba(255,255,255,.04);}
 #tab-registro td.rp-mix{font-weight:600;color:var(--text);white-space:nowrap;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;}
@@ -2870,19 +2870,22 @@ input[type="date"]{ color-scheme:dark; }
 #tab-registro .reg-tipo{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:999px;margin-right:8px;}
 #tab-registro .reg-tipo.cls{background:rgba(var(--accent-rgb),.18);color:var(--accent);border:1px solid var(--accent);}
 #tab-registro .reg-tipo.malta{background:rgba(74,163,223,.18);color:#4aa3df;border:1px solid #4aa3df;}
-#tab-registro .reg-vwarn{margin-top:10px;padding:12px 14px;border-radius:10px;font-size:14px;line-height:1.5;font-weight:600;}
-#tab-registro .reg-vwarn .vw-t{display:block;font-size:15px;font-weight:800;letter-spacing:.02em;margin-bottom:3px;}
+#tab-registro .reg-vwarn{margin-top:12px;padding:16px 18px;border-radius:10px;font-size:16px;line-height:1.55;font-weight:600;}
+#tab-registro .reg-vwarn .vw-t{display:block;font-size:19px;font-weight:800;letter-spacing:.02em;margin-bottom:8px;}
+#tab-registro .reg-vwarn .vw-l{margin:0;padding-left:20px;}
+#tab-registro .reg-vwarn .vw-l li{margin:5px 0;}
+#tab-registro .reg-vwarn b{color:var(--accent);font-size:1.06em;}
+@media (max-width:640px){
+  #tab-registro .reg-vwarn{font-size:15px;padding:14px;}
+  #tab-registro .reg-vwarn .vw-t{font-size:17px;}
+}
 #tab-registro .reg-vwarn.dup{background:rgba(224,90,90,.20);border:2px solid var(--red);color:var(--text);
   box-shadow:0 0 0 3px rgba(224,90,90,.12);animation:vw-pulse 1.2s ease-in-out 3;}
 #tab-registro .reg-vwarn.dup .vw-t{color:var(--red);}
-#tab-registro .reg-vwarn.skip{background:rgba(var(--accent-rgb),.20);border:2px solid var(--accent);color:var(--text);
-  box-shadow:0 0 0 3px rgba(var(--accent-rgb),.10);}
-#tab-registro .reg-vwarn.skip .vw-t{color:var(--accent);}
 @keyframes vw-pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,90,90,.12);}50%{box-shadow:0 0 0 7px rgba(224,90,90,.22);}}
 /* il campo del numero si accende quando il progressivo non torna */
 #tab-registro .reg-verbinput.vw-bad,#tab-registro #reg-num.vw-bad{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(224,90,90,.25)!important;}
 #tab-registro .reg-verbinput.vw-warn,#tab-registro #reg-num.vw-warn{border-color:var(--accent)!important;box-shadow:0 0 0 2px rgba(var(--accent-rgb),.22)!important;}
-#tab-registro .reg-vwarn.back{background:rgba(125,133,144,.12);border:1px solid var(--border2);color:var(--muted);}
 #tab-registro .reg-vwarn b{color:var(--accent);}
 #tab-registro .reg-vwarn.dup b{color:var(--red);}
 </style>
@@ -32721,7 +32724,7 @@ setTool("erase");
       return target.length;
     },
     clearAllEntries: async ()=>{ if(cloudOn()){ await sbFetch('registro?id=not.is.null',{method:'DELETE',headers:{'Prefer':'return=minimal'}}); } db.entries=[]; save(); refreshAll(); return true; },
-    exportRegistro: (lab)=>{ const all=(!lab||lab==='__ALL__'); const rows=all?db.entries.slice():db.entries.filter(e=>(e.lab||'')===lab); if(!rows.length){ toast('Nessun dato da esportare per '+(all?'il database':lab)+'.'); return; } const tag=(all?'CLS':String(lab)).replace(/[^\w]+/g,'_'); exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx'); }
+    exportRegistro: (lab)=>{ const all=(!lab||lab==='__ALL__'); const rows=all?db.entries.slice():db.entries.filter(e=>(e.lab||'')===lab); if(!rows.length){ toast('Nessun dato da esportare per '+(all?'il database':lab)+'.'); return; } const tag=(all?'CLS':String(lab)).replace(/[^\w]+/g,'_'); exportRows(rows,'Registro_'+tag+'.xlsx'); }
   };
   // rinomina una voce di un elenco (mixes/imprese/wbs) aggiornando anche i prelievi già salvati
   function renameListItem(listName, prop, oldVal, newVal){
@@ -32881,6 +32884,21 @@ setTool("erase");
     return found?max:0;
   }
   function nextVerbale(wbs,mix){ const pf=verbalePrefix(wbs,mix); return pf+pad(lastNumForPrefix(pf)+1, db.cfg.width||5); }
+  // Numeri rimasti liberi in mezzo alla serie (buchi lasciati da salti precedenti).
+  // Servono ad avvisare: prima di prendere il numero successivo, chiudi i buchi.
+  function buchiSerie(pf){
+    const usati=new Set();
+    db.entries.forEach(e=>{
+      const s=String(e.verbale||''); if(!s) return;
+      if(pf && s.indexOf(pf)!==0) return;
+      const n=numOf(s); if(n!=null) usati.add(n);
+    });
+    if(usati.size<2) return [];
+    const nums=[...usati].sort((a,b)=>a-b);
+    const mancanti=[];
+    for(let k=nums[0]+1;k<nums[nums.length-1];k++) if(!usati.has(k)) mancanti.push(k);
+    return mancanti;
+  }
   function isDup(verbale, exceptId){
     const key=String(verbale||'').trim().toLowerCase();
     if(!key)return false;
@@ -32913,14 +32931,15 @@ setTool("erase");
       const b=document.createElement('button');
       b.className='reg-lab'+(lab===curLab&&curLab!=='__ALL__'?' active':'');
       b.textContent=lab;
-      b.onclick=()=>{ curLab=lab; editId=null; renderLabs(); renderForm(); renderTable(); reportRefreshIfOpen(); };
+      // updateGuide(): senza questo il riepilogo resta quello del laboratorio precedente
+      b.onclick=()=>{ curLab=lab; editId=null; renderLabs(); renderForm(); renderTable(); updateGuide(); reportRefreshIfOpen(); };
       bar.appendChild(b);
     });
     // Vista "Tutti" (database completo) — utile per admin/report
     const all=document.createElement('button');
     all.className='reg-lab all'+(curLab==='__ALL__'?' active':'');
     all.textContent='▦ Tutti';
-    all.onclick=()=>{ curLab='__ALL__'; editId=null; renderLabs(); renderForm(); renderTable(); reportRefreshIfOpen(); };
+    all.onclick=()=>{ curLab='__ALL__'; editId=null; renderLabs(); renderForm(); renderTable(); updateGuide(); reportRefreshIfOpen(); };
     bar.appendChild(all);
     // La creazione dei laboratori è nel pannello amministratore (＋ solo per admin, come promemoria)
     if(isManager()){
@@ -33111,6 +33130,12 @@ setTool("erase");
     const cols = (allLabs && labs.length>1) ? labs : [ (allLabs? (labs[0]||curLab) : curLab) ];
     const NAMES={ac:'Rapporto<br>A/C',essud:'Acqua<br>essudata',massa:'Massa<br>volumica'};
     const FULL={ac:'Rapporto acqua/cemento',essud:'Acqua essudata',massa:'Massa volumica'};
+    // Larghezze esplicite: tutte le colonne delle prove hanno la stessa dimensione,
+    // indipendentemente da quanti laboratori sono in vista.
+    const LARG_PROVA=112;
+    const colgroup='<colgroup><col style="width:230px"><col style="width:190px">'
+      + cols.map(()=>TK.map(()=>'<col style="width:'+LARG_PROVA+'px">').join('')).join('')
+      + '</colgroup>';
     // intestazione a due livelli: laboratorio sopra, le tre prove sotto
     let thead='<thead><tr><th class="rp-mix" rowspan="2">Miscela</th><th class="rp-bar-h" rowspan="2">m³ '+R.breve+'</th>'
       + cols.map((l,i)=>'<th class="rp-labhead" colspan="3">'+esc(l)+'</th>').join('')
@@ -33122,7 +33147,7 @@ setTool("erase");
       if(!d) return TK.map((t,j)=>'<td class="rp-n'+(j===0?' sep':'')+'" title="'+esc(lab)+': mix non utilizzato in questo periodo"></td>').join('');
       return TK.map((t,j)=>'<td class="rp-c'+(j===0?' sep':'')+(d[t]?'':' z')+'">'+(d[t]||0)+'</td>').join('');
     };
-    chart.innerHTML = '<div class="rp-wrap"><table class="rp-tab">'+thead+'<tbody>'
+    chart.innerHTML = '<div class="rp-wrap"><table class="rp-tab">'+colgroup+thead+'<tbody>'
       + keys.map(k=>{
           const v=mc[k], w=Math.max(2,Math.round(v/max*100));
           return '<tr><td class="rp-mix">'+esc(k)+'</td>'
@@ -33160,7 +33185,12 @@ setTool("erase");
     const mixes=Array.from(new Set(rows.map(e=>(e.mix||'(senza mix)')))).sort();
     if(!mixes.length) return '<div class="wrep-none">Nessuna registrazione in questa settimana.</div>';
     const DOW=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
-    let h='<div class="wrep-hint">↔ scorri la tabella per vedere tutti i giorni</div><div class="wrep-scroll"><table class="wrep"><thead><tr><th>Mix</th>'
+    // Larghezze fisse: i sette giorni hanno tutti la stessa dimensione, indipendentemente
+    // da quanto testo contengono. Senza questo le colonne con dati risultano più larghe.
+    const colgroupW='<colgroup><col style="width:190px">'
+      + days.map(()=>'<col style="width:132px">').join('')
+      + '<col style="width:170px"><col style="width:150px"></colgroup>';
+    let h='<div class="wrep-hint">↔ scorri la tabella per vedere tutti i giorni</div><div class="wrep-scroll"><table class="wrep">'+colgroupW+'<thead><tr><th>Mix</th>'
       + days.map((d,i)=>'<th>'+DOW[i]+'<small>'+fmtIt(d).slice(0,5)+'</small></th>').join('')
       + '<th class="wrep-tot">Totale sett.<small>m³ · prel. · cubetti</small></th><th class="wrep-tot">Settimanale</th></tr></thead><tbody>';
     const dayTot=days.map(()=>({p:0,c:0,mc:0,n:0}));
@@ -33569,27 +33599,37 @@ setTool("erase");
     const tipo = isMalta(mix) ? '<span class="reg-tipo malta">MALTA · '+esc(midMalta().replace(/[-_]/g,''))+'</span>'
                               : '<span class="reg-tipo cls">CLS · '+esc(midPart().replace(/[-_]/g,''))+'</span>';
     let html = tipo+' Serie <b>'+esc(wbs.trim()||'(vuota)')+esc(midNow(mix))+'</b> · ultimo: <b>'+esc(lastStr)+'</b> · prossimo: <b>'+(last+1)+'</b>';
-    // controllo del numero scritto: duplicato oppure salto nella numerazione
-    let stato='';   // 'bad' = numero già usato · 'warn' = salto di numerazione
+    // Buchi già presenti nella serie: numeri rimasti liberi per salti fatti in passato.
+    // Vanno segnalati SEMPRE, anche quando il numero scritto è corretto: altrimenti si
+    // continua ad andare avanti (108, 109…) lasciandosi dietro il 106 mai usato.
+    // ── Un unico avviso, con tutti i problemi di numerazione trovati ──
+    const buchi=buchiSerie(pf);
+    const W=db.cfg.width||5;
+    const problemi=[];
+    let stato='';
     const n=currentNum();
     if(n!=null && n>0){
-      const full=pf+pad(n,db.cfg.width||5);
+      const full=pf+pad(n,W);
       if(isDup(full, editId)){
-        stato='bad';
-        html+='<div class="reg-vwarn dup"><span class="vw-t">⛔ NUMERO GIÀ USATO</span>'
-            + 'Il <b>'+n+'</b> esiste già in questa serie ('+esc(full)+'). Salvando così, il prelievo verrà segnato come <b>RIPETUTO</b>. '
-            + 'Il prossimo numero libero è il <b>'+(last+1)+'</b>.</div>';
+        problemi.push('Il numero <b>'+n+'</b> è <b>già stato usato</b>: salvando così il prelievo risulterà RIPETUTO.');
       } else if(n>last+1){
-        stato='warn';
-        const saltati=[]; for(let k=last+1;k<n && saltati.length<12;k++) saltati.push(k);
         const q=n-last-1;
-        html+='<div class="reg-vwarn skip"><span class="vw-t">⚠ SALTO DI NUMERAZIONE</span>'
-            + 'Stai usando il <b>'+n+'</b> ma l\'ultimo registrato è il <b>'+last+'</b>: '
-            + 'restano scoperti <b>'+q+' numer'+(q===1?'o':'i')+'</b> ('+saltati.join(', ')+(q>12?'…':'')+'). '
-            + 'Il prossimo in ordine sarebbe il <b>'+(last+1)+'</b>.</div>';
-      } else if(n<=last && !isDup(full, editId)){
-        html+='<div class="reg-vwarn back">↩ Numero <b>'+n+'</b> precedente all\'ultimo (<b>'+last+'</b>): stai recuperando un numero non usato.</div>';
+        problemi.push('Stai <b>saltando '+q+' numer'+(q===1?'o':'i')+'</b>: l\'ultimo registrato è il <b>'+last+'</b>, il prossimo è il <b>'+(last+1)+'</b>.');
+      } else if(n<=last){
+        problemi.push('Il numero <b>'+n+'</b> viene <b>prima dell\'ultimo</b> registrato (<b>'+last+'</b>).');
       }
+    }
+    if(buchi.length && !(n!=null && buchi.indexOf(n)>=0)){
+      // numeri senza zeri davanti: più leggibili
+      const el=buchi.slice(0,12).join(', ');
+      problemi.push(buchi.length===1
+        ? 'Nella serie non è <b>mai stato usato</b> il numero <b>'+buchi[0]+'</b>.'
+        : 'Nella serie ci sono <b>'+buchi.length+' prelievi saltati</b>, mai usati: <b>'+el+(buchi.length>12?'…':'')+'</b>.');
+    }
+    if(problemi.length){
+      stato='bad';
+      html+='<div class="reg-vwarn dup"><span class="vw-t">⛔ NUMERAZIONE DA CONTROLLARE</span>'
+        + '<ul class="vw-l"><li>'+problemi.join('</li><li>')+'</li></ul></div>';
     }
     h.innerHTML=html;
     // accende anche il campo del numero, così l'errore si vede dove si scrive
@@ -33906,10 +33946,20 @@ setTool("erase");
     if(r && r.v!=null) return String(r.v);
     return '';
   }
+  // gg/mm/aaaa -> aaaa-mm-gg (per ordinare le date come date, non come testo)
+  function itToIso(s){
+    const m=String(s||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    return m ? (m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')) : '';
+  }
   function distinctColValues(c){
     const set={};
     currentRows().forEach(e=>{ const v=colText(c,e); if(v!=='') set[v]=1; });
-    return Object.keys(set).sort((a,b)=>String(a).localeCompare(String(b),'it',{numeric:true}));
+    const vals=Object.keys(set);
+    // se la colonna contiene date, l'ordine dev'essere cronologico:
+    // in ordine alfabetico "01/09" verrebbe prima di "10/08".
+    const tutteDate = vals.length && vals.every(v=>itToIso(v));
+    if(tutteDate) return vals.sort((a,b)=>itToIso(a).localeCompare(itToIso(b)));
+    return vals.sort((a,b)=>String(a).localeCompare(String(b),'it',{numeric:true}));
   }
   // ---- FILTRI a selezione multipla (come le spunte di Excel) ----
   let _fpanel=null;
@@ -34247,6 +34297,45 @@ setTool("erase");
     return s;
   }
   // ordine colonne richiesto per l'esportazione
+  // Data vera per Excel (non testo): così si ordina e si filtra cronologicamente.
+  const xdate=(iso)=>{ const s=String(iso||'').slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+    const d=new Date(s+'T12:00:00'); return isNaN(d)?'':d; };
+  // Cella davvero VUOTA. Attenzione: scrivere '' non rende la cella vuota per Excel,
+  // che la conta come valore — è così che il conteggio dei prelievi finiva per contare tutte le righe.
+  const xvuoto=(v)=>(v===''||v===undefined||v===null)?null:v;
+  // Controllo della numerazione dei verbali, serie per serie (il prefisso prima del numero).
+  // Segnala i codici usati due volte e i numeri saltati.
+  function controlloNumerazione(righe){
+    const serie={};                                   // prefisso -> {num -> quante volte}
+    righe.forEach(e=>{
+      const v=String(e.verbale||'').trim(); if(!v) return;
+      const m=v.match(/^(.*?)(\d+)$/); if(!m) return;
+      const pf=m[1], n=parseInt(m[2],10); if(isNaN(n)) return;
+      (serie[pf]=serie[pf]||{})[n]=(serie[pf][n]||0)+1;
+    });
+    const esito={};                                   // verbale -> messaggio
+    Object.keys(serie).forEach(pf=>{
+      const nums=Object.keys(serie[pf]).map(Number).sort((a,b)=>a-b);
+      const presenti=new Set(nums);
+      nums.forEach(n=>{
+        const cod=pf+String(n);
+        if(serie[pf][n]>1){ esito[cod]='DUPLICATO'; return; }
+        if(n===nums[0]) return;                       // il primo della serie non può avere salti prima
+        if(!presenti.has(n-1)){
+          const mancanti=[];
+          for(let k=n-1;k>=nums[0] && !presenti.has(k) && mancanti.length<6;k--) mancanti.unshift(k);
+          if(mancanti.length) esito[cod]='SALTO: manca'+(mancanti.length>1?'no':'')+' '+mancanti.join(', ');
+        }
+      });
+    });
+    return esito;                                     // chiave = numero senza zeri iniziali
+  }
+  // ricava la chiave usata da controlloNumerazione a partire dal verbale
+  function chiaveNum(v){
+    const m=String(v||'').trim().match(/^(.*?)(\d+)$/);
+    return m ? (m[1]+String(parseInt(m[2],10))) : '';
+  }
   const xnum=(v)=>{ const s=String(v==null?'':v).trim().replace(',','.'); if(s==='')return ''; const n=parseFloat(s); return isNaN(n)?vir(v):n; };
   // ── Maturazione e settimana di spedizione (solo per i prelievi veri) ──
   // Maturazione = data prelievo + 28 (o + 7) giorni.
@@ -34284,7 +34373,7 @@ setTool("erase");
     {h:'Inserito da',            w:18, get:e=>e.by||''},
     {h:'Data inserimento',       w:18, get:e=>e.at||''},
     {h:'Laboratorio',            w:14, get:e=>e.lab||''},
-    {h:'Data',                   w:12, get:e=>fmtIt(e.data)},
+    {h:'Data',                   w:12, get:e=>xdate(e.data), date:true},
     {h:'DDT',                    w:12, get:e=>String(e.ddt||'').trim().replace(/^'+/,''), text:true},   // colonna formattata come TESTO: 6228/1 non diventa una data
     {h:'Fornitore CLS',          w:20, get:e=>e.fornitore||''},
     {h:'Impresa Esecutrice',     w:18, get:e=>e.impresa||''},
@@ -34299,16 +34388,16 @@ setTool("erase");
     {h:'Slump [cm]',             w:11, get:e=>xnum(tval(e,'slump'))},
     {h:'Spandimento [cm]',       w:14, get:e=>xnum(tval(e,'spand'))},
     {h:'Aria [%]',               w:9,  get:e=>xnum(tval(e,'aria'))},
-    {h:'Rapporto A/C',           w:12, get:e=>xnum(tval(e,'ac'))},
-    {h:'Acqua essudata',         w:13, get:e=>xnum(tval(e,'essud'))},
-    {h:'Massa volumica',         w:18, get:e=>xnum(tval(e,'massa'))},
-    {h:'Temp. ambiente [°C]',    w:16, get:e=>xnum(e.tempAmb)},
-    {h:'Temp. CLS [°C]',         w:14, get:e=>xnum(e.tempCls)},
+    {h:'Rapporto A/C',           w:12, get:e=>xnum(tval(e,'ac')), gruppo:true},
+    {h:'Acqua essudata',         w:13, get:e=>xnum(tval(e,'essud')), gruppo:true},
+    {h:'Massa volumica',         w:18, get:e=>xnum(tval(e,'massa')), gruppo:true},
+    {h:'Temp. ambiente [°C]',    w:16, get:e=>xnum(e.tempAmb), gruppo:true},
+    {h:'Temp. CLS [°C]',         w:14, get:e=>xnum(e.tempCls), gruppo:true},
     {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
     {h:'N° cubetti',             w:10, get:e=>xnum(e.cubetti)},
     {h:'Settimanale',            w:12, get:e=>isSettimanale(e)?'Sì':''},
-    {h:'Maturazione 28 gg',      w:16, get:e=>{const d=maturDate(e,28); return d?fmtIt(_isoOf(d)):'';}},
-    {h:'Maturazione 7 gg',       w:15, get:e=>{const d=maturDate(e,7);  return d?fmtIt(_isoOf(d)):'';}},
+    {h:'Maturazione 28 gg',      w:16, get:e=>{const d=maturDate(e,28); return d?xdate(_isoOf(d)):'';}, date:true},
+    {h:'Maturazione 7 gg',       w:15, get:e=>{const d=maturDate(e,7);  return d?xdate(_isoOf(d)):'';}, date:true},
     {h:'Settimana spedizione 28 gg', w:20, get:e=>shipWeek(e,28)},
     {h:'Settimana spedizione 7 gg',  w:19, get:e=>shipWeek(e,7)},
     {h:'Note',                   w:24, get:e=>e.note||''},
@@ -34403,12 +34492,12 @@ setTool("erase");
     const COLS=[
       {h:'Stato',                w:20, get:r=>r.stato},
       {h:'Prova',                w:11, get:r=>r.prova},
-      {h:'Data maturazione',     w:17, get:r=>fmtIt(r.matur)},
+      {h:'Data maturazione',     w:17, get:r=>xdate(r.matur), date:true},
       {h:'Giorni mancanti',      w:14, get:r=>r.giorni},
       {h:'Verbale di prelievo',  w:20, get:r=>r.verbale, text:true},
       {h:'N° cubetti',           w:11, get:r=>xnum(r.cubetti)},
       {h:'Laboratorio',          w:14, get:r=>r.lab},
-      {h:'Data prelievo',        w:14, get:r=>fmtIt(r.data)},
+      {h:'Data prelievo',        w:14, get:r=>xdate(r.data), date:true},
       {h:'DDT',                  w:12, get:r=>String(r.ddt||'').trim().replace(/^'+/,''), text:true},
       {h:'Fornitore CLS',        w:20, get:r=>r.fornitore},
       {h:'Impresa Esecutrice',   w:20, get:r=>r.impresa},
@@ -34435,18 +34524,21 @@ setTool("erase");
         const wb=new ExcelJS.Workbook();
         const ws=wb.addWorksheet('Scadenze',{views:[{state:'frozen',ySplit:1}]});
         ws.columns=COLS.map(c=>({header:c.h,key:c.h,width:c.w}));
+        COLS.forEach((c,i)=>{ if(c.date) ws.getColumn(i+1).numFmt='dd/mm/yyyy'; });
         const bd={style:'thin',color:{argb:'FFB8CCE4'}}; const border={top:bd,left:bd,bottom:bd,right:bd};
         const hr=ws.getRow(1); hr.height=38;                      // intestazione ben visibile
         hr.eachCell(cell=>{ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F4E79'}};
           cell.font={bold:true,color:{argb:'FFFFFFFF'},size:12};
           cell.alignment={vertical:'middle',horizontal:'center',wrapText:true}; cell.border=border; });
-        const COL={'SCADUTO':'FFF4B8B8','QUESTA SETTIMANA':'FFFFD08A','SETTIMANA PROSSIMA':'FFFFE9A8'};
+        const COL={'SCADUTO':'FFB3261E','QUESTA SETTIMANA':'FFFFA733','SETTIMANA PROSSIMA':'FFFFE08A'};
+        const COLTXT={'SCADUTO':'FFFFFFFF','QUESTA SETTIMANA':'FF4A2C00','SETTIMANA PROSSIMA':'FF7A4E00'};
         list.forEach(r=>{
-          const row=ws.addRow(COLS.map(c=>c.get(r)));
+          const row=ws.addRow(COLS.map(c=>xvuoto(c.get(r))));
           row.eachCell({includeEmpty:true},cell=>{
             cell.border=border;
             cell.alignment={vertical:'middle',horizontal:'center',wrapText:true};
             cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:COL[r.stato]||'FFFFFFFF'}};
+            cell.font={size:11,bold:true,color:{argb:COLTXT[r.stato]||'FF1A1A1A'}};
           });
           row.getCell(1).font={bold:true};
           row.getCell(3).font={bold:true};
@@ -34479,14 +34571,21 @@ setTool("erase");
         const RIGHE_TESTA=4;                       // righe di riepilogo sopra l'intestazione
         const RIGA_INT=RIGHE_TESTA+1;              // riga dell'intestazione
         const ws=wb.addWorksheet('Registro CLS',{views:[{state:'frozen',ySplit:RIGA_INT}]});
-        EXPORT_COLS.forEach((c,i)=>{ ws.getColumn(i+1).width=c.w; if(c.text) ws.getColumn(i+1).numFmt='@'; });
-        const bd={style:'thin',color:{argb:'FF9DB9D9'}};
-        const bdForte={style:'medium',color:{argb:'FF1F4E79'}};                // separatore netto fra colonne
-        const border={top:bd,left:bdForte,bottom:bd,right:bdForte};
+        EXPORT_COLS.forEach((c,i)=>{ const col=ws.getColumn(i+1); col.width=c.w;
+          if(c.text) col.numFmt='@';
+          if(c.date) col.numFmt='dd/mm/yyyy';                     // date vere, mostrate gg/mm/aaaa
+          if(c.gruppo) col.outlineLevel=1; });                    // colonne raggruppabili col +/- di Excel
+        ws.properties.outlineProperties={summaryBelow:false,summaryRight:false};
+        // griglia uniforme e leggera su tutti i lati: nessun separatore marcato
+        const bd={style:'thin',color:{argb:'FFD9D9D9'}};
+        const border={top:bd,left:bd,bottom:bd,right:bd};
         // ── riepilogo in alto (i conteggi seguono i filtri della tabella) ──
         const colDDT=EXPORT_COLS.findIndex(c=>c.h==='DDT')+1;
         const colMC =EXPORT_COLS.findIndex(c=>c.h==='m³')+1;
         const colVerb=EXPORT_COLS.findIndex(c=>c.h==='Verbale di prelievo')+1;
+        const _colSettXls=EXPORT_COLS.findIndex(c=>c.h==='Settimanale')+1;
+        // Codici di verbale usati da più di una riga: è un errore nella numerazione
+        // progressiva e va segnalato su TUTTE le righe coinvolte, non solo sulla seconda.
         const testa=[
           ['Data di esportazione', fmtIt(isoLocal(new Date())), null],
           ['Numero DDT',           null, {f:'SUBTOTAL(103,Registro[DDT])'}],
@@ -34534,24 +34633,55 @@ setTool("erase");
         }
         rows.forEach((e,i)=>{
           const r=ws.getRow(RIGA_INT+1+i);
-          EXPORT_COLS.forEach((c,j)=>{ r.getCell(j+1).value=c.get(e); });
+          EXPORT_COLS.forEach((c,j)=>{ r.getCell(j+1).value=xvuoto(c.get(e)); });
           const prel=isPrelievo(e);                       // riga con verbale = prelievo vero
           r.height=15;                                    // righe compatte, altezza fissa
+          // Aspetto essenziale: un solo colore in tutto il foglio, il verde tenue
+          // sulle righe di prelievo. Niente grassetti, niente evidenziazioni sparse.
           for(let j=1;j<=EXPORT_COLS.length;j++){
             const cell=r.getCell(j);
-            cell.border=border;                           // separatore netto fra le colonne
+            cell.border=border;
             cell.alignment={vertical:'middle',horizontal:'center',wrapText:false};
-            // niente righe alterne: solo i prelievi si distinguono
-            if(prel) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF7EA'}};
+            cell.font={size:11,color:{argb:'FF222222'}};
+            if(prel) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE4F1DC'}};
           }
+
+          // Sulle sole celle delle date di maturazione: arancione = matura la settimana
+          // prossima (cubetti da preparare), rosso = maturazione già passata.
           [[28,_col28],[7,_col7]].forEach(([gg,col])=>{
             if(col<=0) return;
             const st=_statoData(e,gg); if(!st) return;
             const c=r.getCell(col);
-            c.fill={type:'pattern',pattern:'solid',fgColor:{argb: st==='scaduto'?'FFF4B8B8':'FFFFE08A'}};
-            c.font={bold:true};
+            if(st==='scaduto'){ c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF4CCCC'}};
+              c.font={size:11,color:{argb:'FF990000'}}; }
+            else { c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFCE0C0'}};
+              c.font={size:11,color:{argb:'FF7A4E00'}}; }
           });
         });
+        // ── Controllo DINAMICO della numerazione (formattazione condizionale) ──
+        // Il testo del verbale diventa rosso da solo se modifichi una cella e crei un
+        // doppione, oppure se salti un numero nella serie di quella WBS.
+        if(colVerb>0 && rows.length){
+          const L=(function(n){ let s=''; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26);} return s; })(colVerb);
+          const r1=RIGA_INT+1, r2=RIGA_INT+rows.length;
+          const cella=`$${L}${r1}`;
+          const zona=`$${L}$${r1}:$${L}$${r2}`;
+          const W=db.cfg.width||5;                              // cifre del progressivo
+          const prefisso=`LEFT(${cella},LEN(${cella})-${W})`;    // es. "VI09-CZ-"
+          const numero=`VALUE(RIGHT(${cella},${W}))`;
+          const precedente=`${prefisso}&TEXT(${numero}-1,REPT("0",${W}))`;
+          const stileRosso={font:{color:{argb:'FFCC0000'},bold:true}};
+          ws.addConditionalFormatting({ ref:`${L}${r1}:${L}${r2}`, rules:[
+            { // stesso codice usato da più righe
+              type:'expression', priority:1,
+              formulae:[`AND(${cella}<>"",COUNTIF(${zona},${cella})>1)`],
+              style:stileRosso },
+            { // manca il numero precedente della stessa serie
+              type:'expression', priority:2,
+              formulae:[`AND(${cella}<>"",COUNTIF(${zona},${precedente})=0,COUNTIFS(${zona},${prefisso}&"*",${zona},"<"&${cella})>0)`],
+              style:stileRosso }
+          ]});
+        }
         // Tabella vera di Excel: dà i filtri e i riferimenti "Registro[...]" usati dai conteggi in alto.
         try{
           ws.addTable({
@@ -34560,7 +34690,7 @@ setTool("erase");
             headerRow:true,
             style:{theme:'TableStyleLight1', showRowStripes:false, showColumnStripes:false},
             columns:EXPORT_COLS.map(c=>({name:c.h, filterButton:true})),
-            rows:rows.map(e=>EXPORT_COLS.map(c=>c.get(e)))
+            rows:rows.map(e=>EXPORT_COLS.map(c=>xvuoto(c.get(e))))
           });
         }catch(err){ console.warn('tabella Excel',err);
           ws.autoFilter={from:{row:RIGA_INT,column:1},to:{row:RIGA_INT,column:EXPORT_COLS.length}}; }
@@ -34960,7 +35090,9 @@ setTool("erase");
       const rows= all ? db.entries.slice() : db.entries.filter(e=>(e.lab||'')===curLab);
       if(!rows.length){ toast('Nessun dato da esportare.'); return; }
       const tag=(all?'CLS':curLab).replace(/[^\w]+/g,'_');
-      exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+      // nome fisso (niente data): il file va sovrascritto nella cartella e le formule
+      // CERCA.X di altri fogli continuano a trovarlo. La data è dentro, in prima riga.
+      exportRows(rows,'Registro_'+tag+'.xlsx');
     };
     if($('reg-scad-go')) $('reg-scad-go').onclick=()=>{
       const all=(curLab==='__ALL__');
@@ -35023,7 +35155,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 17.5';
+  window.APP_VERSION = 'Versione 19.3';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
