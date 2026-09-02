@@ -32397,9 +32397,13 @@ setTool("erase");
       const merged=cloud.concat(stillPending);
       // se NON c'è una config condivisa, deduci laboratori/miscele dalle righe (fallback)
       if(!cfgLoaded){
+        db.wbs=db.wbs||[]; db.imprese=db.imprese||[]; db.fornitori=db.fornitori||[];
         merged.forEach(e=>{
           if(e.lab&&!db.labs.includes(e.lab)){db.labs.push(e.lab);cfgChanged=true;}
           if(e.mix&&!db.mixes.includes(e.mix)){db.mixes.push(e.mix);cfgChanged=true;}
+          if(e.wbs&&!db.wbs.includes(e.wbs)){db.wbs.push(e.wbs);cfgChanged=true;}
+          if(e.impresa&&!db.imprese.includes(e.impresa)){db.imprese.push(e.impresa);cfgChanged=true;}
+          if(e.fornitore&&!db.fornitori.includes(e.fornitore)){db.fornitori.push(e.fornitore);cfgChanged=true;}
         });
       }
       const cfgSig=db.labs.join(',')+'|'+db.mixes.join(',')+'|'+midPart()+'|'+(db.cfg.width||5)+'|'+JSON.stringify(db.labUsers||{});
@@ -32717,7 +32721,7 @@ setTool("erase");
       return target.length;
     },
     clearAllEntries: async ()=>{ if(cloudOn()){ await sbFetch('registro?id=not.is.null',{method:'DELETE',headers:{'Prefer':'return=minimal'}}); } db.entries=[]; save(); refreshAll(); return true; },
-    exportRegistro: (lab)=>{ const all=(!lab||lab==='__ALL__'); const rows=all?db.entries.slice():db.entries.filter(e=>(e.lab||'')===lab); if(!rows.length){ toast('Nessun dato da esportare per '+(all?'il database':lab)+'.'); return; } const tag=(all?'CONGIUNTI':String(lab)).replace(/[^\w]+/g,'_'); exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx'); }
+    exportRegistro: (lab)=>{ const all=(!lab||lab==='__ALL__'); const rows=all?db.entries.slice():db.entries.filter(e=>(e.lab||'')===lab); if(!rows.length){ toast('Nessun dato da esportare per '+(all?'il database':lab)+'.'); return; } const tag=(all?'CLS':String(lab)).replace(/[^\w]+/g,'_'); exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx'); }
   };
   // rinomina una voce di un elenco (mixes/imprese/wbs) aggiornando anche i prelievi già salvati
   function renameListItem(listName, prop, oldVal, newVal){
@@ -33780,13 +33784,16 @@ setTool("erase");
       if(entry.prelievo && _cfg.sett>0 && _n===_cfg.sett){ entry.tests=entry.tests||{}; entry.tests.__sett=true; }
       else if(entry.tests && entry.tests.__sett && _n!==_cfg.sett){ delete entry.tests.__sett; }
     }catch(_){}
-    // se sono state scritte a mano una miscela/impresa nuove, le aggiungo agli elenchi condivisi
+    // Se il laboratorio ha scritto a mano un valore nuovo, entra negli elenchi condivisi:
+    // così compare a tutti e l'admin può gestirlo dal pannello.
     let cfgGrew=false;
     if(entry.mix && !db.mixes.includes(entry.mix)){ db.mixes.push(entry.mix); cfgGrew=true; }
     db.imprese=db.imprese||[];
     if(entry.impresa && !db.imprese.includes(entry.impresa)){ db.imprese.push(entry.impresa); cfgGrew=true; }
     db.fornitori=db.fornitori||[];
     if(entry.fornitore && !db.fornitori.includes(entry.fornitore)){ db.fornitori.push(entry.fornitore); cfgGrew=true; }
+    db.wbs=db.wbs||[];
+    if(entry.wbs && !db.wbs.includes(entry.wbs)){ db.wbs.push(entry.wbs); cfgGrew=true; }
     if(cfgGrew) pushConfig();
     tombDrop(entry.id);   // se si risalva una riga con lo stesso id, non è più "cancellata"
     if(editId){
@@ -33976,7 +33983,12 @@ setTool("erase");
       btn.setAttribute('draggable','false');
     });
   }
-  let sortKey='data', sortDir=1, _suppressSortClick=false;   // ordine iniziale: Data crescente
+  // Ordine iniziale: sul computer per data crescente (lettura da registro),
+  // sul telefono per data DECRESCENTE — le schede si caricano poche per volta,
+  // quindi i giorni recenti devono stare subito in cima.
+  let sortKey='data',
+      sortDir=(window.matchMedia && window.matchMedia('(max-width:640px)').matches) ? -1 : 1,
+      _suppressSortClick=false;
   // confronto "naturale": spezza il testo in parti (numeri e lettere) e confronta
   // i numeri come numeri. Così 14/0078 viene prima di 14/002277 e 6325/1 prima di 6330.
   const _NUMONLY=/^-?\d+([.,]\d+)?$/;
@@ -34094,11 +34106,11 @@ setTool("erase");
     const ss=$('reg-msort');
     if(ss){
       ss.innerHTML=COLS.map(c=>'<option value="'+c.key+'"'+(sortKey===c.key?' selected':'')+'>'+esc(c.label)+'</option>').join('');
-      ss.onchange=()=>{ sortKey=ss.value; renderThead(); renderBody(); renderMobileTools(); };
+      ss.onchange=()=>{ sortKey=ss.value; _limiteMobile=PASSO_MOBILE; renderThead(); renderBody(); renderMobileTools(); };
     }
     const sd=$('reg-msort-dir');
     if(sd){ sd.textContent=(sortDir>0?'▲':'▼'); sd.title=(sortDir>0?'Crescente':'Decrescente');
-      sd.onclick=()=>{ sortDir=-sortDir; renderThead(); renderBody(); renderMobileTools(); }; }
+      sd.onclick=()=>{ sortDir=-sortDir; _limiteMobile=PASSO_MOBILE; renderThead(); renderBody(); renderMobileTools(); }; }
     const mk=(id,key,allLabel)=>{
       const el=$(id); if(!el) return;
       const c=COLS.find(x=>x.key===key); if(!c){ el.style.display='none'; return; }
@@ -34308,7 +34320,8 @@ setTool("erase");
   // Excel: marca le colonne di testo con l'apostrofo "di sistema" (quotePrefix).
   // Il valore resta pulito nella cella (6228/1) e non viene interpretato come data.
   function colLetter(n){ let s=''; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
-  async function applyQuotePrefix(buf, cols){
+  // primaRiga = prima riga di DATI (sotto l'intestazione). Le righe superiori non vanno toccate.
+  async function applyQuotePrefix(buf, cols, primaRiga){
     if(typeof JSZip==='undefined') return buf;
     const idx=cols.map((c,i)=>c.text?i+1:0).filter(Boolean);
     if(!idx.length) return buf;
@@ -34324,7 +34337,7 @@ setTool("erase");
     idx.forEach(n=>{
       const L=colLetter(n);
       sheet=sheet.replace(new RegExp('<c r="'+L+'(\\d+)"([^>]*?)(/?)>','g'),(full,row,attrs,sc)=>{
-        if(row==='1') return full;                       // intestazione esclusa
+        if(parseInt(row,10) < (primaRiga||2)) return full;   // riepilogo e intestazione esclusi
         const sm=attrs.match(/\ss="(\d+)"/); const old=sm?parseInt(sm[1],10):0;
         if(map[old]===undefined){
           const base=xfs[old]||'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>';
@@ -34463,13 +34476,40 @@ setTool("erase");
     if(typeof ExcelJS!=='undefined'){
       try{
         const wb=new ExcelJS.Workbook();
-        const ws=wb.addWorksheet('Registro Prelievi',{views:[{state:'frozen',ySplit:1}]});
-        ws.columns=EXPORT_COLS.map(c=>({header:c.h,key:c.h,width:c.w}));
-        // colonne da trattare come testo (es. DDT 6228/1, che Excel altrimenti converte in data)
-        EXPORT_COLS.forEach((c,i)=>{ if(c.text) ws.getColumn(i+1).numFmt='@'; });
-        const bd={style:'thin',color:{argb:'FFB8CCE4'}};                       // bordi azzurro tenue
-        const border={top:bd,left:bd,bottom:bd,right:bd};
-        const hr=ws.getRow(1); hr.height=24;
+        const RIGHE_TESTA=4;                       // righe di riepilogo sopra l'intestazione
+        const RIGA_INT=RIGHE_TESTA+1;              // riga dell'intestazione
+        const ws=wb.addWorksheet('Registro CLS',{views:[{state:'frozen',ySplit:RIGA_INT}]});
+        EXPORT_COLS.forEach((c,i)=>{ ws.getColumn(i+1).width=c.w; if(c.text) ws.getColumn(i+1).numFmt='@'; });
+        const bd={style:'thin',color:{argb:'FF9DB9D9'}};
+        const bdForte={style:'medium',color:{argb:'FF1F4E79'}};                // separatore netto fra colonne
+        const border={top:bd,left:bdForte,bottom:bd,right:bdForte};
+        // ── riepilogo in alto (i conteggi seguono i filtri della tabella) ──
+        const colDDT=EXPORT_COLS.findIndex(c=>c.h==='DDT')+1;
+        const colMC =EXPORT_COLS.findIndex(c=>c.h==='m³')+1;
+        const colVerb=EXPORT_COLS.findIndex(c=>c.h==='Verbale di prelievo')+1;
+        const testa=[
+          ['Data di esportazione', fmtIt(isoLocal(new Date())), null],
+          ['Numero DDT',           null, {f:'SUBTOTAL(103,Registro[DDT])'}],
+          ['Somma m³',             null, {f:'SUBTOTAL(109,Registro[m³])'}],
+          ['Numero prelievi',      null, {f:'SUBTOTAL(103,Registro[Verbale di prelievo])'}]
+        ];
+        testa.forEach((t,i)=>{
+          const r=ws.getRow(i+1); r.height=20;
+          const c1=r.getCell(1), c2=r.getCell(2);
+          c1.value=t[0];
+          c1.font={bold:true,size:11,color:{argb:'FF1F4E79'}};
+          c1.alignment={vertical:'middle',horizontal:'left'};
+          c1.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF1F8'}};
+          c1.border={top:bd,left:bd,bottom:bd,right:bd};
+          if(t[2]) c2.value={formula:t[2].f}; else c2.value=t[1];
+          c2.font={bold:true,size:12};
+          c2.alignment={vertical:'middle',horizontal:'center'};
+          c2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF3D6'}};
+          c2.border={top:bd,left:bd,bottom:bd,right:bd};
+        });
+        // intestazione della tabella
+        const hr=ws.getRow(RIGA_INT); hr.height=38;
+        EXPORT_COLS.forEach((c,i)=>{ hr.getCell(i+1).value=c.h; });
         hr.eachCell(cell=>{
           cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F4E79'}};  // intestazione blu
           cell.font={bold:true,color:{argb:'FFFFFFFF'},size:11};
@@ -34493,16 +34533,17 @@ setTool("erase");
           return '';
         }
         rows.forEach((e,i)=>{
-          const r=ws.addRow(EXPORT_COLS.map(c=>c.get(e)));
+          const r=ws.getRow(RIGA_INT+1+i);
+          EXPORT_COLS.forEach((c,j)=>{ r.getCell(j+1).value=c.get(e); });
           const prel=isPrelievo(e);                       // riga con verbale = prelievo vero
-          r.height=15;                                             // righe compatte, altezza fissa
-          r.eachCell({includeEmpty:true},cell=>{
-            cell.border=border;
-            // niente a capo nelle righe dati: manterrebbe le righe alte il doppio
+          r.height=15;                                    // righe compatte, altezza fissa
+          for(let j=1;j<=EXPORT_COLS.length;j++){
+            const cell=r.getCell(j);
+            cell.border=border;                           // separatore netto fra le colonne
             cell.alignment={vertical:'middle',horizontal:'center',wrapText:false};
-            if(prel) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD8F0D8'}};        // prelievo: verde chiaro
-            else if(i%2===1) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF1F8'}}; // righe alterne azzurrine
-          });
+            // niente righe alterne: solo i prelievi si distinguono
+            if(prel) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF7EA'}};
+          }
           [[28,_col28],[7,_col7]].forEach(([gg,col])=>{
             if(col<=0) return;
             const st=_statoData(e,gg); if(!st) return;
@@ -34511,10 +34552,21 @@ setTool("erase");
             c.font={bold:true};
           });
         });
-        ws.autoFilter={from:{row:1,column:1},to:{row:1,column:EXPORT_COLS.length}};
+        // Tabella vera di Excel: dà i filtri e i riferimenti "Registro[...]" usati dai conteggi in alto.
+        try{
+          ws.addTable({
+            name:'Registro', displayName:'Registro',
+            ref:'A'+RIGA_INT,
+            headerRow:true,
+            style:{theme:'TableStyleLight1', showRowStripes:false, showColumnStripes:false},
+            columns:EXPORT_COLS.map(c=>({name:c.h, filterButton:true})),
+            rows:rows.map(e=>EXPORT_COLS.map(c=>c.get(e)))
+          });
+        }catch(err){ console.warn('tabella Excel',err);
+          ws.autoFilter={from:{row:RIGA_INT,column:1},to:{row:RIGA_INT,column:EXPORT_COLS.length}}; }
         let buf=await wb.xlsx.writeBuffer();
         // apostrofo "invisibile" sulle colonne di testo (DDT): presente nella barra della formula, non nella cella
-        try{ buf=await applyQuotePrefix(buf, EXPORT_COLS); }catch(_){}
+        try{ buf=await applyQuotePrefix(buf, EXPORT_COLS, RIGA_INT+1); }catch(_){}
         const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
         const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
         setTimeout(()=>URL.revokeObjectURL(a.href),1500);
@@ -34632,6 +34684,16 @@ setTool("erase");
     m.id=vecchia.id;
     return m;
   }
+  // Porta negli elenchi condivisi i valori nuovi trovati in una riga (da Excel o dal cloud),
+  // così compaiono nei menu di tutti e l'admin può gestirli dal pannello.
+  function aggiungiAglielenchi(e){
+    db.wbs=db.wbs||[]; db.imprese=db.imprese||[]; db.fornitori=db.fornitori||[];
+    if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
+    if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
+    if(e.wbs && !db.wbs.includes(e.wbs)) db.wbs.push(e.wbs);
+    if(e.impresa && !db.imprese.includes(e.impresa)) db.imprese.push(e.impresa);
+    if(e.fornitore && !db.fornitori.includes(e.fornitore)) db.fornitori.push(e.fornitore);
+  }
   // trova la riga esistente che corrisponde a quella importata (id, poi verbale, poi lab+data+ddt+mix)
   function findExisting(e){
     if(e.id){ const i=db.entries.findIndex(x=>x.id===e.id); if(i>=0) return i; }
@@ -34645,8 +34707,7 @@ setTool("erase");
       const {entries, skipped, onlyLab, campiPresenti, proveNelFile} = await readEntriesFromFile(file);
       let added=0, updated=0, skipLab=skipped;
       entries.forEach(e=>{
-        if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
-        if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
+        aggiungiAglielenchi(e);
         const i=findExisting(e);
         if(i>=0 && onlyLab && (db.entries[i].lab||'').toLowerCase()!==onlyLab.toLowerCase()){ skipLab++; return; }
         if(i>=0){ db.entries[i]=fondiRiga(db.entries[i], e, campiPresenti, proveNelFile); updated++; }
@@ -34712,12 +34773,9 @@ setTool("erase");
         }
       }
       // esegui: aggiorna, aggiungi, cancella (con lapide → propagata a tutti i dispositivi)
-      toUpdate.forEach(({e,i})=>{ if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
-        if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
+      toUpdate.forEach(({e,i})=>{ aggiungiAglielenchi(e);
         db.entries[i]=fondiRiga(db.entries[i], e, campiPresenti, proveNelFile); });
-      toAdd.forEach(e=>{ if(e.lab && !db.labs.includes(e.lab)) db.labs.push(e.lab);
-        if(e.mix && !db.mixes.includes(e.mix)) db.mixes.push(e.mix);
-        db.entries.push(e); });
+      toAdd.forEach(e=>{ aggiungiAglielenchi(e); db.entries.push(e); });
       const delIds=new Set(toDelete.map(x=>x.id));
       db.entries=db.entries.filter(x=>!delIds.has(x.id));
       // ricalcola ripetuto
@@ -34901,14 +34959,14 @@ setTool("erase");
       const all=(curLab==='__ALL__');
       const rows= all ? db.entries.slice() : db.entries.filter(e=>(e.lab||'')===curLab);
       if(!rows.length){ toast('Nessun dato da esportare.'); return; }
-      const tag=(all?'CONGIUNTI':curLab).replace(/[^\w]+/g,'_');
+      const tag=(all?'CLS':curLab).replace(/[^\w]+/g,'_');
       exportRows(rows,'Registro_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
     };
     if($('reg-scad-go')) $('reg-scad-go').onclick=()=>{
       const all=(curLab==='__ALL__');
       const rows= all ? db.entries.slice() : db.entries.filter(e=>(e.lab||'')===curLab);
       if(!rows.length){ toast('Nessun dato disponibile.'); return; }
-      const tag=(all?'CONGIUNTI':curLab).replace(/[^\w]+/g,'_');
+      const tag=(all?'CLS':curLab).replace(/[^\w]+/g,'_');
       exportScadenze(rows,'Scadenze_prove_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
     };
     applyViewerUI();
@@ -34965,7 +35023,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 17.2';
+  window.APP_VERSION = 'Versione 17.5';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
