@@ -2611,11 +2611,13 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-cfg{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;}
 #tab-registro .reg-cfg .reg-f{max-width:180px;}
 
-#tab-registro .reg-btn-txt{display:none;}
+/* Il testo dei pulsanti resta visibile fino ai tablet e ai telefoni in orizzontale:
+   sopra i 640px partiva la vista tabella e restavano solo le icone, senza scritta. */
+#tab-registro .reg-btn-txt{display:inline;}
+@media (min-width:1025px){ #tab-registro .reg-btn-txt{display:none;} }
 
 /* ══ MODALITÀ TELEFONO — il Registro diventa una web-app ══ */
 @media (max-width:640px){
-  #tab-registro .reg-btn-txt{display:inline;}
   #tab-registro .reg-wrap{padding:0 2px;}
   #tab-registro .reg-title{font-size:16px;}
   #tab-registro .reg-title small{display:block;margin-top:2px;}
@@ -2874,6 +2876,9 @@ input[type="date"]{ color-scheme:dark; }
 #tab-registro .reg-vwarn .vw-t{display:block;font-size:19px;font-weight:800;letter-spacing:.02em;margin-bottom:8px;}
 #tab-registro .reg-vwarn .vw-l{margin:0;padding-left:20px;}
 #tab-registro .reg-vwarn .vw-l li{margin:5px 0;}
+#tab-registro .reg-vwarn .vw-bip{margin-top:10px;background:transparent;border:1px solid var(--border2);
+  color:var(--muted);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+#tab-registro .reg-vwarn .vw-bip:hover{color:var(--text);border-color:var(--muted);}
 #tab-registro .reg-vwarn b{color:var(--accent);font-size:1.06em;}
 @media (max-width:640px){
   #tab-registro .reg-vwarn{font-size:15px;padding:14px;}
@@ -32883,6 +32888,41 @@ setTool("erase");
   function nextVerbale(wbs,mix){ const pf=verbalePrefix(wbs,mix); return pf+pad(lastNumForPrefix(pf)+1, db.cfg.width||5); }
   // Numeri rimasti liberi in mezzo alla serie (buchi lasciati da salti precedenti).
   // Servono ad avvisare: prima di prendere il numero successivo, chiudi i buchi.
+  // ── Avviso sonoro per i problemi di numerazione ──
+  // Suono generato dal browser: nessun file da caricare. Suona SOLO quando il problema
+  // compare, non a ogni tasto premuto, altrimenti diventerebbe insopportabile.
+  let _bipCtx=null, _bipAcceso=false;
+  const BIP_KEY='mq_reg_bip_v1';
+  function bipAttivo(){ try{ return localStorage.getItem(BIP_KEY)!=='0'; }catch(_){ return true; } }
+  function setBip(on){ try{ localStorage.setItem(BIP_KEY,on?'1':'0'); }catch(_){ } }
+  function bip(){
+    if(!bipAttivo()) return;
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+      _bipCtx=_bipCtx||new AC();
+      if(_bipCtx.state==='suspended') _bipCtx.resume();
+      const t0=_bipCtx.currentTime;
+      // Sirena: tre passate che salgono e scendono, come un allarme.
+      const PASSATA=0.42, CICLI=3;
+      const g=_bipCtx.createGain();
+      g.gain.setValueAtTime(0.0001,t0);
+      g.gain.exponentialRampToValueAtTime(0.18,t0+0.05);
+      g.gain.setValueAtTime(0.18,t0+PASSATA*CICLI-0.12);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+PASSATA*CICLI);
+      const o=_bipCtx.createOscillator();
+      o.type='sawtooth';                                   // timbro più aspro, da allarme
+      o.frequency.setValueAtTime(420,t0);
+      for(let k=0;k<CICLI;k++){
+        const a0=t0+k*PASSATA;
+        o.frequency.linearRampToValueAtTime(980,a0+PASSATA*0.55);   // salita
+        o.frequency.linearRampToValueAtTime(420,a0+PASSATA);        // discesa
+      }
+      const f=_bipCtx.createBiquadFilter();                // smussa le asprezze
+      f.type='lowpass'; f.frequency.value=2400;
+      o.connect(f); f.connect(g); g.connect(_bipCtx.destination);
+      o.start(t0); o.stop(t0+PASSATA*CICLI+0.02);
+    }catch(_){ /* se l'audio non è disponibile, l'avviso visivo basta */ }
+  }
   function buchiSerie(pf){
     const usati=new Set();
     db.entries.forEach(e=>{
@@ -33625,10 +33665,16 @@ setTool("erase");
     }
     if(problemi.length){
       stato='bad';
+      if(!_bipAcceso){ bip(); _bipAcceso=true; }   // solo alla comparsa del problema
       html+='<div class="reg-vwarn dup"><span class="vw-t">⛔ NUMERAZIONE DA CONTROLLARE</span>'
-        + '<ul class="vw-l"><li>'+problemi.join('</li><li>')+'</li></ul></div>';
+        + '<ul class="vw-l"><li>'+problemi.join('</li><li>')+'</li></ul>'
+        + '<button type="button" class="vw-bip" id="reg-bip-toggle" title="Attiva o disattiva il segnale acustico">'
+        + (bipAttivo()?'🔔 suono attivo':'🔕 suono spento')+'</button></div>';
     }
+    if(!problemi.length) _bipAcceso=false;        // rientrato: il prossimo problema suonerà
     h.innerHTML=html;
+    const bt=document.getElementById('reg-bip-toggle');
+    if(bt) bt.onclick=(ev)=>{ ev.preventDefault(); setBip(!bipAttivo()); if(bipAttivo()) bip(); updateVerbHint(); };
     // accende anche il campo del numero, così l'errore si vede dove si scrive
     ['reg-num','reg-verbale'].forEach(id=>{
       const el=$(id); if(!el) return;
@@ -34211,8 +34257,8 @@ setTool("erase");
       COLS.forEach(c=>{ tds+=cellHtml(c.label, c.get(e), c.key); });
       const piu='<button class="reg-del reg-more" data-more="1" title="Mostra tutti i campi">▾<span class="reg-btn-txt"> Dettagli</span></button>';
       tds+= isViewer() ? ('<td class="reg-actions-cell">'+piu+'</td>')
-        : ('<td class="reg-actions-cell">'+piu+'<button class="reg-del reg-edit" data-edit="'+esc(e.id)+'">✎<span class="reg-btn-txt"> Modifica</span></button>'+
-        '<button class="reg-del" data-del="'+esc(e.id)+'">✕<span class="reg-btn-txt"> Elimina</span></button></td>');
+        : ('<td class="reg-actions-cell">'+piu+'<button class="reg-del reg-edit" data-edit="'+esc(e.id)+'" title="Modifica questa riga">✎<span class="reg-btn-txt"> Modifica</span></button>'+
+        '<button class="reg-del" data-del="'+esc(e.id)+'" title="Elimina questa riga">✕<span class="reg-btn-txt"> Elimina</span></button></td>');
       return '<tr class="'+(e.ripetuto?'rip':'')+'">'+tds+'</tr>';
     }).join('');
     tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
@@ -34295,9 +34341,13 @@ setTool("erase");
   }
   // ordine colonne richiesto per l'esportazione
   // Data vera per Excel (non testo): così si ordina e si filtra cronologicamente.
+  // Data pura, senza ora: si costruisce in UTC a mezzanotte, così Excel la memorizza
+  // come numero intero. Costruendola in orario locale resterebbe attaccata un'ora.
   const xdate=(iso)=>{ const s=String(iso||'').slice(0,10);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
-    const d=new Date(s+'T12:00:00'); return isNaN(d)?'':d; };
+    const p=s.split('-');
+    const d=new Date(Date.UTC(+p[0], +p[1]-1, +p[2]));
+    return isNaN(d)?'':d; };
   // Cella davvero VUOTA. Attenzione: scrivere '' non rende la cella vuota per Excel,
   // che la conta come valore — è così che il conteggio dei prelievi finiva per contare tutte le righe.
   const xvuoto=(v)=>(v===''||v===undefined||v===null)?null:v;
@@ -34591,16 +34641,15 @@ setTool("erase");
         ];
         testa.forEach((t,i)=>{
           const r=ws.getRow(i+1); r.height=20;
-          const c1=r.getCell(1), c2=r.getCell(2);
+          // riepilogo nelle colonne D (etichetta) ed E (valore)
+          const c1=r.getCell(4), c2=r.getCell(5);
           c1.value=t[0];
           c1.font={bold:true,size:11,color:{argb:'FF1F4E79'}};
-          c1.alignment={vertical:'middle',horizontal:'left'};
-          c1.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEAF1F8'}};
-          c1.border={top:bd,left:bd,bottom:bd,right:bd};
+          c1.alignment={vertical:'middle',horizontal:'right'};   // sborda a sinistra, dove è vuoto
           if(t[2]) c2.value={formula:t[2].f}; else c2.value=t[1];
-          c2.font={bold:true,size:12};
+          c2.font={bold:true,size:11,color:{argb:'FF222222'}};
           c2.alignment={vertical:'middle',horizontal:'center'};
-          c2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF3D6'}};
+          c2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFDF0D5'}};
           c2.border={top:bd,left:bd,bottom:bd,right:bd};
         });
         // intestazione della tabella
@@ -35165,7 +35214,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 19.6';
+  window.APP_VERSION = 'Versione 20.1';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
