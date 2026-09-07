@@ -58,6 +58,25 @@ input,td,th,span,div,button,label,select,textarea{font-feature-settings:'zero' 0
   pointer-events:none;
 }
 #login-screen.hidden{display:none;}
+/* ── Ingresso nel sito: la schermata di accesso si allontana, il sito entra ── */
+#login-screen.uscita{
+  animation:accessoUscita .62s cubic-bezier(.4,0,.2,1) forwards;
+  pointer-events:none;
+}
+@keyframes accessoUscita{
+  0%  {opacity:1; transform:scale(1);      filter:blur(0);}
+  100%{opacity:0; transform:scale(1.12);   filter:blur(6px);}
+}
+#app.entrata{ animation:accessoEntrata 1.1s cubic-bezier(.22,.8,.3,1) both; }
+@keyframes accessoEntrata{
+  0%  {opacity:0; transform:scale(.985) translateY(10px); filter:blur(8px);}
+  55% {opacity:1;}
+  100%{opacity:1; transform:none;                          filter:blur(0);}
+}
+/* chi preferisce meno animazioni non le subisce */
+@media (prefers-reduced-motion:reduce){
+  #login-screen.uscita,#app.entrata{animation:none;}
+}
 .login-box{
   position:relative;z-index:1;
   background:rgba(22,27,34,.85);
@@ -867,6 +886,13 @@ tr.new-row{animation:rowIn .2s ease both;}
 
       <!-- Telegram -->
       <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
+        <div class="admin-section-title">🔊 Suono di accesso</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Il segnale acustico all'ingresso nel sito. La scelta vale solo su questo dispositivo.</div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px;">
+          <button class="btn btn-sm" id="suono-toggle" style="background:var(--bg);border:1px solid var(--border2);color:var(--text);"></button>
+          <button class="btn btn-sm" id="suono-prova" style="background:var(--bg);border:1px solid var(--border2);color:var(--muted);">▶ Ascolta</button>
+        </div>
+
         <div class="admin-section-title">🤖 Notifiche Telegram</div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">
           Bot attivo: <b>@modernquality_notifiche_bot</b><br/>
@@ -2631,7 +2657,7 @@ tr.new-row{animation:rowIn .2s ease both;}
   #tab-registro .reg-f input,#tab-registro .reg-f select{font-size:16px;padding:12px 12px;border-radius:8px;}
   #tab-registro .reg-tests-grid{grid-template-columns:1fr;}
   #tab-registro .reg-test{padding:11px 12px;}
-  #tab-registro .reg-test input[type=text]{width:90px;font-size:15px;padding:8px;}
+  #tab-registro .reg-test input[type=text]{width:90px;font-size:16px;padding:8px;}
   #tab-registro .reg-verbrow{flex-direction:column;align-items:stretch;gap:8px;}
   #tab-registro .reg-verbinput{min-width:0;width:100%;font-size:16px;padding:12px;}
   #tab-registro .reg-verbcfg{justify-content:space-between;}
@@ -2639,8 +2665,8 @@ tr.new-row{animation:rowIn .2s ease both;}
   /* i due pulsanti secondari: stessa larghezza, centrati sotto quello principale */
   #tab-registro .reg-actions{gap:8px;justify-content:center;}
   #tab-registro .reg-actions .reg-btn:not(.primary){flex:1 1 0;min-width:0;text-align:center;}
-  #tab-registro .reg-btn{padding:14px 18px;font-size:15px;border-radius:9px;}
-  #tab-registro .reg-btn.primary{width:100%;order:-1;}
+  #tab-registro .reg-btn{padding:14px 18px;font-size:15px;border-radius:9px;min-height:48px;}
+  #tab-registro .reg-btn.primary{width:100%;order:-1;min-height:56px;font-size:17px;font-weight:700;}
   #tab-registro .reg-toolbar{gap:8px;}
   #tab-registro .reg-toolbar .reg-btn{flex:1 1 45%;text-align:center;}
   #tab-registro .reg-count{flex:1 1 100%;margin:0 0 4px;text-align:left;}
@@ -2687,7 +2713,7 @@ tr.new-row{animation:rowIn .2s ease both;}
     gap:6px;padding:8px 0 1px;margin-top:2px;border-top:1px solid var(--border);}
   #tab-registro table.reg-table td.reg-actions-cell::before{display:none;}
   #tab-registro table.reg-table td.reg-actions-cell .reg-del{flex:1 1 0;min-width:0;margin:0;
-    padding:9px 4px;font-size:12.5px;text-align:center;justify-content:center;
+    padding:12px 4px;font-size:12.5px;text-align:center;justify-content:center;min-height:46px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   #tab-registro .reg-more{border-color:var(--border2);color:var(--accent);}
   #tab-registro .reg-empty{padding:24px 10px;}
@@ -2706,7 +2732,7 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-mtools-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 #tab-registro .reg-mtools-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);flex:0 0 46px;font-weight:700;}
 #tab-registro .reg-mtools-sel{background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:9px 10px;font-size:15px;}
-#tab-registro .reg-mtools-btn{background:var(--bg);border:1px solid var(--border2);color:var(--accent);border-radius:8px;padding:9px 13px;font-size:15px;cursor:pointer;font-weight:700;}
+#tab-registro .reg-mtools-btn{min-height:46px;background:var(--bg);border:1px solid var(--border2);color:var(--accent);border-radius:8px;padding:9px 13px;font-size:15px;cursor:pointer;font-weight:700;}
 /* ===== Rifiniture estetiche registro ===== */
 #tab-registro .reg-guide{background:linear-gradient(180deg,rgba(var(--accent-rgb),.07),rgba(var(--accent-rgb),.02));border:1px solid rgba(var(--accent-rgb),.35);border-radius:14px;padding:14px 16px;margin-bottom:14px;line-height:1.5;}
 #tab-registro .reg-guide-ok{color:var(--green);font-weight:700;}
@@ -2972,7 +2998,7 @@ input[type="date"]{ color-scheme:dark; }
           <select id="reg-forn"></select>
           <input type="text" id="reg-forn-other" placeholder="scrivi il fornitore" style="display:none;margin-top:8px;" autocomplete="off"/>
         </div>
-        <div class="reg-f"><label>Metri cubi (m³)</label><input type="text" inputmode="decimal" id="reg-mc" placeholder="es. 9,50" autocomplete="off"/></div>
+        <div class="reg-f"><label>Metri cubi (m³)</label><input type="text" inputmode="decimal" id="reg-mc" inputmode="decimal" placeholder="es. 9,50" autocomplete="off"/></div>
         <div class="reg-f"><label>Impresa esecutrice</label>
           <select id="reg-impresa"></select>
           <input type="text" id="reg-impresa-other" placeholder="scrivi l'impresa" style="display:none;margin-top:8px;" autocomplete="off"/>
@@ -2997,11 +3023,11 @@ input[type="date"]{ color-scheme:dark; }
         <div class="reg-sec-hint">Spunta quelle effettuate e inserisci il valore.</div>
         <div class="reg-test reg-test-plain">
           <span class="rt-lab">Temperatura ambiente <small>[°C]</small></span>
-          <input type="text" inputmode="decimal" id="reg-temp-amb" placeholder="22" autocomplete="off"/>
+          <input type="text" inputmode="decimal" id="reg-temp-amb" inputmode="decimal" placeholder="22" autocomplete="off"/>
         </div>
         <div class="reg-test reg-test-plain">
           <span class="rt-lab">Temperatura CLS <small>[°C]</small></span>
-          <input type="text" inputmode="decimal" id="reg-temp-cls" placeholder="18" autocomplete="off"/>
+          <input type="text" inputmode="decimal" id="reg-temp-cls" inputmode="decimal" placeholder="18" autocomplete="off"/>
         </div>
         <div class="reg-fieldwarn" id="reg-tcls-hint"></div>
         <div class="reg-tests-grid" id="reg-tests-grid"></div>
@@ -3032,7 +3058,7 @@ input[type="date"]{ color-scheme:dark; }
             <button type="button" class="reg-chip" data-v="8">8</button>
             <button type="button" class="reg-chip" data-v="__altro">Altro</button>
           </div>
-          <input type="number" min="0" inputmode="numeric" id="reg-cubetti-manual" placeholder="numero cubetti" style="display:none;margin-top:8px;" autocomplete="off"/>
+          <input type="number" min="0" inputmode="numeric" id="reg-cubetti-manual" inputmode="numeric" placeholder="numero cubetti" style="display:none;margin-top:8px;" autocomplete="off"/>
           <input type="hidden" id="reg-cubetti" autocomplete="off"/>
         </div>
         <div class="reg-f"><label>Note (facoltative)</label><input type="text" id="reg-note" autocomplete="off"/></div>
@@ -25446,6 +25472,47 @@ function markLastLogin(username){
   }catch(_){ /* se il cloud non risponde, l'accesso non deve fallire */ }
 }
 
+// Suono di ingresso: due note che salgono, generate dal browser (nessun file da scaricare).
+const SUONO_KEY='mq_suono_accesso_v1';
+function suonoAccessoAttivo(){ try{ return localStorage.getItem(SUONO_KEY)!=='0'; }catch(_){ return true; } }
+function setSuonoAccesso(on){ try{ localStorage.setItem(SUONO_KEY,on?'1':'0'); }catch(_){ } }
+function suonoAccesso(){
+  if(!suonoAccessoAttivo()) return;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    const ctx=new AC();
+    if(ctx.state==='suspended') ctx.resume();
+    const t0=ctx.currentTime;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(0.09,t0+0.06);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+0.95);
+    const f=ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=3200;
+    [[392,0,0.85],[523.25,0.06,0.80],[659.25,0.16,0.72]].forEach(([hz,dt,dur])=>{
+      const o=ctx.createOscillator(); o.type='sine'; o.frequency.value=hz;
+      const gv=ctx.createGain();
+      gv.gain.setValueAtTime(0.0001,t0+dt);
+      gv.gain.exponentialRampToValueAtTime(0.7,t0+dt+0.05);
+      gv.gain.exponentialRampToValueAtTime(0.0001,t0+dt+dur);
+      o.connect(gv); gv.connect(f);
+      o.start(t0+dt); o.stop(t0+dt+dur+0.02);
+    });
+    f.connect(g); g.connect(ctx.destination);
+    setTimeout(()=>{ try{ ctx.close(); }catch(_){ } }, 1800);
+  }catch(_){ /* se l'audio non parte, l'accesso funziona lo stesso */ }
+}
+(function(){
+  function agganciaSuono(){
+    const t=document.getElementById('suono-toggle'), pv=document.getElementById('suono-prova');
+    if(!t||t._bound) return; t._bound=true;
+    const aggiorna=()=>{ t.textContent = suonoAccessoAttivo()?'🔔 suono attivo':'🔕 suono spento'; };
+    aggiorna();
+    t.onclick=()=>{ setSuonoAccesso(!suonoAccessoAttivo()); aggiorna(); if(suonoAccessoAttivo()) suonoAccesso(); };
+    if(pv) pv.onclick=()=>{ const era=suonoAccessoAttivo(); setSuonoAccesso(true); suonoAccesso(); setSuonoAccesso(era); };
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',agganciaSuono); else agganciaSuono();
+  setTimeout(agganciaSuono,1500);
+})();
 async function doLogin(){
   const username=(document.getElementById('login-user').value||'').trim();
   const password=document.getElementById('login-pass').value||'';
@@ -25786,8 +25853,13 @@ function loginAs(user){
     const session={username:user.username,role:user.role,active:user.active,
       password:user.password,ts:Date.now(),expires:Date.now()+7*24*60*60*1000};
     try{localStorage.setItem('mq_session',JSON.stringify(session));}catch(e){}
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('app').classList.add('visible');
+    suonoAccesso();                                   // segnale acustico di ingresso
+    const _ls=document.getElementById('login-screen');
+    _ls.classList.add('uscita');                      // la schermata di accesso sfuma
+    setTimeout(()=>{ _ls.classList.add('hidden'); _ls.classList.remove('uscita'); }, 620);
+    const _app=document.getElementById('app');
+    _app.classList.add('visible','entrata');          // il sito entra in dissolvenza
+    setTimeout(()=>_app.classList.remove('entrata'), 1400);
     const initials=(user.username||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('hdr-avatar').textContent=initials;
     document.getElementById('hdr-username').textContent=user.username;
@@ -32339,6 +32411,20 @@ setTool("erase");
         const idx=db.entries.findIndex(x=>x.id===e.id);
         if(idx>=0){ db.entries[idx].verbale=row.verbale; db.entries[idx].ripetuto=!!row.ripetuto; }
         e.verbale=row.verbale; delete e._pending; save(); setStatus('ok'); renderTable();
+        // Il numero assegnato dal database può non coincidere con quello mostrato nel form
+        // (un altro dispositivo può aver salvato nel frattempo). Se cambia, va detto forte:
+        // il tecnico deve poterlo correggere sul cartellino e sui cubetti già segnati.
+        const atteso=e._numAtteso; delete e._numAtteso;
+        const m=String(row.verbale||'').match(/(\d+)$/);
+        const dato=m?parseInt(m[1],10):null;
+        if(atteso!=null && dato!=null && dato!==atteso){
+          try{ if(typeof bip==='function') bip(); }catch(_){ }   // sirena: il numero è cambiato
+          alert('ATTENZIONE — il numero è cambiato.\n\n'
+              + 'Nel modulo compariva il '+atteso+', ma il numero assegnato è il '+dato+'.\n'
+              + 'Verbale definitivo: '+row.verbale+'\n\n'
+              + 'Succede quando un altro laboratorio salva nello stesso momento.\n'
+              + 'Correggi il numero sul cartellino e sui cubetti.');
+        }
         toast('Prelievo salvato — verbale '+row.verbale);
       }else{ delete e._pending; save(); setStatus('ok'); renderTable(); toast('Prelievo salvato.'); }
     }catch(err){
@@ -33802,7 +33888,7 @@ setTool("erase");
     clearMissingHighlight();
     $('tab-registro').scrollIntoView({behavior:'smooth',block:'start'});
   }
-  function saveEntry(){
+  async function saveEntry(){
     if(isViewer()){ toast('Profilo di sola consultazione: non puoi inserire o modificare.'); return; }
     // evita che una riga finisca sul laboratorio sbagliato prima che arrivi la configurazione
     if(cloudOn() && !cfgLoaded && isRestricted() && !myLab()){
@@ -33888,8 +33974,16 @@ setTool("erase");
     save();
     // Salvataggio robusto: se è un NUOVO prelievo con numero automatico (non scelto a mano),
     // lascio che sia il database ad assegnare il numero in modo atomico → niente doppioni in contemporanea.
+    // Il numero AUTOMATICO lo assegna il database (evita doppioni fra dispositivi), ma
+    // quello mostrato nel form è solo una previsione basata sui dati locali: se un altro
+    // laboratorio ha salvato nel frattempo, i due non coincidono. Perciò il numero
+    // mostrato viene passato come richiesta e la differenza viene segnalata a voce alta.
     const autoVerbale = prel && !verbaleManual && !editId;
     if(autoVerbale){
+      entry._numAtteso = currentNum();
+      // prima di lasciar decidere al database, allinea i dati locali: così la previsione
+      // mostrata è basata su quello che c'è davvero sul cloud, non su una copia vecchia
+      if(cloudOn()){ try{ await cloudSync(); }catch(_){ } }
       pushEntryAuto(entry, verbalePrefix(entry.wbs, entry.mix), db.cfg.width||5);
       clearForm(!editId); renderTable();
       return;
@@ -35024,14 +35118,24 @@ setTool("erase");
         pushConfig(); refreshMix(name); toast('Miscela aggiunta.');
       };
     }
-    $('reg-save').onclick=saveEntry;
+    $('reg-save').onclick=async ()=>{
+      const b=$('reg-save'); if(b._busy) return; b._busy=true;
+      try{ await saveEntry(); } finally { b._busy=false; }
+    };
     $('reg-clear').onclick=clearForm;
     $('reg-cancel-edit').onclick=()=>clearForm(false);   // annulla = pulizia totale (l'evento non deve valere come "mantieni")
     $('reg-prel-done').addEventListener('change',()=>{
       const on=prelChecked();
       setPrel(on);
       setCubettiEnabled(on);
-      if(on){ verbaleManual=false; cubettiManual=false; suggestNumber(); updateGuide(); if($('reg-num'))$('reg-num').focus(); }
+      if(on){
+        // Se il tecnico ha GIÀ scritto un numero, quello vale: non va sovrascritto
+        // e non deve tornare automatico, altrimenti al salvataggio verrebbe ignorato.
+        const giaScritto=!!String(($('reg-num')&&$('reg-num').value)||'').trim();
+        if(!giaScritto){ verbaleManual=false; suggestNumber(); }
+        else { verbaleManual=true; composeVerbale(); }
+        cubettiManual=false; updateGuide(); if($('reg-num'))$('reg-num').focus();
+      }
       else { if($('reg-num'))$('reg-num').value=''; composeVerbale(); }
       updateVerbHint();
     });
@@ -35214,7 +35318,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 20.1';
+  window.APP_VERSION = 'Versione 20.6';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
