@@ -844,6 +844,11 @@ tr.new-row{animation:rowIn .2s ease both;}
       </div>
 
       <!-- Campi obbligatori -->
+      <!-- Limiti prove sui fanghi -->
+      <div class="admin-section-title" style="margin-top:24px;">🧫 Limiti prove sui fanghi</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Valgono per tutte le miscele: i fanghi non seguono la ricetta del calcestruzzo. Fuori da questi valori il campo si accende di rosso al momento della compilazione. Lascia vuoto per non controllare.</div>
+      <div id="ra-fanghi" style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;"></div>
+
       <div class="admin-section-title" style="margin-top:24px;">🔒 Campi obbligatori per il salvataggio</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Scegli quali campi non possono restare vuoti quando si salva una registrazione. La regola vale per tutti i laboratori e per tutti gli utenti (il campo compare con un <b style="color:var(--red);">*</b> rosso nel form).</div>
       <div id="ra-required" style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--text);"></div>
@@ -2433,7 +2438,16 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-mini{background:var(--bg);border:1px solid var(--border2);color:var(--accent);border-radius:9px;padding:0 15px;cursor:pointer;font-size:20px;line-height:1;}
 #tab-registro .reg-mini:hover{border-color:var(--accent);}
 #tab-registro .reg-tests{grid-column:1/-1;}
+#tab-registro .reg-cubhint{margin:2px 0 8px;padding:9px 12px;border-radius:9px;font-size:13.5px;line-height:1.45;
+  background:rgba(var(--accent-rgb),.12);border:1px solid var(--accent);color:var(--text);}
+#tab-registro .reg-cubhint b{color:var(--accent);}
+#tab-registro .reg-cubhint .cub-ok{color:var(--green);font-size:12.5px;}
+#tab-registro .reg-cubhint .cub-att{color:var(--red);font-size:12.5px;font-weight:600;}
+#tab-registro .reg-cubhint.diverso{background:rgba(224,90,90,.14);border-color:var(--red);}
+#tab-registro .reg-cubhint.diverso b{color:var(--red);}
 #tab-registro .reg-tests-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:4px;}
+#tab-registro .reg-test-gruppo{margin-top:10px;padding-top:12px;border-top:1px solid var(--border2);
+  font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);}
 #tab-registro .reg-test{display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:13px 14px;}
 #tab-registro .reg-test.on{border-color:var(--accent);background:rgba(var(--accent-rgb),.06);}
 #tab-registro .reg-test input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
@@ -3052,6 +3066,7 @@ input[type="date"]{ color-scheme:dark; }
 
         <div class="reg-f">
           <label>N° cubetti realizzati</label>
+          <div class="reg-cubhint" id="reg-cub-hint" style="display:none;"></div>
           <div class="reg-chips" id="reg-cubetti-chips">
             <button type="button" class="reg-chip" data-v="4">4</button>
             <button type="button" class="reg-chip" data-v="6">6</button>
@@ -26218,6 +26233,30 @@ function renderScadenze(){
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();
   setTimeout(bind,1500);
 })();
+function renderFanghi(){
+  const box=document.getElementById('ra-fanghi'); if(!box) return;
+  const RA=window.RegAdmin; if(!RA||!RA.fanghiCfg){ box.innerHTML=''; return; }
+  const c=RA.fanghiCfg();
+  box.innerHTML='';
+  [['Densità','g/cm³','densMin','densMax','0.1'],['Viscosità Marsh','s','marshMin','marshMax','1']]
+    .forEach(([lbl,unit,kMin,kMax,step])=>{
+      const w=document.createElement('div');
+      w.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);';
+      const mk=(val,key)=>{ const i=document.createElement('input');
+        i.type='number'; i.step=step; i.placeholder='—';
+        i.value=(val===''||val==null)?'':val;
+        i.style.cssText='width:70px;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:6px 8px;font-size:13px;text-align:center;';
+        i.addEventListener('change',()=>{ const p={}; p[key]=i.value; RA.setFanghiCfg(p); renderFanghi(); });
+        return i; };
+      const t=document.createElement('b'); t.style.color='var(--text)'; t.textContent=lbl;
+      w.appendChild(t);
+      w.appendChild(mk(c[kMin],kMin));
+      w.appendChild(document.createTextNode('–'));
+      w.appendChild(mk(c[kMax],kMax));
+      w.appendChild(document.createTextNode(' '+unit));
+      box.appendChild(w);
+    });
+}
 function renderDdtDup(){
   const box=document.getElementById('ra-ddt-dup'); if(!box) return;
   const RA=window.RegAdmin; if(!RA||!RA.ddtDupReport){ box.innerHTML=''; return; }
@@ -26256,6 +26295,7 @@ function renderRegAdmin(){
   const RA=window.RegAdmin; if(!RA) return;
   renderRequired();
   renderScadenze();
+  renderFanghi();
   renderDdtDup();
   renderWbsReport();
   // elenco laboratori
@@ -26351,6 +26391,9 @@ function renderRegAdmin(){
         w.appendChild(document.createTextNode(' '+unit));
         return w;
       };
+      const tit=(txt)=>{ const t=document.createElement('div');
+        t.style.cssText='width:100%;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin-top:2px;';
+        t.textContent=txt; return t; };
       sub.appendChild(mkRange('Slump','cm','slumpMin','slumpMax'));
       sub.appendChild(mkRange('Spand.','cm','spandMin','spandMax'));
       sub.appendChild(mkRange('T.CLS','°C','tclsMin','tclsMax'));
@@ -32277,10 +32320,13 @@ setTool("erase");
     {k:'aria',  label:'Aria',           unit:'%'},
     {k:'ac',    label:'Rapporto A/C',   unit:''},
     {k:'essud', label:'Acqua essudata', unit:''},
-    {k:'massa', label:'Massa volumica', unit:''}
+    {k:'massa', label:'Massa volumica', unit:''},
+    // Prove sui fanghi: gruppo a sé, con la loro intestazione nel modulo
+    {k:'dens',  label:'Densità',         unit:'g/cm³', gruppo:'fanghi'},
+    {k:'marsh', label:'Viscosità Marsh', unit:'s',     gruppo:'fanghi'}
   ];
 
-  let db={labs:DEFAULT_LABS.slice(), mixes:DEFAULT_MIXES.slice(), entries:[], labUsers:{}, imprese:[], fornitori:[], wbs:[], mixCfg:{}, cfg:{mid:'-CZ-',width:5}};
+  let db={labs:DEFAULT_LABS.slice(), mixes:DEFAULT_MIXES.slice(), entries:[], labUsers:{}, imprese:[], fornitori:[], wbs:[], mixCfg:{}, fanghi:{}, cfg:{mid:'-CZ-',width:5}};
   let verbaleManual=false;   // true se l'utente ha scritto a mano il verbale
   let cubettiManual=false;   // true se l'utente ha scelto i cubetti a mano
   let curLab=db.labs[0];
@@ -32320,7 +32366,15 @@ setTool("erase");
   // La colonna "settimanale" potrebbe non esistere ancora su Supabase.
   // L'app la cerca una volta sola: se c'è la usa, altrimenti resta al vecchio posto.
   // Così caricare il file prima o dopo l'SQL non fa differenza.
-  let _colSett=null;
+  let _colSett=null, _colFanghi=null;
+  // Le colonne delle prove sui fanghi potrebbero non esistere ancora: l'app le usa
+  // solo se ci sono, altrimenti i valori restano comunque dentro "tests".
+  async function verificaColonneFanghi(){
+    if(_colFanghi!==null) return _colFanghi;
+    try{ await sbFetch('registro?select=densita&limit=1'); _colFanghi=true; }
+    catch(_){ _colFanghi=false; }
+    return _colFanghi;
+  }
   async function verificaColonnaSett(){
     if(_colSett!==null) return _colSett;
     try{ await sbFetch('registro?select=settimanale&limit=1'); _colSett=true; }
@@ -32336,6 +32390,7 @@ setTool("erase");
               if(_colSett===true) delete t.__sett;   // ha la sua colonna: fuori dalle prove
               return t; })(),
       rck:e.rck||'', pk_da:e.pkDa||'', pk_a:e.pkA||'',
+      ...(_colFanghi===true ? {densita:tval(e,'dens')||'', viscosita_marsh:tval(e,'marsh')||''} : {}),
       prelievo:!!e.prelievo, verbale:e.verbale||'', ripetuto:!!e.ripetuto,
       ...(_colSett===true ? {settimanale: !!(e.tests && e.tests.__sett)} : {}),
       cubetti:e.cubetti||'', note:e.note||'', temp_amb:e.tempAmb||'', temp_cls:e.tempCls||'',
@@ -32459,6 +32514,7 @@ setTool("erase");
   async function cloudSync(){
     if(!cloudOn()){ setStatus('local'); return; }
     await verificaColonnaSett();   // una volta sola: c'è la colonna "settimanale"?
+    await verificaColonneFanghi();
     try{
       // 0) configurazione condivisa (laboratori, miscele, formato, utenti→lab)
       let cfgChanged=false;
@@ -32618,7 +32674,7 @@ setTool("erase");
   /* ---------- CONFIG condivisa (laboratori, miscele, formato, utenti→lab) ---------- */
   let lastCfgSig='';
   function currentConfig(){
-    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), midMalta:midMalta(), width:db.cfg.width||5, labUsers:db.labUsers||{}, deleted:tombs(), required:reqCfg() };
+    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), midMalta:midMalta(), width:db.cfg.width||5, labUsers:db.labUsers||{}, deleted:tombs(), required:reqCfg(), fanghi:db.fanghi||{} };
   }
   function applyConfig(c){
     if(!c||typeof c!=='object')return false;
@@ -32629,6 +32685,8 @@ setTool("erase");
     if(Array.isArray(c.fornitori)){ if(JSON.stringify(c.fornitori)!==JSON.stringify(db.fornitori||[])){db.fornitori=c.fornitori.slice();changed=true;} }
     if(Array.isArray(c.wbs)){ if(JSON.stringify(c.wbs)!==JSON.stringify(db.wbs||[])){db.wbs=c.wbs.slice();changed=true;} }
     if(c.mixCfg&&typeof c.mixCfg==='object'){ if(JSON.stringify(c.mixCfg)!==JSON.stringify(db.mixCfg||{})){db.mixCfg=c.mixCfg;changed=true;} }
+    // limiti delle prove sui fanghi: valgono per tutti, non per singola miscela
+    if(c.fanghi&&typeof c.fanghi==='object'){ if(JSON.stringify(c.fanghi)!==JSON.stringify(db.fanghi||{})){db.fanghi=c.fanghi;changed=true;} }
     if(c.mid!=null && c.mid!==db.cfg.mid){ db.cfg.mid=c.mid; changed=true; }
     if(c.midMalta!=null && c.midMalta!==db.cfg.midMalta){ db.cfg.midMalta=c.midMalta; changed=true; }
     if(c.width && c.width!==db.cfg.width){ db.cfg.width=c.width; changed=true; }
@@ -32768,6 +32826,7 @@ setTool("erase");
       const senzaCfg=db.entries.filter(e=>isPrelievo(e) && !(mixCfgOf(e.mix||'').sett>0)).length;
       return {marcate:daMarcare.length, senzaCfg, colonnaSett:_colSett===true};
     },
+    fanghiCfg:()=>fanghiCfg(), setFanghiCfg:(p)=>setFanghiCfg(p),
     scadenzeReport:()=> scadenzeList(db.entries),
     ddtDupReport:()=>{
       const by={};
@@ -33077,7 +33136,16 @@ setTool("erase");
   function renderTestsInputs(){
     const g=$('reg-tests-grid'); if(!g)return;
     g.innerHTML='';
+    let gruppoFatto='';
     TESTS.forEach(t=>{
+      // intestazione quando comincia un gruppo diverso (es. le prove sui fanghi)
+      if(t.gruppo && t.gruppo!==gruppoFatto){
+        gruppoFatto=t.gruppo;
+        const tit=document.createElement('div');
+        tit.className='reg-test-gruppo';
+        tit.textContent='Prove sui fanghi';
+        g.appendChild(tit);
+      }
       const wrap=document.createElement('label');
       wrap.className='reg-test'; wrap.id='reg-test-'+t.k;
       wrap.innerHTML=
@@ -33472,6 +33540,20 @@ setTool("erase");
   // Chi lo mette: il salvataggio dal sito, la colonna "Settimanale" dell'Excel e,
   // per le righe vecchie, il pulsante in Pannello Admin → Manutenzione dati.
   function isSettimanale(e){ return isSettMark(e); }
+  // Limiti delle prove sui fanghi: UNICI per tutta l'app, non legati alla miscela.
+  function fanghiCfg(){
+    const f=db.fanghi||{};
+    const n=v=>{ const s=String(v==null?'':v).trim().replace(',','.'); return (s===''||isNaN(parseFloat(s)))?'':parseFloat(s); };
+    return {densMin:n(f.densMin), densMax:n(f.densMax), marshMin:n(f.marshMin), marshMax:n(f.marshMax)};
+  }
+  function setFanghiCfg(patch){
+    db.fanghi=Object.assign({}, db.fanghi||{});
+    ['densMin','densMax','marshMin','marshMax'].forEach(k=>{
+      if(patch[k]!==undefined){ const s=String(patch[k]).trim().replace(',','.');
+        db.fanghi[k]=(s===''||isNaN(parseFloat(s)))?'':parseFloat(s); }
+    });
+    save(); pushConfig(); return db.fanghi;
+  }
   // Il prelievo settimanale vale per laboratorio + mix, in QUALSIASI WBS
   // (stessa regola dell'aria, e coerente con il prospetto settimanale):
   // se il settimanale di quel mix è già stato fatto in un'altra WBS, non va rifatto.
@@ -33551,6 +33633,26 @@ setTool("erase");
         + (!ariaOk?'<br><span class="reg-guide-warn">⚠ contenuto d\'aria DA FARE oggi</span>':'')
         + '</div>';
       if(!editId && !cubettiManual && prelChecked() && s.n>0){ setCubetti(String(s.n)); }
+      // Suggerimento scritto accanto ai pulsanti dei cubetti.
+      // Diventa rosso solo se si sta per rifare un settimanale già eseguito:
+      // scegliere un numero diverso dal suggerito è legittimo e non va segnalato.
+      if(s.n>0 && prelChecked()){
+        const scelti=parseInt(($('reg-cubetti')?$('reg-cubetti').value:''),10);
+        const nSett=mixCfgOf(mix).sett||0;
+        const doppione = weeklyOk && nSett>0 && scelti===nSett;
+        const ch=$('reg-cub-hint');
+        if(ch){
+          ch.className='reg-cubhint'+(doppione?' diverso':'');
+          // stato del settimanale, utile anche quando è tutto in regola
+          const nota = weeklyOk
+            ? '<br><span class="cub-ok">✓ settimanale di questa miscela già eseguito questa settimana'+weeklyWhere(mix,wbs)+'</span>'
+            : (s.weeklyPending ? '<br><span class="cub-att">⚠ il prelievo settimanale di questa miscela è ancora DA FARE</span>' : '');
+          ch.innerHTML = doppione
+            ? '⛔ Il <b>prelievo settimanale</b> di questa miscela è <b>già stato fatto</b> questa settimana'+weeklyWhere(mix,wbs)+'. Per il giornaliero servono <b>'+s.n+' cubetti</b>.'
+            : ('➡ È il <b>'+esc(s.tipo)+'</b>: servono <b>'+s.n+' cubetti</b>.'+nota);
+          ch.style.display='';
+        }
+      } else { const ch=$('reg-cub-hint'); if(ch) ch.style.display='none'; }
     }
     box.innerHTML=html;
     checkRanges();
@@ -33580,8 +33682,16 @@ setTool("erase");
     mark('reg-val-spand', !!b2); const iss2=b2?issues[issues.length-1]:'';
     const b3= chk($('reg-temp-cls')?$('reg-temp-cls').value:'', cfg.tclsMin, cfg.tclsMax,'Temp. CLS','°C');
     mark('reg-temp-cls', !!b3);
+    // prove sui fanghi: stesso controllo di slump e spandimento
+    const densOn=$('reg-chk-dens')&&$('reg-chk-dens').checked;
+    const fg=fanghiCfg();
+    const b4= densOn ? chk($('reg-val-dens')?$('reg-val-dens').value:'', fg.densMin, fg.densMax,'Densità','g/cm³') : false;
+    mark('reg-val-dens', !!b4); const iss4=b4?issues[issues.length-1]:'';
+    const marshOn=$('reg-chk-marsh')&&$('reg-chk-marsh').checked;
+    const b5= marshOn ? chk($('reg-val-marsh')?$('reg-val-marsh').value:'', fg.marshMin, fg.marshMax,'Viscosità Marsh','s') : false;
+    mark('reg-val-marsh', !!b5); const iss5=b5?issues[issues.length-1]:'';
     // avvisi in linea, subito sotto i campi interessati
-    const th=$('reg-tests-hint'); if(th){ const parts=[iss1,iss2].filter(Boolean); th.innerHTML=parts.length?('⚠ '+parts.join(' · ')):''; th.style.display=parts.length?'':'none'; }
+    const th=$('reg-tests-hint'); if(th){ const parts=[iss1,iss2,iss4,iss5].filter(Boolean); th.innerHTML=parts.length?('⚠ '+parts.join(' · ')):''; th.style.display=parts.length?'':'none'; }
     const tc=$('reg-tcls-hint'); if(tc){ tc.innerHTML=b3?('⚠ '+issues[issues.length-1]):''; tc.style.display=b3?'':'none'; }
     box.innerHTML = issues.length ? ('⚠ '+issues.join(' · ')) : '';
     box.style.display = issues.length ? '' : 'none';
@@ -34532,6 +34642,8 @@ setTool("erase");
     {h:'Rapporto A/C',           w:12, get:e=>xnum(tval(e,'ac')), gruppo:true},
     {h:'Acqua essudata',         w:13, get:e=>xnum(tval(e,'essud')), gruppo:true},
     {h:'Massa volumica',         w:18, get:e=>xnum(tval(e,'massa')), gruppo:true},
+    {h:'Densità [g/cm³]',        w:16, get:e=>xnum(tval(e,'dens')),  gruppo:true},
+    {h:'Viscosità Marsh [s]',    w:19, get:e=>xnum(tval(e,'marsh')), gruppo:true},
     {h:'Temp. ambiente [°C]',    w:16, get:e=>xnum(e.tempAmb), gruppo:true},
     {h:'Temp. CLS [°C]',         w:14, get:e=>xnum(e.tempCls), gruppo:true},
     {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
@@ -35290,9 +35402,10 @@ setTool("erase");
         const v=b.getAttribute('data-v');
         if(v==='__altro'){ if(cbMan){ cbMan.style.display=''; cbMan.focus(); if($('reg-cubetti'))$('reg-cubetti').value=cbMan.value||''; } cbHi('__altro'); }
         else { if(cbMan){ cbMan.style.display='none'; cbMan.value=''; } if($('reg-cubetti'))$('reg-cubetti').value=v; cbHi(v); }
+        updateGuide();   // il suggerimento scritto deve seguire la scelta
       };
     });
-    if(cbMan) cbMan.addEventListener('input',()=>{ cubettiManual=true; if($('reg-cubetti'))$('reg-cubetti').value=cbMan.value||''; cbHi('__altro'); });
+    if(cbMan) cbMan.addEventListener('input',()=>{ cubettiManual=true; if($('reg-cubetti'))$('reg-cubetti').value=cbMan.value||''; cbHi('__altro'); updateGuide(); });
 
     // ── Sincronizzazione cloud (Supabase) ──
     const topbar=document.querySelector('#tab-registro .reg-topbar');
@@ -35318,7 +35431,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 20.6';
+  window.APP_VERSION = 'Versione 21.4';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
