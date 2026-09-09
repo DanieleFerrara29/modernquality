@@ -2656,6 +2656,26 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .reg-btn-txt{display:inline;}
 @media (min-width:1025px){ #tab-registro .reg-btn-txt{display:none;} }
 
+/* ── Consegne ── */
+#tab-registro .reg-cons{background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:14px 16px;margin-bottom:14px;}
+#tab-registro .reg-cons-h{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;margin-bottom:12px;}
+#tab-registro .reg-cons-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+#tab-registro .reg-cons-bar label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;}
+#tab-registro .reg-cons-cnt{font-size:12px;color:var(--accent);font-weight:700;}
+#tab-registro .reg-cons-list{max-height:340px;overflow:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:12px;}
+#tab-registro .reg-cons-none{padding:16px;color:var(--green);font-size:13px;}
+#tab-registro .cons-wbs{position:sticky;top:0;background:var(--bg);padding:7px 12px;font-size:11px;font-weight:800;
+  letter-spacing:.06em;color:var(--accent);border-bottom:1px solid var(--border2);}
+#tab-registro .cons-wbs small{color:var(--muted);font-weight:600;}
+#tab-registro .reg-cons-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;}
+#tab-registro .reg-cons-row:hover{background:var(--bg);}
+#tab-registro .reg-cons-row.sca{background:rgba(224,90,90,.08);}
+#tab-registro .reg-cons-row input{width:18px;height:18px;flex:0 0 auto;}
+#tab-registro .cons-v{font-family:monospace;font-weight:700;color:var(--accent);}
+#tab-registro .cons-c,#tab-registro .cons-m{color:var(--muted);font-size:12px;}
+#tab-registro .cons-x{margin-left:auto;color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:38%;}
+#tab-registro .cons-urg.sca{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(224,90,90,.2);color:var(--red);}
+@media (max-width:640px){ #tab-registro .cons-x{margin-left:0;max-width:100%;flex-basis:100%;} #tab-registro .reg-cons-row{flex-wrap:wrap;} }
 /* ══ MODALITÀ TELEFONO — il Registro diventa una web-app ══ */
 @media (max-width:640px){
   #tab-registro .reg-wrap{padding:0 2px;}
@@ -3093,6 +3113,8 @@ input[type="date"]{ color-scheme:dark; }
     <div class="reg-toolbar reg-toolbar-btns">
       <button class="reg-btn excel" id="reg-exp-go">⬇ Esporta in Excel</button>
       <button class="reg-btn ghost" id="reg-scad-go" title="Elenco dei cubetti da provare: scaduti, in scadenza questa settimana e la prossima (7 e 28 giorni)">⏰ Scadenze prove</button>
+      <button class="reg-btn ghost" id="reg-cons-icm" title="Segna i cubetti ICM consegnati al laboratorio">📦 Consegne ICM</button>
+      <button class="reg-btn ghost" id="reg-cons-dl" title="Segna i cubetti della Direzione Lavori consegnati">🔬 Consegne DL</button>
       <button class="reg-btn ghost" id="reg-imp-btn">⬆ Carica / aggiorna da Excel</button>
       <button class="reg-btn ghost" id="reg-sync-btn" title="Confronta l'Excel con il registro: aggiunge le nuove, aggiorna le modificate, CANCELLA quelle che nel file non ci sono più (con anteprima e conferma)">⇄ Sincronizza da Excel</button>
       <input type="file" id="reg-imp-file" accept=".xlsx,.xls" style="display:none;" autocomplete="off"/>
@@ -3120,6 +3142,22 @@ input[type="date"]{ color-scheme:dark; }
         <select id="reg-mf-data" class="reg-mtools-sel"></select>
         <button id="reg-mf-clear" class="reg-mtools-btn" title="Togli filtri">✕</button>
       </div>
+    </div>
+
+    <div class="reg-cons" id="reg-cons-box" style="display:none;">
+      <div class="reg-cons-h"><span id="reg-cons-tit">Consegne</span>
+        <button class="reg-mini" id="reg-cons-close" title="Chiudi">✕</button></div>
+      <div class="reg-cons-bar">
+        <span id="reg-cons-gg-w"><label>Prova</label>
+          <select id="reg-cons-gg" class="reg-mtools-sel"><option value="28">28 giorni</option><option value="7">7 giorni</option></select></span>
+        <label>Consegnati il</label>
+        <input type="date" id="reg-cons-data" class="reg-mtools-sel"/>
+        <button class="reg-btn ghost" id="reg-cons-all">Tutti</button>
+        <button class="reg-btn ghost" id="reg-cons-none">Nessuno</button>
+        <span id="reg-cons-cnt" class="reg-cons-cnt"></span>
+      </div>
+      <div id="reg-cons-list" class="reg-cons-list"></div>
+      <div class="reg-cons-bar"><button class="reg-btn primary" id="reg-cons-ok">✓ Segna consegnati</button></div>
     </div>
 
     <div class="reg-tablewrap">
@@ -32366,7 +32404,13 @@ setTool("erase");
   // La colonna "settimanale" potrebbe non esistere ancora su Supabase.
   // L'app la cerca una volta sola: se c'è la usa, altrimenti resta al vecchio posto.
   // Così caricare il file prima o dopo l'SQL non fa differenza.
-  let _colSett=null, _colFanghi=null;
+  let _colSett=null, _colFanghi=null, _colCons=null;
+  async function verificaColonneConsegna(){
+    if(_colCons!==null) return _colCons;
+    try{ await sbFetch('registro?select=consegna_icm_7gg&limit=1'); _colCons=true; }
+    catch(_){ _colCons=false; }
+    return _colCons;
+  }
   // Le colonne delle prove sui fanghi potrebbero non esistere ancora: l'app le usa
   // solo se ci sono, altrimenti i valori restano comunque dentro "tests".
   async function verificaColonneFanghi(){
@@ -32390,6 +32434,8 @@ setTool("erase");
               if(_colSett===true) delete t.__sett;   // ha la sua colonna: fuori dalle prove
               return t; })(),
       rck:e.rck||'', pk_da:e.pkDa||'', pk_a:e.pkA||'',
+      // ICM prova a 7 e a 28 giorni · la DL prova solo a 28
+      ...(_colCons===true ? {consegna_icm_7gg:e.cons7||'', consegna_icm_28gg:e.cons28||'', consegna_dl_28gg:e.consDl||''} : {}),
       ...(_colFanghi===true ? {densita:tval(e,'dens')||'', viscosita_marsh:tval(e,'marsh')||''} : {}),
       prelievo:!!e.prelievo, verbale:e.verbale||'', ripetuto:!!e.ripetuto,
       ...(_colSett===true ? {settimanale: !!(e.tests && e.tests.__sett)} : {}),
@@ -32407,6 +32453,7 @@ setTool("erase");
               return t; })(), prelievo:(r.prelievo!=null?!!r.prelievo:!!(r.verbale&&String(r.verbale).trim())), verbale:r.verbale||'', ripetuto:!!r.ripetuto,
       // legge la colonna vera; se vuota ripiega sul vecchio posto, così le righe già salvate non perdono nulla
       rck: (r.rck!=null&&r.rck!=='') ? String(r.rck) : ((r.tests&&r.tests.__rck)||''),
+      cons7:String(r.consegna_icm_7gg||''), cons28:String(r.consegna_icm_28gg||''), consDl:String(r.consegna_dl_28gg||''),
       pkDa:(r.pk_da!=null&&r.pk_da!=='') ? String(r.pk_da) : ((r.tests&&r.tests.__pkda)||''),
       pkA: (r.pk_a!=null&&r.pk_a!=='')  ? String(r.pk_a)  : ((r.tests&&r.tests.__pka)||''),
       cubetti:r.cubetti||'', note:r.note||'', tempAmb:r.temp_amb||'', tempCls:r.temp_cls||'', by:r.inserito_da||'', at:r.inserito_il||'',
@@ -32515,6 +32562,7 @@ setTool("erase");
     if(!cloudOn()){ setStatus('local'); return; }
     await verificaColonnaSett();   // una volta sola: c'è la colonna "settimanale"?
     await verificaColonneFanghi();
+    await verificaColonneConsegna();
     try{
       // 0) configurazione condivisa (laboratori, miscele, formato, utenti→lab)
       let cfgChanged=false;
@@ -33540,6 +33588,35 @@ setTool("erase");
   // Chi lo mette: il salvataggio dal sito, la colonna "Settimanale" dell'Excel e,
   // per le righe vecchie, il pulsante in Pannello Admin → Manutenzione dati.
   function isSettimanale(e){ return isSettMark(e); }
+  /* Ripartizione dei cubetti (regola ICM):
+       4 → 2 solo DL + 2 riserve ICM/DL      · nessun cubetto ICM
+       6 → 2 ICM (28gg) + 2 riserve + 2 DL
+       8 → i 6 sopra + 2 ICM a 7 giorni                                */
+  function ripartizione(e){
+    const n=parseInt(e&&e.cubetti,10);
+    if(!isPrelievo(e)||isNaN(n)) return {icm7:0,icm28:0,ris:0,dl:0};
+    if(n>=8) return {icm7:2,icm28:2,ris:2,dl:2};
+    if(n>=6) return {icm7:0,icm28:2,ris:2,dl:2};
+    if(n>=4) return {icm7:0,icm28:0,ris:2,dl:2};
+    return {icm7:0,icm28:0,ris:0,dl:n};
+  }
+  function dataConsegna(e,c){ if(!e) return '';
+    return String((c==='dl'?e.consDl : c===7?e.cons7 : e.cons28)||'').trim(); }
+  const consegnato=(e,c)=>!!dataConsegna(e,c);
+  function daPortare(e,c){ const r=ripartizione(e);
+    return c==='dl' ? r.dl>0 : (c===7 ? r.icm7>0 : r.icm28>0); }
+  // Una scadenza è chiusa solo quando ogni parte in gioco è stata consegnata:
+  // i cubetti ICM di quella prova e, per i 28 giorni, anche quelli della DL.
+  // Se una delle due parti non ha cubetti, quella parte non blocca.
+  function tuttoConsegnato(e,gg){
+    const r=ripartizione(e);
+    const nIcm=(gg===7?r.icm7:r.icm28);
+    const nDl =(gg===28?r.dl:0);
+    if(!nIcm && !nDl) return false;                 // niente da consegnare: decide la maturazione
+    const okIcm=!nIcm || consegnato(e,gg);
+    const okDl =!nDl  || consegnato(e,'dl');
+    return okIcm && okDl;
+  }
   // Limiti delle prove sui fanghi: UNICI per tutta l'app, non legati alla miscela.
   function fanghiCfg(){
     const f=db.fanghi||{};
@@ -34642,13 +34719,19 @@ setTool("erase");
     {h:'Rapporto A/C',           w:12, get:e=>xnum(tval(e,'ac')), gruppo:true},
     {h:'Acqua essudata',         w:13, get:e=>xnum(tval(e,'essud')), gruppo:true},
     {h:'Massa volumica',         w:18, get:e=>xnum(tval(e,'massa')), gruppo:true},
-    {h:'Densità [g/cm³]',        w:16, get:e=>xnum(tval(e,'dens')),  gruppo:true},
-    {h:'Viscosità Marsh [s]',    w:19, get:e=>xnum(tval(e,'marsh')), gruppo:true},
     {h:'Temp. ambiente [°C]',    w:16, get:e=>xnum(e.tempAmb), gruppo:true},
     {h:'Temp. CLS [°C]',         w:14, get:e=>xnum(e.tempCls), gruppo:true},
+    {h:'Densità [g/cm³] [Fanghi]',      w:19, get:e=>xnum(tval(e,'dens')),  gruppo:true},
+    {h:'Viscosità Marsh [s] [Fanghi]',  w:21, get:e=>xnum(tval(e,'marsh')), gruppo:true},
     {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
     {h:'N° cubetti',             w:10, get:e=>xnum(e.cubetti)},
     {h:'Settimanale',            w:12, get:e=>isSettimanale(e)?'Sì':''},
+    {h:'Cub. ICM',               w:10, get:e=>{const r=ripartizione(e); return (r.icm7+r.icm28)||'';}, gruppo:true},
+    {h:'Cub. riserve',           w:12, get:e=>{const r=ripartizione(e); return r.ris||'';}, gruppo:true},
+    {h:'Cub. DL',                w:10, get:e=>{const r=ripartizione(e); return r.dl||'';}, gruppo:true},
+    {h:'Consegna ICM 7 gg',      w:17, get:e=>xdate(e.cons7),  date:true, gruppo:true},
+    {h:'Consegna ICM 28 gg',     w:18, get:e=>xdate(e.cons28), date:true, gruppo:true},
+    {h:'Consegna DL 28 gg',      w:17, get:e=>xdate(e.consDl), date:true, gruppo:true},
     {h:'Maturazione 28 gg',      w:16, get:e=>{const d=maturDate(e,28); return d?xdate(_isoOf(d)):'';}, date:true},
     {h:'Maturazione 7 gg',       w:15, get:e=>{const d=maturDate(e,7);  return d?xdate(_isoOf(d)):'';}, date:true},
     {h:'Settimana spedizione 28 gg', w:20, get:e=>shipWeek(e,28)},
@@ -34708,6 +34791,71 @@ setTool("erase");
   // ── File SCADENZE: cosa va provato la settimana prossima ──
   // Elenca i prelievi la cui maturazione (7 o 28 giorni) cade nella settimana successiva,
   // più quelli già scaduti e non ancora provati. Pensato da mandare ai laboratori.
+  /* ── Consegne: elenco raggruppato per WBS ── */
+  let _cSel={}, _cMode='icm';
+  function canaleCons(){ return _cMode==='dl' ? 'dl' : parseInt(($('reg-cons-gg')||{}).value||'28',10); }
+  function consDaFare(c){
+    const out=[];
+    currentRows().forEach(e=>{
+      if(!isPrelievo(e)) return;
+      if(!daPortare(e,c)) return;
+      if(consegnato(e,c)) return;
+      const d=maturDate(e, c==='dl'?28:c);
+      out.push({e, wbs:(e.wbs||'—'), matur:d?_isoOf(d):''});
+    });
+    return out.sort((a,b)=> a.wbs<b.wbs?-1 : a.wbs>b.wbs?1 : (a.matur<b.matur?-1:a.matur>b.matur?1:0));
+  }
+  function renderCons(){
+    const box=$('reg-cons-list'); if(!box) return;
+    const c=canaleCons(), righe=consDaFare(c), oggi=todayISO();
+    if($('reg-cons-gg-w')) $('reg-cons-gg-w').style.display = (_cMode==='dl'?'none':'');
+    if($('reg-cons-tit')) $('reg-cons-tit').textContent = (_cMode==='dl'?'🔬 Consegne DL':'📦 Consegne ICM');
+    if(!righe.length){
+      box.innerHTML='<div class="reg-cons-none">✓ Nessun cubetto in attesa di consegna.</div>';
+      if($('reg-cons-cnt')) $('reg-cons-cnt').textContent=''; return;
+    }
+    let html='', wbsOra='';
+    righe.forEach(r=>{
+      if(r.wbs!==wbsOra){ wbsOra=r.wbs;
+        const n=righe.filter(x=>x.wbs===wbsOra).length;
+        html+='<div class="cons-wbs">'+esc(wbsOra)+' <small>'+n+'</small></div>'; }
+      const rp=ripartizione(r.e);
+      const nc=(c==='dl'?rp.dl:(c===7?rp.icm7:rp.icm28));
+      const sca=r.matur&&r.matur<oggi;
+      html+='<label class="reg-cons-row'+(sca?' sca':'')+'">'
+        +'<input type="checkbox" data-ck="'+esc(r.e.id)+'"'+(_cSel[r.e.id]?' checked':'')+'/>'
+        +'<span class="cons-v">'+esc(r.e.verbale||'')+'</span>'
+        +'<span class="cons-c">'+nc+' cub.</span>'
+        +'<span class="cons-m">'+(r.matur?('matura '+fmtIt(r.matur)):'')+'</span>'
+        +(sca?'<span class="cons-urg sca">SCADUTO</span>':'')
+        +'<span class="cons-x">'+esc(r.e.mix||'')+'</span></label>';
+    });
+    box.innerHTML=html;
+    box.querySelectorAll('input[data-ck]').forEach(cb=>{
+      cb.onchange=()=>{ if(cb.checked)_cSel[cb.dataset.ck]=true; else delete _cSel[cb.dataset.ck]; conta(); };
+    });
+    conta();
+    function conta(){
+      const sel=righe.filter(r=>_cSel[r.e.id]);
+      const cub=sel.reduce((s,r)=>{const rp=ripartizione(r.e); return s+(c==='dl'?rp.dl:(c===7?rp.icm7:rp.icm28));},0);
+      const el=$('reg-cons-cnt');
+      if(el) el.textContent = sel.length ? (sel.length+' prelievi · '+cub+' cubetti') : (righe.length+' in attesa');
+    }
+  }
+  async function segnaConsegnati(){
+    const c=canaleCons();
+    const righe=consDaFare(c).filter(r=>_cSel[r.e.id]);
+    if(!righe.length){ toast('Seleziona almeno un prelievo.'); return; }
+    const d=($('reg-cons-data')&&$('reg-cons-data').value)||todayISO();
+    const nome = c==='dl' ? 'cubetti DL' : ('cubetti ICM · prova a '+c+' giorni');
+    if(!confirm('Segnare '+righe.length+' prelievi come consegnati il '+fmtIt(d)+' — '+nome+'?')) return;
+    righe.forEach(r=>{ if(c==='dl') r.e.consDl=d; else if(c===7) r.e.cons7=d; else r.e.cons28=d; });
+    save();
+    if(cloudOn()){ try{ await sbRegUpsertMany(righe.map(r=>r.e)); lastSig=''; }catch(err){ console.warn('consegna',err); } }
+    _cSel={}; refreshAll(); renderCons();
+    toast(righe.length+' prelievi segnati come consegnati.');
+    if(typeof addLog==='function') addLog('Consegna '+nome+': '+righe.length+' prelievi al '+fmtIt(d));
+  }
   function scadenzeList(rows){
     const oggi=isoLocal(new Date());   // data locale: toISOString sposterebbe il giorno
     const lunProssima=mondayOf(_isoOf(_plusDays(mondayOf(oggi),7)));
@@ -34858,6 +35006,31 @@ setTool("erase");
           c2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFDF0D5'}};
           c2.border={top:bd,left:bd,bottom:bd,right:bd};
         });
+        // Legenda dei colori, accanto al riepilogo: le celle sono tinte davvero
+        // con gli stessi colori usati nelle date di maturazione.
+        (function(){
+          const colG=EXPORT_COLS.findIndex(c=>c.h==='Maturazione 28 gg')+1;
+          const col = colG>0 ? colG : 8;
+          const voci=[
+            ['FFF4CCCC','FF990000','maturazione già passata'],
+            ['FFFAC090','FF7A3B00','matura questa settimana'],
+            ['FFFCE0C0','FF7A4E00','matura la settimana prossima'],
+            [null,      'FF555555','bianco = consegnati sia ICM sia DL']
+          ];
+          const t=ws.getRow(1).getCell(col);
+          t.value='LEGENDA COLORI (colonne Maturazione)';
+          t.font={size:10,bold:true,color:{argb:'FF555555'}};
+          t.alignment={vertical:'middle',horizontal:'left'};
+          voci.forEach((v,i)=>{
+            const r=ws.getRow(2+i);
+            const q=r.getCell(col);
+            q.value=v[2];
+            q.font={size:10,color:{argb:v[1]}};
+            q.alignment={vertical:'middle',horizontal:'left'};
+            if(v[0]) q.fill={type:'pattern',pattern:'solid',fgColor:{argb:v[0]}};
+            q.border={top:bd,left:bd,bottom:bd,right:bd};
+          });
+        })();
         // intestazione della tabella
         const hr=ws.getRow(RIGA_INT); hr.height=38;
         EXPORT_COLS.forEach((c,i)=>{ hr.getCell(i+1).value=c.h; });
@@ -34876,10 +35049,18 @@ setTool("erase");
         const _settProssima=mondayOf(_isoOf(_plusDays(mondayOf(_oggiISO),7)));
         const _col28=EXPORT_COLS.findIndex(c=>c.h==='Maturazione 28 gg')+1;
         const _col7 =EXPORT_COLS.findIndex(c=>c.h==='Maturazione 7 gg')+1;
+        const _settOggi=mondayOf(_oggiISO);
         function _statoData(e,gg){
+          // Il colore NON guarda di chi sono i cubetti: i tre stati ci sono sempre.
+          // Sparisce solo quando hanno consegnato SIA ICM SIA la DL.
+          // (i cubetti DL si provano a 28 giorni: sulla prova a 7 non entrano)
+          if(tuttoConsegnato(e,gg)) return '';
           const m=maturDate(e,gg); if(!m) return '';
           const iso=_isoOf(m);
           if(iso < _oggiISO) return 'scaduto';
+          // mancava questo: ciò che matura OGGI o entro domenica restava bianco,
+          // proprio la cosa più urgente da vedere
+          if(mondayOf(iso)===_settOggi) return 'ora';
           if(mondayOf(iso)===_settProssima) return 'prossima';
           return '';
         }
@@ -34906,6 +35087,8 @@ setTool("erase");
             const c=r.getCell(col);
             if(st==='scaduto'){ c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF4CCCC'}};
               c.font={size:11,color:{argb:'FF990000'}}; }
+            else if(st==='ora'){ c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFAC090'}};
+              c.font={size:11,color:{argb:'FF7A3B00'}}; }
             else { c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFCE0C0'}};
               c.font={size:11,color:{argb:'FF7A4E00'}}; }
           });
@@ -34985,14 +35168,20 @@ setTool("erase");
     // (data di esportazione, conteggi). La si cerca guardando i titoli noti, altrimenti
     // ogni riga verrebbe letta come nuova e si creerebbero righe vuote.
     const rigaIntestazione=(function(){
+      // ATTENZIONE: sheet_to_json con header:1 parte dalla prima riga PIENA del foglio,
+      // mentre l'opzione range conta le righe vere. Se il foglio non comincia dalla riga 1
+      // i due indici non coincidono e si leggerebbero le colonne sbagliate: qui si somma
+      // l'origine reale del foglio.
+      let origine=0;
+      try{ const rr=XLSX.utils.decode_range(ws['!ref']||'A1'); origine=rr.s.r; }catch(_){ origine=0; }
       const grezzo=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
       const attesi=['ddt','data','verbale di prelievo','mix','wbs','n° cubetti','laboratorio'];
       for(let i=0;i<Math.min(grezzo.length,30);i++){
         const cel=(grezzo[i]||[]).map(v=>String(v==null?'':v).trim().toLowerCase());
         const quanti=attesi.filter(t=>cel.indexOf(t)>=0).length;
-        if(quanti>=2) return i;                    // riga con almeno due titoli noti
+        if(quanti>=2) return origine+i;            // riga con almeno due titoli noti
       }
-      return 0;                                    // file vecchio: intestazione in prima riga
+      return origine;                              // file vecchio: intestazione in prima riga
     })();
     const rows=XLSX.utils.sheet_to_json(ws,{defval:'',range:rigaIntestazione});
     // Intestazioni realmente presenti nel file: una colonna assente significa
@@ -35008,9 +35197,10 @@ setTool("erase");
       verbale:['Verbale di prelievo','Verbale'], cubetti:['N° cubetti','N cubetti','Cubetti'],
       note:['Note'], tempAmb:['Temp. ambiente [°C]','Temp ambiente','Temperatura ambiente'],
       tempCls:['Temp. CLS [°C]','Temp CLS','Temperatura CLS'],
-      by:['Inserito da'], at:['Data inserimento'], sett:['Settimanale'] };
+      by:['Inserito da'], at:['Data inserimento'], sett:['Settimanale'],
+      cons7:['Consegna ICM 7 gg'], cons28:['Consegna ICM 28 gg'], consDl:['Consegna DL 28 gg'] };
     const campiPresenti=new Set(Object.keys(FONTI).filter(k=>presente.apply(null,FONTI[k])));
-    const proveNelFile = presente('Slump [cm]','Slump','Spandimento [cm]','Spandimento','Aria [%]','Aria','Rapporto A/C','A/C','Acqua essudata','Massa volumica [kg/m³]','Massa volumica');
+    const proveNelFile = presente('Slump [cm]','Slump','Spandimento [cm]','Spandimento','Aria [%]','Aria','Rapporto A/C','A/C','Acqua essudata','Massa volumica [kg/m³]','Massa volumica','Densità [g/cm³] [Fanghi]','Densità [g/cm³]','Viscosità Marsh [s] [Fanghi]','Viscosità Marsh [s]');
     const onlyLab = isManager() ? '' : (myLab()||curLab||'');
     const out=[]; let skipped=0;
     rows.forEach(r=>{
@@ -35026,10 +35216,15 @@ setTool("erase");
         wbs:String(g('WBS')), opera:String(g('Opera')), parte:String(g("Parte d'Opera",'Parte')),
         mix:String(g('Mix')), rck:String(g('Rck','Rck / classe')), mc:String(g('m³','m3','mc')),
         pkDa:normPk(g('da pk','Da pk','DA PK')), pkA:normPk(g('a pk','A pk','A PK')),
+        // date di consegna: senza queste, esportando e ricaricando si perderebbero
+        cons7:toISODate(g('Consegna ICM 7 gg')), cons28:toISODate(g('Consegna ICM 28 gg')), consDl:toISODate(g('Consegna DL 28 gg')),
         tests:{
           slump:pickTest(g('Slump [cm]','Slump')), spand:pickTest(g('Spandimento [cm]','Spandimento')),
           aria:pickTest(g('Aria [%]','Aria')), ac:pickTest(g('Rapporto A/C','A/C')),
-          essud:pickTest(g('Acqua essudata')), massa:pickTest(g('Massa volumica [kg/m³]','Massa volumica'))
+          essud:pickTest(g('Acqua essudata')), massa:pickTest(g('Massa volumica [kg/m³]','Massa volumica')),
+          // prove sui fanghi: senza queste due righe, esportando e ricaricando si perdevano
+          dens:pickTest(g('Densità [g/cm³] [Fanghi]','Densità [g/cm³]','Densità','Densita')),
+          marsh:pickTest(g('Viscosità Marsh [s] [Fanghi]','Viscosità Marsh [s]','Viscosità Marsh','Viscosita Marsh','Marsh'))
         },
         verbale:String(g('Verbale di prelievo','Verbale')),
         ripetuto:truthy(g('Ripetuto')),
@@ -35337,6 +35532,20 @@ setTool("erase");
         if(btn) btn.textContent='Oggi';
       }
     }
+    const apriCons=(mode)=>{
+      _cMode=mode; _cSel={};
+      const bx=$('reg-cons-box'); if(!bx) return;
+      bx.style.display='';
+      if($('reg-cons-data') && !$('reg-cons-data').value) $('reg-cons-data').value=todayISO();
+      renderCons(); bx.scrollIntoView({behavior:'smooth',block:'start'});
+    };
+    if($('reg-cons-icm')) $('reg-cons-icm').onclick=()=>apriCons('icm');
+    if($('reg-cons-dl'))  $('reg-cons-dl').onclick =()=>apriCons('dl');
+    if($('reg-cons-close')) $('reg-cons-close').onclick=()=>{ $('reg-cons-box').style.display='none'; };
+    if($('reg-cons-gg')) $('reg-cons-gg').onchange=()=>{ _cSel={}; renderCons(); };
+    if($('reg-cons-all')) $('reg-cons-all').onclick=()=>{ consDaFare(canaleCons()).forEach(r=>{_cSel[r.e.id]=true;}); renderCons(); };
+    if($('reg-cons-none')) $('reg-cons-none').onclick=()=>{ _cSel={}; renderCons(); };
+    if($('reg-cons-ok')) $('reg-cons-ok').onclick=segnaConsegnati;
     if($('rep-prev')) $('rep-prev').onclick=()=>repSposta(-1);
     if($('rep-next')) $('rep-next').onclick=()=>repSposta(1);
     if($('rep-oggi')) $('rep-oggi').onclick=repOggi;
@@ -35431,7 +35640,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 21.4';
+  window.APP_VERSION = 'Versione 22.4';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
