@@ -2674,6 +2674,14 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .cons-v{font-family:monospace;font-weight:700;color:var(--accent);}
 #tab-registro .cons-c,#tab-registro .cons-m{color:var(--muted);font-size:12px;}
 #tab-registro .cons-x{margin-left:auto;color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:38%;}
+#tab-registro .reg-cons-vis{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer;}
+#tab-registro .reg-cons-vis input{width:16px;height:16px;}
+#tab-registro .reg-cons-row.fatto{opacity:.75;cursor:default;}
+#tab-registro .reg-cons-row.fatto:hover{background:transparent;}
+#tab-registro .cons-ok{color:var(--green);font-weight:800;width:18px;text-align:center;}
+#tab-registro .cons-undo{background:transparent;border:1px solid var(--border2);color:var(--muted);
+  border-radius:7px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit;}
+#tab-registro .cons-undo:hover{color:var(--red);border-color:var(--red);}
 #tab-registro .cons-urg.sca{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(224,90,90,.2);color:var(--red);}
 @media (max-width:640px){ #tab-registro .cons-x{margin-left:0;max-width:100%;flex-basis:100%;} #tab-registro .reg-cons-row{flex-wrap:wrap;} }
 /* ══ MODALITÀ TELEFONO — il Registro diventa una web-app ══ */
@@ -3154,6 +3162,7 @@ input[type="date"]{ color-scheme:dark; }
         <input type="date" id="reg-cons-data" class="reg-mtools-sel"/>
         <button class="reg-btn ghost" id="reg-cons-all">Tutti</button>
         <button class="reg-btn ghost" id="reg-cons-none">Nessuno</button>
+        <label class="reg-cons-vis"><input type="checkbox" id="reg-cons-fatti"/> mostra già consegnati</label>
         <span id="reg-cons-cnt" class="reg-cons-cnt"></span>
       </div>
       <div id="reg-cons-list" class="reg-cons-list"></div>
@@ -34726,9 +34735,6 @@ setTool("erase");
     {h:'Verbale di prelievo',    w:18, get:e=>e.verbale||''},
     {h:'N° cubetti',             w:10, get:e=>xnum(e.cubetti)},
     {h:'Settimanale',            w:12, get:e=>isSettimanale(e)?'Sì':''},
-    {h:'Cub. ICM',               w:10, get:e=>{const r=ripartizione(e); return (r.icm7+r.icm28)||'';}, gruppo:true},
-    {h:'Cub. riserve',           w:12, get:e=>{const r=ripartizione(e); return r.ris||'';}, gruppo:true},
-    {h:'Cub. DL',                w:10, get:e=>{const r=ripartizione(e); return r.dl||'';}, gruppo:true},
     {h:'Consegna ICM 7 gg',      w:17, get:e=>xdate(e.cons7),  date:true, gruppo:true},
     {h:'Consegna ICM 28 gg',     w:18, get:e=>xdate(e.cons28), date:true, gruppo:true},
     {h:'Consegna DL 28 gg',      w:17, get:e=>xdate(e.consDl), date:true, gruppo:true},
@@ -34794,24 +34800,39 @@ setTool("erase");
   /* ── Consegne: elenco raggruppato per WBS ── */
   let _cSel={}, _cMode='icm';
   function canaleCons(){ return _cMode==='dl' ? 'dl' : parseInt(($('reg-cons-gg')||{}).value||'28',10); }
-  function consDaFare(c){
+  function consDaFare(c, includiFatti){
     const out=[];
     currentRows().forEach(e=>{
       if(!isPrelievo(e)) return;
       if(!daPortare(e,c)) return;
-      if(consegnato(e,c)) return;
+      const fatto=consegnato(e,c);
+      if(fatto && !includiFatti) return;
       const d=maturDate(e, c==='dl'?28:c);
-      out.push({e, wbs:(e.wbs||'—'), matur:d?_isoOf(d):''});
+      out.push({e, wbs:(e.wbs||'—'), matur:d?_isoOf(d):'', fatto, quando:dataConsegna(e,c)});
     });
     return out.sort((a,b)=> a.wbs<b.wbs?-1 : a.wbs>b.wbs?1 : (a.matur<b.matur?-1:a.matur>b.matur?1:0));
   }
+  // Annulla una consegna registrata per errore: svuota la data di quel canale.
+  async function annullaConsegna(id,c){
+    const e=db.entries.find(x=>x.id===id); if(!e) return;
+    if(!confirm('Annullare la consegna del '+fmtIt(dataConsegna(e,c))+' per '+(e.verbale||'questo prelievo')+'?')) return;
+    if(c==='dl') e.consDl=''; else if(c===7) e.cons7=''; else e.cons28='';
+    save();
+    if(cloudOn()){ try{ await sbRegUpsertMany([e]); lastSig=''; }catch(err){ console.warn('annulla',err); } }
+    refreshAll(); renderCons();
+    toast('Consegna annullata.');
+    if(typeof addLog==='function') addLog('Annullata consegna di '+(e.verbale||''));
+  }
   function renderCons(){
     const box=$('reg-cons-list'); if(!box) return;
-    const c=canaleCons(), righe=consDaFare(c), oggi=todayISO();
+    const c=canaleCons();
+    const mostraFatti=!!($('reg-cons-fatti')&&$('reg-cons-fatti').checked);
+    const righe=consDaFare(c,mostraFatti), oggi=todayISO();
     if($('reg-cons-gg-w')) $('reg-cons-gg-w').style.display = (_cMode==='dl'?'none':'');
     if($('reg-cons-tit')) $('reg-cons-tit').textContent = (_cMode==='dl'?'🔬 Consegne DL':'📦 Consegne ICM');
     if(!righe.length){
-      box.innerHTML='<div class="reg-cons-none">✓ Nessun cubetto in attesa di consegna.</div>';
+      box.innerHTML='<div class="reg-cons-none">✓ Nessun cubetto in attesa di consegna.'
+        +(mostraFatti?'':' <span style="color:var(--muted);">Spunta «mostra già consegnati» per rivedere e correggere quelli fatti.</span>')+'</div>';
       if($('reg-cons-cnt')) $('reg-cons-cnt').textContent=''; return;
     }
     let html='', wbsOra='';
@@ -34821,7 +34842,17 @@ setTool("erase");
         html+='<div class="cons-wbs">'+esc(wbsOra)+' <small>'+n+'</small></div>'; }
       const rp=ripartizione(r.e);
       const nc=(c==='dl'?rp.dl:(c===7?rp.icm7:rp.icm28));
-      const sca=r.matur&&r.matur<oggi;
+      const sca=r.matur&&r.matur<oggi && !r.fatto;
+      if(r.fatto){
+        html+='<div class="reg-cons-row fatto">'
+          +'<span class="cons-ok">✓</span>'
+          +'<span class="cons-v">'+esc(r.e.verbale||'')+'</span>'
+          +'<span class="cons-c">'+nc+' cub.</span>'
+          +'<span class="cons-m">consegnati il <b>'+fmtIt(r.quando)+'</b></span>'
+          +'<button type="button" class="cons-undo" data-undo="'+esc(r.e.id)+'" title="Annulla questa consegna">✕ annulla</button>'
+          +'<span class="cons-x">'+esc(r.e.mix||'')+'</span></div>';
+        return;
+      }
       html+='<label class="reg-cons-row'+(sca?' sca':'')+'">'
         +'<input type="checkbox" data-ck="'+esc(r.e.id)+'"'+(_cSel[r.e.id]?' checked':'')+'/>'
         +'<span class="cons-v">'+esc(r.e.verbale||'')+'</span>'
@@ -34831,15 +34862,21 @@ setTool("erase");
         +'<span class="cons-x">'+esc(r.e.mix||'')+'</span></label>';
     });
     box.innerHTML=html;
+    box.querySelectorAll('button[data-undo]').forEach(b=>{
+      b.onclick=(ev)=>{ ev.preventDefault(); annullaConsegna(b.dataset.undo, canaleCons()); };
+    });
     box.querySelectorAll('input[data-ck]').forEach(cb=>{
       cb.onchange=()=>{ if(cb.checked)_cSel[cb.dataset.ck]=true; else delete _cSel[cb.dataset.ck]; conta(); };
     });
     conta();
     function conta(){
-      const sel=righe.filter(r=>_cSel[r.e.id]);
+      const daFare=righe.filter(r=>!r.fatto);
+      const sel=daFare.filter(r=>_cSel[r.e.id]);
       const cub=sel.reduce((s,r)=>{const rp=ripartizione(r.e); return s+(c==='dl'?rp.dl:(c===7?rp.icm7:rp.icm28));},0);
       const el=$('reg-cons-cnt');
-      if(el) el.textContent = sel.length ? (sel.length+' prelievi · '+cub+' cubetti') : (righe.length+' in attesa');
+      const fatti=righe.length-daFare.length;
+      if(el) el.textContent = sel.length ? (sel.length+' prelievi · '+cub+' cubetti')
+             : (daFare.length+' in attesa'+(fatti?(' · '+fatti+' già consegnati'):''));
     }
   }
   async function segnaConsegnati(){
@@ -35571,7 +35608,8 @@ setTool("erase");
     if($('reg-cons-dl'))  $('reg-cons-dl').onclick =()=>apriCons('dl');
     if($('reg-cons-close')) $('reg-cons-close').onclick=()=>{ $('reg-cons-box').style.display='none'; };
     if($('reg-cons-gg')) $('reg-cons-gg').onchange=()=>{ _cSel={}; renderCons(); };
-    if($('reg-cons-all')) $('reg-cons-all').onclick=()=>{ consDaFare(canaleCons()).forEach(r=>{_cSel[r.e.id]=true;}); renderCons(); };
+    if($('reg-cons-fatti')) $('reg-cons-fatti').onchange=()=>{ renderCons(); };
+    if($('reg-cons-all')) $('reg-cons-all').onclick=()=>{ consDaFare(canaleCons()).forEach(r=>{_cSel[r.e.id]=true;}); renderCons(); };   // solo quelli da fare
     if($('reg-cons-none')) $('reg-cons-none').onclick=()=>{ _cSel={}; renderCons(); };
     if($('reg-cons-ok')) $('reg-cons-ok').onclick=segnaConsegnati;
     if($('rep-prev')) $('rep-prev').onclick=()=>repSposta(-1);
@@ -35668,7 +35706,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 22.6';
+  window.APP_VERSION = 'Versione 22.8';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
