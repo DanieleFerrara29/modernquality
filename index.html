@@ -1292,10 +1292,6 @@ tr.new-row{animation:rowIn .2s ease both;}
               <label>Per ICM (nome)</label>
               <input type="text" id="vcls-icm-nome" placeholder="es. CIMMINO MARILENA" value="FERRARA DANIELE"/>
             </div>
-            <div class="vcls-meta-field">
-              <label>Per la Direzione Lavori (nome)</label>
-              <input type="text" id="vcls-dl-nome" placeholder="es. ING. MARIO ROSSI"/>
-            </div>
             <!-- vcls-lab-ragione: auto-filled from Excel lab column -->
             <input type="hidden" id="vcls-lab-ragione"/>
             <!-- vcls-lab-nome: compatibilità (fallback) -->
@@ -2674,7 +2670,13 @@ tr.new-row{animation:rowIn .2s ease both;}
 #tab-registro .cons-v{font-family:monospace;font-weight:700;color:var(--accent);}
 #tab-registro .cons-c,#tab-registro .cons-m{color:var(--muted);font-size:12px;}
 #tab-registro .cons-x{margin-left:auto;color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:38%;}
+#tab-registro .reg-cons.reg-cons-simula{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.18);}
+#tab-registro .reg-cons.reg-cons-simula .reg-cons-h::before{content:'🔮 ANALISI PROGRAMMATA — non è la data di oggi';
+  display:block;font-size:11px;font-weight:800;color:var(--accent);margin-bottom:6px;letter-spacing:.03em;}
+#tab-registro .reg-cons-info{font-size:12px;color:var(--accent);font-weight:600;white-space:nowrap;}
 #tab-registro .reg-cons-vis{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer;}
+/* i nomi dei presenti hanno spazio vero: niente testo più grande della casella */
+#tab-registro .reg-cons-nome{flex:1 1 220px;min-width:160px;max-width:320px;font-size:14px;text-overflow:ellipsis;}
 #tab-registro .reg-cons-vis input{width:16px;height:16px;}
 #tab-registro .reg-cons-row.fatto{opacity:.75;cursor:default;}
 #tab-registro .reg-cons-row.fatto:hover{background:transparent;}
@@ -3160,9 +3162,53 @@ input[type="date"]{ color-scheme:dark; }
           <select id="reg-cons-gg" class="reg-mtools-sel"><option value="28">28 giorni</option><option value="7">7 giorni</option></select></span>
         <label>Consegnati il</label>
         <input type="date" id="reg-cons-data" class="reg-mtools-sel"/>
+        <label>Luogo</label>
+        <input type="text" id="reg-cons-luogo" class="reg-mtools-sel reg-cons-nome" value="SALANDRA SCALO"/>
+        <label>N° verbale</label>
+        <input type="text" id="reg-cons-num" class="reg-mtools-sel" style="width:80px;" inputmode="numeric"
+               title="Numero proposto in automatico: puoi cambiarlo prima di generare il verbale"/>
+      </div>
+      <div class="reg-cons-bar">
+        <label>Per ICM</label>
+        <input type="text" id="reg-cons-icm-nome" class="reg-mtools-sel reg-cons-nome" value="FERRARA DANIELE"/>
+        <label>Per il Laboratorio</label>
+        <input type="text" id="reg-cons-lab-nome" class="reg-mtools-sel reg-cons-nome" placeholder="es. MARIO ROSSI"/>
+      </div>
+      <div class="reg-cons-bar">
         <button class="reg-btn ghost" id="reg-cons-all">Tutti</button>
         <button class="reg-btn ghost" id="reg-cons-none">Nessuno</button>
         <label class="reg-cons-vis"><input type="checkbox" id="reg-cons-fatti"/> mostra già consegnati</label>
+        <span id="reg-cons-fd-wrap" style="display:none;gap:8px;align-items:center;">
+          <label>consegnati fra</label>
+          <input type="date" id="reg-cons-fd-da" class="reg-mtools-sel"/>
+          <label>e</label>
+          <input type="date" id="reg-cons-fd-a" class="reg-mtools-sel"/>
+        </span>
+        <label class="reg-cons-vis"><input type="checkbox" id="reg-cons-doc" checked/> genera il verbale (PDF)</label>
+      </div>
+      <div class="reg-cons-bar" id="reg-cons-matur-row">
+        <label>Maturazione</label>
+        <select id="reg-cons-per" class="reg-mtools-sel">
+          <option value="">tutte</option>
+          <option value="sca">già scadute</option>
+          <option value="ora">questa settimana</option>
+          <option value="pros">settimana prossima</option>
+          <option value="due">entro 2 settimane</option>
+          <option value="mese">entro il mese</option>
+          <option value="range">fra due date…</option>
+        </select>
+        <span id="reg-cons-per-info" class="reg-cons-info"></span>
+      </div>
+      <div class="reg-cons-bar">
+        <span id="reg-cons-oggi-wrap" style="display:flex;gap:8px;align-items:center;">
+          <label>Analizza dal</label>
+          <input type="date" id="reg-cons-oggi" class="reg-mtools-sel" title="Cambia questa data per vedere le scadenze come se fosse quel giorno"/>
+          <button class="reg-btn ghost" id="reg-cons-oggi-reset" title="Torna a oggi">↺ Oggi</button>
+          <span id="reg-cons-range" style="display:none;gap:8px;align-items:center;">
+            <label>dal</label><input type="date" id="reg-cons-da" class="reg-mtools-sel"/>
+            <label>al</label><input type="date" id="reg-cons-a" class="reg-mtools-sel"/>
+          </span>
+        </span>
         <span id="reg-cons-cnt" class="reg-cons-cnt"></span>
       </div>
       <div id="reg-cons-list" class="reg-cons-list"></div>
@@ -3248,6 +3294,7 @@ input[type="date"]{ color-scheme:dark; }
   <hr/>
   <div class="ctx-item" id="ctx-remove-row"><span class="ctx-icon">🗂</span>Rimuovi file</div>
 </div>
+</div><!-- /#app -->
 
 <script>
 var docx = (function(exports) {
@@ -25742,12 +25789,12 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 
 // ── Genera DOCX verbale ──
-async function buildVerbaleDocx({num,dataVerbale,luogo,icmNome,labNome,dlNome,labRagione,rows,giorni=28}){
+async function buildVerbaleDocx({num,dataVerbale,luogo,icmNome,labNome,labRagione,rows,giorni=28}){
   // docx già disponibile come globale (inline)
-  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,AlignmentType,BorderStyle,WidthType,ShadingType,VerticalAlign}=docx;
+  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,AlignmentType,BorderStyle,WidthType,ShadingType,VerticalAlign,PageOrientation}=docx;
   if(!Document||!Packer) throw new Error('Libreria docx non disponibile');
 
-  const W=9026; // A4 content width DXA (1 inch margins)
+  const W=15300; // A4 orizzontale: molto più spazio per la tabella con 10 colonne
   const bdr={style:BorderStyle.SINGLE,size:4,color:'000000'};
   const borders={top:bdr,bottom:bdr,left:bdr,right:bdr};
   const noBdr={style:BorderStyle.NONE,size:0,color:'FFFFFF'};
@@ -25790,8 +25837,8 @@ async function buildVerbaleDocx({num,dataVerbale,luogo,icmNome,labNome,dlNome,la
   }
 
   // Calcola larghezze colonne proporzionali
-  // N°,VP,Data,Mix,Rck,Impianto,DDT,WBS,Parte
-  const colW=[400,1100,700,1000,500,1000,700,600,2026];
+  // N°,VP,Data,Mix,Rck,Impianto,DDT,WBS,Parte,Maturazione
+  const colW=[400,1100,700,1000,500,1000,700,600,1650,700];
   // Normalizza a W
   const sum=colW.reduce((a,b)=>a+b,0);
   const cw=colW.map(v=>Math.round(v/sum*W));
@@ -25805,13 +25852,14 @@ async function buildVerbaleDocx({num,dataVerbale,luogo,icmNome,labNome,dlNome,la
   const headRow=new TableRow({children:[
     hdr('N°',cw[0]),hdr('VP',cw[1]),hdr('Data',cw[2]),hdr('Mix',cw[3]),
     hdr('Rck',cw[4]),hdr('Impianto',cw[5]),hdr('DDT',cw[6]),
-    hdr('WBS',cw[7]),hdr("Parte d'opera",cw[8])
+    hdr('WBS',cw[7]),hdr("Parte d'opera",cw[8]),hdr('Maturazione',cw[9])
   ]});
 
   // Righe dati
   const fmtD2=d=>{if(!d)return '';const dt=d instanceof Date?d:new Date(d);return isNaN(dt)?'':dt.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});};
   const dataRows=rows.map((r,i)=>{
     const shade=i%2===0?'FFFFFF':'EDF4FF';
+    const maturR = giorni===7 ? r.matur7 : r.matur28;
     return new TableRow({children:[
       tc(i+1,{w:cw[0],align:AlignmentType.CENTER,shade}),
       tc(r.verb,{w:cw[1],shade}),
@@ -25821,42 +25869,39 @@ async function buildVerbaleDocx({num,dataVerbale,luogo,icmNome,labNome,dlNome,la
       tc(r.forn,{w:cw[5],shade}),
       tc(r.ddt,{w:cw[6],align:AlignmentType.CENTER,shade}),
       tc(r.wbs,{w:cw[7],align:AlignmentType.CENTER,shade}),
-      tc(r.parte,{w:cw[8],shade})
+      tc(r.parte,{w:cw[8],shade}),
+      tc(fmtD2(maturR),{w:cw[9],align:AlignmentType.CENTER,shade})
     ]});
   });
 
   const table=new Table({width:{size:W,type:WidthType.DXA},columnWidths:cw,rows:[headRow,...dataRows]});
 
-  // Tabella firme
-  const fW=Math.round(W/4);
+  // Tabella firme — solo ICM e Laboratorio, niente Direzione Lavori
   const fWL=Math.round(W*0.22);
-  const fWC=Math.round((W-fWL)/3);
+  const fWC=Math.round((W-fWL)/2);
   const firmeHdr=new TableRow({children:[
     tc('DESCRIZIONE',{w:fWL,bold:true,shade:'E0E0E0'}),
     tc('ICM',{w:fWC,bold:true,align:AlignmentType.CENTER,shade:'E8E8E8'}),
-    tc('Laboratorio',{w:fWC,bold:true,align:AlignmentType.CENTER,shade:'E8E8E8'}),
-    tc('Direzione Lavori',{w:fWC,bold:true,align:AlignmentType.CENTER,shade:'E8E8E8'})
+    tc('Laboratorio',{w:fWC,bold:true,align:AlignmentType.CENTER,shade:'E8E8E8'})
   ]});
   const firmeNom=new TableRow({children:[
     tc('NOMINATIVO',{w:fWL,bold:true}),
     tc(icmNome,{w:fWC,align:AlignmentType.CENTER}),
-    tc(labNome,{w:fWC,align:AlignmentType.CENTER}),
-    tc(dlNome||'',{w:fWC,align:AlignmentType.CENTER})
+    tc(labNome,{w:fWC,align:AlignmentType.CENTER})
   ]});
   const firmeFirma=new TableRow({children:[
     tc('FIRMA',{w:fWL,bold:true}),
     new TableCell({borders,width:{size:fWC,type:WidthType.DXA},margins:cellPad,children:[par('',{size:32})]}),
-    new TableCell({borders,width:{size:fWC,type:WidthType.DXA},margins:cellPad,children:[par('',{size:32})]}),
     new TableCell({borders,width:{size:fWC,type:WidthType.DXA},margins:cellPad,children:[par('',{size:32})]})
   ]});
-  const tFirme=new Table({width:{size:W,type:WidthType.DXA},columnWidths:[fWL,fWC,fWC,fWC],rows:[firmeHdr,firmeNom,firmeFirma]});
+  const tFirme=new Table({width:{size:W,type:WidthType.DXA},columnWidths:[fWL,fWC,fWC],rows:[firmeHdr,firmeNom,firmeFirma]});
 
   const numToWords2=n=>{const u=['ZERO','UNO','DUE','TRE','QUATTRO','CINQUE','SEI','SETTE','OTTO','NOVE','DIECI','UNDICI','DODICI','TREDICI','QUATTORDICI','QUINDICI','SEDICI','DICIASSETTE','DICIOTTO','DICIANNOVE','VENTI','VENTUNO','VENTIDUE','VENTITRE','VENTIQUATTRO','VENTICINQUE','VENTISEI','VENTISETTE','VENTOTTO','VENTINOVE','TRENTA'];return n>=0&&n<u.length?u[n]:String(n);};
 
   const doc=new Document({
     styles:{default:{document:{run:{font:'Arial',size:sz}}}},
     sections:[{
-      properties:{page:{size:{width:11906,height:16838},margin:{top:720,right:720,bottom:720,left:720}}},
+      properties:{page:{size:{width:16838,height:11906,orientation:PageOrientation.LANDSCAPE},margin:{top:720,right:720,bottom:720,left:720}}},
       children:[
         // Intestazione
         new Table({width:{size:W,type:WidthType.DXA},columnWidths:[1100,W-2800,1700],rows:[
@@ -25867,13 +25912,10 @@ async function buildVerbaleDocx({num,dataVerbale,luogo,icmNome,labNome,dlNome,la
           ]})
         ]}),
         par(''),
-        par('VERBALE di CONSEGNA CUBETTI CLS al Laboratorio n° '+num,{bold:true,size:18}),
-        par(''),
         labelVal('Data/Ora:',dataStr+'    Luogo: '+luogo),
         par(''),
         par('PRESENTI:',{bold:true}),
         labelVal('per ICM:',icmNome),
-        labelVal('per la Direzione Lavori:',dlNome||'………………………………………'),
         labelVal('per il Laboratorio:',labNome),
         par(''),
         new Paragraph({children:[
@@ -25908,6 +25950,9 @@ async function buildVerbaleDocx({num,dataVerbale,luogo,icmNome,labNome,dlNome,la
   return new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
 }
 
+// Verbale di consegna cubetti (ICM o DL), stesso stile grafico del verbale CLS.
+// Verbale di consegna cubetti in PDF, stesso impianto grafico del verbale CLS.
+// Il titolo cambia sempre a seconda che si tratti della prova a 7, a 28 giorni o dei cubetti DL.
 function loginAs(user){
   try{
     currentUser=user;
@@ -28592,13 +28637,12 @@ function switchMainTab(name, btn) {
   $('btn-vcls-pdf').addEventListener('click', async()=>{
     if(!filtered.length){vclsSt('Nessun dato.','error');return;}
     const numEl=$('vcls-num'), dataEl=$('vcls-data'), luogoEl=$('vcls-luogo');
-    const icmEl=$('vcls-icm-nome'), labNomeEl=$('vcls-lab-nome'), labRagEl=$('vcls-lab-ragione'), dlEl=$('vcls-dl-nome');
+    const icmEl=$('vcls-icm-nome'), labNomeEl=$('vcls-lab-nome'), labRagEl=$('vcls-lab-ragione');
     const baseNum=numEl?parseInt(numEl.value)||0:0;
     const dataVerbale=dataEl&&dataEl.value?new Date(dataEl.value+'T12:00'):new Date();
     const luogo=luogoEl?luogoEl.value.trim()||'—':'—';
     const icmNome=icmEl?icmEl.value.trim()||'—':'—';
     const labNome=labNomeEl?labNomeEl.value.trim()||'—':'—';
-    const dlNome=dlEl?dlEl.value.trim()||'':'';
     const labRagDef=labRagEl?labRagEl.value.trim()||'—':'—';
     const btn=$('btn-vcls-pdf');
     btn.disabled=true; btn.textContent='⏳ Generazione...';
@@ -28630,7 +28674,7 @@ function switchMainTab(name, btn) {
         const giorni=getGiorni();
         const labNomeKey='vcls-labnome-'+lab.replace(/[^a-zA-Z0-9]/g,'_');
         const labNomeSpecific=(document.getElementById(labNomeKey)||{}).value||labNome||'—';
-        const bytes=await buildVerbalePDF(PDFDocument,rgb,StandardFonts,{num:labNum,dataVerbale,luogo,icmNome,labNome:labNomeSpecific,dlNome,labRagione:lab||labRagDef,rows,giorni});
+        const bytes=await buildVerbalePDF(PDFDocument,rgb,StandardFonts,{num:labNum,dataVerbale,luogo,icmNome,labNome:labNomeSpecific,labRagione:lab||labRagDef,rows,giorni});
         zip.file('Verbale_n'+labNum+'_'+lab.replace(/[\s\/\\]+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'')+'.pdf',bytes);
         const wbsSet=[...new Set(rows.map(r=>r.wbs))].sort().join(', ');
         const verbs=rows.map(r=>r.verb).sort();
@@ -28662,7 +28706,7 @@ function switchMainTab(name, btn) {
           const labNomeSpec2=(document.getElementById(labNomeKey2)||{}).value||labNome||'\u2014';
           const giorni2=getGiorni();
           try{
-            const docBlob=await buildVerbaleDocx({num:labNum,dataVerbale,luogo,icmNome,labNome:labNomeSpec2,dlNome,labRagione:lab||labRagDef,rows,giorni:giorni2});
+            const docBlob=await buildVerbaleDocx({num:labNum,dataVerbale,luogo,icmNome,labNome:labNomeSpec2,labRagione:lab||labRagDef,rows,giorni:giorni2});
             const fname='Verbale_n'+labNum+'_'+lab.replace(/[\s\/\\]+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'')+'.docx';
             const a2=document.createElement('a');a2.href=URL.createObjectURL(docBlob);
             a2.download=fname;document.body.appendChild(a2);a2.click();document.body.removeChild(a2);
@@ -28677,26 +28721,27 @@ function switchMainTab(name, btn) {
     btn.disabled=false; btn.textContent='Genera PDF Verbale';
   });
 
-  async function buildVerbalePDF(PDFDocument,rgb,StandardFonts,{num,dataVerbale,luogo,icmNome,labNome,dlNome='',labRagione,rows,giorni=28}){
+  async function buildVerbalePDF(PDFDocument,rgb,StandardFonts,{num,dataVerbale,luogo,icmNome,labNome,labRagione,rows,giorni=28}){
     const doc=await PDFDocument.create();
     const fontR=await doc.embedFont(StandardFonts.Helvetica);
     const fontB=await doc.embedFont(StandardFonts.HelveticaBold);
-    const PW=595.28, PH=841.89, ML=36, MR=36, MT=32, MB=32;
+    const PW=841.89, PH=595.28, ML=36, MR=36, MT=32, MB=32;  // orizzontale
     const UW=PW-ML-MR;
     const BLACK=rgb(0,0,0),GREY=rgb(0.45,0.45,0.45),LGREY=rgb(0.72,0.72,0.72);
     const WHITE=rgb(1,1,1),HDR_BG=rgb(0.08,0.15,0.28);
     const ROW_EVEN=rgb(0.93,0.96,0.99),ROW_ODD=WHITE;
     // Colonne dinamiche: calcola larghezza in base al contenuto reale
-    const HEADS=['N°','VP','Data','Mix','Rck','Impianto betonaggio','DDT','WBS',"Parte d'opera"];
+    const HEADS=['N°','VP','Data','Maturazione','Mix','Rck','Impianto betonaggio','DDT','WBS',"Parte d'opera"];
     const SZ=7; // font size celle
 
-    const NO_WRAP_COLS=[0,1,2,4,6,7]; // colonne senza wrapping
+    const NO_WRAP_COLS=[0,1,2,3,5,7,8]; // colonne senza wrapping (3 = Maturazione, è una data)
     function measureCol(colIdx,allRows2){
       // Misura la larghezza massima tra header e tutte le celle di questa colonna
       const header=HEADS[colIdx];
       let maxW=fontB.widthOfTextAtSize(header,SZ)+6;
       allRows2.forEach(r=>{
-        const cells=[String(allRows2.indexOf(r)+1),r.verb,fmtD(r.getto),r.mix,r.rck,r.forn,r.ddt,r.wbs,r.parte];
+        const maturR = giorni===7 ? r.matur7 : r.matur28;
+        const cells=[String(allRows2.indexOf(r)+1),r.verb,fmtD(r.getto),fmtD(maturR),r.mix,r.rck,r.forn,r.ddt,r.wbs,r.parte];
         const txt=String(cells[colIdx]||'');
         // Per colonne no-wrap: misura tutta la stringa
         let wMeas;
@@ -28716,7 +28761,7 @@ function switchMainTab(name, btn) {
     }
 
     // Calcola larghezze colonne in base al contenuto
-    const CW_MIN=[16,80,46,28,22,0,28,22,0]; // minimi assoluti — VP e Data no-wrap
+    const CW_MIN=[16,80,46,46,28,22,0,28,22,0]; // minimi assoluti — VP, Data e Maturazione no-wrap
     const CW=HEADS.map((_,i)=>measureCol(i,rows));
     CW.forEach((v,i)=>{if(CW_MIN[i]&&v<CW_MIN[i])CW[i]=CW_MIN[i];});
     // Scala proporzionalmente per riempire UW
@@ -28820,10 +28865,11 @@ function switchMainTab(name, btn) {
 
     function drawDataRow(r,idx){
       const bg=idx%2===0?ROW_ODD:ROW_EVEN;
-      const cells=[String(idx+1),r.verb,fmtD(r.getto),r.mix,r.rck,r.forn,r.ddt,r.wbs,r.parte];
-      const aligns=['center','left','center','left','center','left','center','center','left'];
+      const maturR = giorni===7 ? r.matur7 : r.matur28;
+      const cells=[String(idx+1),r.verb,fmtD(r.getto),fmtD(maturR),r.mix,r.rck,r.forn,r.ddt,r.wbs,r.parte];
+      const aligns=['center','left','center','center','left','center','left','center','center','left'];
       // Colonne che non devono mai andare a capo (codici compatti)
-      const noWrap=[true,true,true,false,true,false,true,true,false];
+      const noWrap=[true,true,true,true,false,true,false,true,true,false];
       // Altezza riga = la cella piu alta (solo colonne con wrapping)
       const rowH=Math.max(14,...cells.map((cell,ci)=>cellH(cell,fontR,7,CW[ci],noWrap[ci])));
       let x=ML;
@@ -28838,64 +28884,67 @@ function switchMainTab(name, btn) {
     function checkBreak(rowH){if(y-(rowH||18)<MB+130){newPage();drawTableHeader();}}
 
     newPage();
-    page.drawText('VERBALE di CONSEGNA CUBETTI CLS al Laboratorio n\u00b0  '+num,{x:ML,y,size:9,font:fontB,color:BLACK});
-    y-=20;
     page.drawText('Data/Ora:',{x:ML,y,size:8,font:fontB,color:BLACK});
     page.drawText(fmtD(dataVerbale),{x:ML+52,y,size:8,font:fontR,color:BLACK});
     page.drawText('Luogo della consegna:',{x:ML+200,y,size:8,font:fontB,color:BLACK});
     page.drawText(luogo,{x:ML+318,y,size:8,font:fontR,color:BLACK});
     y-=18;
     page.drawText('PRESENTI:',{x:ML,y,size:8,font:fontB,color:BLACK}); y-=13;
-    const NX=ML+132; // colonna allineata nomi
+    // Il nome parte subito dopo l'etichetta più lunga, non a una colonna fissa e lontana:
+    // così resta vicino ai due punti qualunque sia il testo dell'etichetta.
+    const NX=ML+Math.max(fontR.widthOfTextAtSize('per ICM:',8),fontR.widthOfTextAtSize('per il Laboratorio:',8))+8;
     page.drawText('per ICM:',{x:ML,y,size:8,font:fontR,color:BLACK});
     page.drawText(icmNome,{x:NX,y,size:8,font:fontB,color:BLACK}); y-=13;
-    page.drawText('per la Direzione Lavori:',{x:ML,y,size:8,font:fontR,color:BLACK});
-    if(dlNome) page.drawText(dlNome,{x:NX,y,size:8,font:fontB,color:BLACK});
-    else page.drawText('\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026',{x:NX,y,size:8,font:fontR,color:LGREY});
-    y-=13;
     page.drawText('per il Laboratorio:',{x:ML,y,size:8,font:fontR,color:BLACK});
     page.drawText(labNome,{x:NX,y,size:8,font:fontB,color:BLACK}); y-=16;
-    page.drawText('si \u00e8 provveduto alla consegna al Laboratorio',{x:ML,y,size:8,font:fontR,color:BLACK});
-    const xAL=ML+fontR.widthOfTextAtSize('si \u00e8 provveduto alla consegna al Laboratorio',8)+8;
-    page.drawText(labRagione,{x:xAL,y,size:9,font:fontB,color:BLACK});
-    const xAR=xAL+fontB.widthOfTextAtSize(labRagione,9)+8;
-    page.drawText('di n.',{x:xAR,y,size:8,font:fontR,color:BLACK});
-    page.drawText(rows.length+' ('+numToWords(rows.length)+')',{x:xAR+fontR.widthOfTextAtSize('di n.',8)+6,y,size:9,font:fontB,color:BLACK});
-    y-=13;
-    page.drawText('coppie di cubetti di conglomerato cementizio confezionati in cantiere e di seguito elencati:',{x:ML,y,size:8,font:fontR,color:BLACK});
-    y-=12;
+    // Un'unica frase su una riga sola: in orizzontale c'è spazio, niente più
+    // interruzione a metà frase con la seconda parte incollata al margine sinistro.
+    {
+      let xN=ML;
+      const seg=(txt,f,sz)=>{ page.drawText(txt,{x:xN,y,size:sz,font:f,color:BLACK}); xN+=f.widthOfTextAtSize(txt,sz); };
+      seg('si \u00e8 provveduto alla consegna al Laboratorio ',fontR,8);
+      seg(labRagione+' ',fontB,9);
+      seg('di n. ',fontR,8);
+      seg(rows.length+' ('+numToWords(rows.length)+') ',fontB,9);
+      seg('coppie di cubetti di conglomerato cementizio confezionati in cantiere e di seguito elencati:',fontR,8);
+    }
+    y-=16;
     drawTableHeader();
     rows.forEach((r,i)=>{const rh=drawDataRow(r,i);checkBreak(rh);});
     y-=14;
     if(y<MB+100){newPage();y-=8;}
-    const s1='per essere sottoposti alla prova di resistenza a compressione (per ogni provino) a ';
-    page.drawText(s1,{x:ML,y,size:8,font:fontR,color:BLACK});
-    const giorniStr=String(giorni)+' giorni';
-    page.drawText(giorniStr,{x:ML+fontR.widthOfTextAtSize(s1,8),y,size:8,font:fontB,color:BLACK});
-    page.drawText('.',{x:ML+fontR.widthOfTextAtSize(s1,8)+fontB.widthOfTextAtSize(giorniStr,8),y,size:8,font:fontR,color:BLACK});
-    y-=13;
-    page.drawText('Perch\u00e9 ci\u00f2 consti, si \u00e8 redatto in unico originale il presente verbale che viene letto, confermato e sottoscritto dagli intervenuti.',{x:ML,y,size:8,font:fontR,color:BLACK});
-    y-=13;
+    // Stesso principio della frase di consegna: un unico paragrafo che va a capo
+    // da solo riempiendo ogni riga, invece di due frasi ciascuna sulla propria riga
+    // a prescindere da quanto spazio resta.
+    {
+      const chiusura='per essere sottoposti alla prova di resistenza a compressione (per ogni provino) a '+giorni+' giorni. '
+        +'Perch\u00e9 ci\u00f2 consti, si \u00e8 redatto in unico originale il presente verbale che viene letto, confermato e sottoscritto dagli intervenuti.';
+      wrapLines(chiusura,fontR,8,UW).forEach(line=>{ page.drawText(line,{x:ML,y,size:8,font:fontR,color:BLACK}); y-=13; });
+    }
     page.drawText('Note:',{x:ML,y,size:8,font:fontB,color:BLACK});
     y-=36;
+    // Se il verbale ha poche righe, il foglio resterebbe per metà vuoto: le firme
+    // scendono verso il fondo invece di restare incollate subito sotto il testo.
+    const yFirme=MB+98;
+    if(y>yFirme) y=yFirme;
     if(y<MB+70){newPage();y-=8;}
-    const col0W=UW*0.22,colW=(UW-col0W)/3;
+    const col0W=UW*0.22,colW=(UW-col0W)/2;   // solo ICM e Laboratorio
     const firmeH=[16,20,32];
-    ['DESCRIZIONE','ICM','Laboratorio','Direzione Lavori'].forEach((label,ci)=>{
+    ['DESCRIZIONE','ICM','Laboratorio'].forEach((label,ci)=>{
       const cx=ci===0?ML:ML+col0W+(ci-1)*colW, cw=ci===0?col0W:colW;
       page.drawRectangle({x:cx,y:y-firmeH[0],width:cw,height:firmeH[0],color:ci===0?rgb(0.88,0.88,0.88):rgb(0.93,0.93,0.93),borderColor:BLACK,borderWidth:0.5});
       page.drawText(label,{x:cx+4,y:y-firmeH[0]+5,size:8,font:fontB,color:BLACK});
     });
     y-=firmeH[0];
-    const nomValues=['',icmNome,labNome,dlNome||''];
-    ['NOMINATIVO','','',''].forEach((label,ci)=>{
+    const nomValues=['',icmNome,labNome];
+    ['NOMINATIVO','',''].forEach((label,ci)=>{
       const cx=ci===0?ML:ML+col0W+(ci-1)*colW, cw=ci===0?col0W:colW;
       page.drawRectangle({x:cx,y:y-firmeH[1],width:cw,height:firmeH[1],color:WHITE,borderColor:BLACK,borderWidth:0.5});
       if(ci===0) page.drawText('NOMINATIVO',{x:cx+4,y:y-firmeH[1]+6,size:8,font:fontB,color:BLACK});
       else if(nomValues[ci]){let s=nomValues[ci];while(s.length>1&&fontR.widthOfTextAtSize(s,7.5)>cw-8)s=s.slice(0,-1);if(s!==nomValues[ci])s=s.slice(0,-1)+'\u2026';page.drawText(s,{x:cx+4,y:y-firmeH[1]+6,size:7.5,font:fontR,color:BLACK});}
     });
     y-=firmeH[1];
-    ['FIRMA','','',''].forEach((label,ci)=>{
+    ['FIRMA','',''].forEach((label,ci)=>{
       const cx=ci===0?ML:ML+col0W+(ci-1)*colW, cw=ci===0?col0W:colW;
       page.drawRectangle({x:cx,y:y-firmeH[2],width:cw,height:firmeH[2],color:WHITE,borderColor:BLACK,borderWidth:0.5});
       if(ci===0) page.drawText('FIRMA',{x:cx+4,y:y-firmeH[2]+20,size:8,font:fontB,color:BLACK});
@@ -32373,7 +32422,7 @@ setTool("erase");
     {k:'marsh', label:'Viscosità Marsh', unit:'s',     gruppo:'fanghi'}
   ];
 
-  let db={labs:DEFAULT_LABS.slice(), mixes:DEFAULT_MIXES.slice(), entries:[], labUsers:{}, imprese:[], fornitori:[], wbs:[], mixCfg:{}, fanghi:{}, cfg:{mid:'-CZ-',width:5}};
+  let db={labs:DEFAULT_LABS.slice(), mixes:DEFAULT_MIXES.slice(), entries:[], labUsers:{}, imprese:[], fornitori:[], wbs:[], mixCfg:{}, fanghi:{}, consNum:{icm:0,dl:0}, cfg:{mid:'-CZ-',width:5}};
   let verbaleManual=false;   // true se l'utente ha scritto a mano il verbale
   let cubettiManual=false;   // true se l'utente ha scelto i cubetti a mano
   let curLab=db.labs[0];
@@ -32731,7 +32780,7 @@ setTool("erase");
   /* ---------- CONFIG condivisa (laboratori, miscele, formato, utenti→lab) ---------- */
   let lastCfgSig='';
   function currentConfig(){
-    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), midMalta:midMalta(), width:db.cfg.width||5, labUsers:db.labUsers||{}, deleted:tombs(), required:reqCfg(), fanghi:db.fanghi||{} };
+    return { labs:db.labs, mixes:db.mixes, imprese:db.imprese||[], fornitori:db.fornitori||[], wbs:db.wbs||[], mixCfg:db.mixCfg||{}, mid:midPart(), midMalta:midMalta(), width:db.cfg.width||5, labUsers:db.labUsers||{}, deleted:tombs(), required:reqCfg(), fanghi:db.fanghi||{}, consNum:db.consNum||{icm:0,dl:0} };
   }
   function applyConfig(c){
     if(!c||typeof c!=='object')return false;
@@ -32744,6 +32793,7 @@ setTool("erase");
     if(c.mixCfg&&typeof c.mixCfg==='object'){ if(JSON.stringify(c.mixCfg)!==JSON.stringify(db.mixCfg||{})){db.mixCfg=c.mixCfg;changed=true;} }
     // limiti delle prove sui fanghi: valgono per tutti, non per singola miscela
     if(c.fanghi&&typeof c.fanghi==='object'){ if(JSON.stringify(c.fanghi)!==JSON.stringify(db.fanghi||{})){db.fanghi=c.fanghi;changed=true;} }
+    if(c.consNum&&typeof c.consNum==='object'){ if(JSON.stringify(c.consNum)!==JSON.stringify(db.consNum||{})){db.consNum=Object.assign({icm:0,dl:0},c.consNum);changed=true;} }
     if(c.mid!=null && c.mid!==db.cfg.mid){ db.cfg.mid=c.mid; changed=true; }
     if(c.midMalta!=null && c.midMalta!==db.cfg.midMalta){ db.cfg.midMalta=c.midMalta; changed=true; }
     if(c.width && c.width!==db.cfg.width){ db.cfg.width=c.width; changed=true; }
@@ -34800,15 +34850,75 @@ setTool("erase");
   /* ── Consegne: elenco raggruppato per WBS ── */
   let _cSel={}, _cMode='icm';
   function canaleCons(){ return _cMode==='dl' ? 'dl' : parseInt(($('reg-cons-gg')||{}).value||'28',10); }
+  // Filtro per periodo di maturazione: scelte rapide oppure un intervallo di date.
+  // Data su cui si ragiona: quella scelta nel campo, o oggi se non è stata toccata.
+  function dataAnalisi(){
+    const v=($('reg-cons-oggi')&&$('reg-cons-oggi').value)||'';
+    return v || todayISO();
+  }
+  function filtroPeriodo(){
+    const v=($('reg-cons-per')||{}).value||'';
+    if(!v) return null;
+    const oggi=dataAnalisi();
+    const lunOggi=mondayOf(oggi);
+    const dom=(lun,sett)=>_isoOf(_plusDays(lun, 7*sett+6));
+    if(v==='sca')  return {fino:oggi, escludiOggi:true};
+    if(v==='ora')  return {da:oggi,   fino:dom(lunOggi,0)};
+    if(v==='pros'){ const l=_isoOf(_plusDays(lunOggi,7)); return {da:l, fino:dom(lunOggi,1)}; }
+    if(v==='due')  return {da:oggi, fino:dom(lunOggi,1)};   // da oggi, non anche le già scadute
+    if(v==='mese') return {da:oggi, fino:_isoOf(_plusDays(oggi,30))};
+    if(v==='range'){
+      const da=($('reg-cons-da')||{}).value||'', a=($('reg-cons-a')||{}).value||'';
+      if(!da && !a) return null;
+      return {da:da||undefined, fino:a||undefined};
+    }
+    return null;
+  }
+  // Testo leggibile del periodo scelto: da quando a quando
+  function descrizionePeriodo(){
+    const f=filtroPeriodo();
+    if(!f) return '';
+    if(f.escludiOggi) return 'fino al giorno prima, ' + fmtIt(_isoOf(_plusDays(dataAnalisi(),-1)));
+    if(f.da && f.fino) return 'dal ' + fmtIt(f.da) + ' al ' + fmtIt(f.fino);
+    if(f.fino) return 'fino al ' + fmtIt(f.fino);
+    if(f.da)   return 'dal ' + fmtIt(f.da);
+    return '';
+  }
+  function filtroConsegnaDate(){
+    const da=($('reg-cons-fd-da')||{}).value||'', a=($('reg-cons-fd-a')||{}).value||'';
+    if(!da && !a) return null;
+    return {da:da||undefined, fino:a||undefined};
+  }
+  function nelPeriodo(matur,f){
+    if(!f) return true;
+    if(!matur) return false;                       // senza data non si può giudicare
+    if(f.escludiOggi && !(matur<f.fino)) return false;
+    if(!f.escludiOggi && f.fino && matur>f.fino) return false;
+    if(f.da && matur<f.da) return false;
+    return true;
+  }
+  // Due modalità nette, mai mescolate: "da consegnare" (filtrata per maturazione) oppure
+  // "già consegnate" (filtrata per data di CONSEGNA, per ritrovarle e annullarle).
   function consDaFare(c, includiFatti){
     const out=[];
+    const f=filtroPeriodo();
+    const fd=filtroConsegnaDate();
     currentRows().forEach(e=>{
       if(!isPrelievo(e)) return;
       if(!daPortare(e,c)) return;
       const fatto=consegnato(e,c);
-      if(fatto && !includiFatti) return;
-      const d=maturDate(e, c==='dl'?28:c);
-      out.push({e, wbs:(e.wbs||'—'), matur:d?_isoOf(d):'', fatto, quando:dataConsegna(e,c)});
+      if(includiFatti){
+        if(!fatto) return;                         // in rassegna: SOLO quelle già consegnate
+        const quando=dataConsegna(e,c);
+        if(!nelPeriodo(quando,fd)) return;
+        out.push({e, wbs:(e.wbs||'—'), matur:'', fatto:true, quando});
+      } else {
+        if(fatto) return;                          // uso normale: SOLO quelle da consegnare
+        const d=maturDate(e, c==='dl'?28:c);
+        const iso=d?_isoOf(d):'';
+        if(!nelPeriodo(iso,f)) return;
+        out.push({e, wbs:(e.wbs||'—'), matur:iso, fatto:false, quando:''});
+      }
     });
     return out.sort((a,b)=> a.wbs<b.wbs?-1 : a.wbs>b.wbs?1 : (a.matur<b.matur?-1:a.matur>b.matur?1:0));
   }
@@ -34827,12 +34937,36 @@ setTool("erase");
     const box=$('reg-cons-list'); if(!box) return;
     const c=canaleCons();
     const mostraFatti=!!($('reg-cons-fatti')&&$('reg-cons-fatti').checked);
-    const righe=consDaFare(c,mostraFatti), oggi=todayISO();
+    // Due modalità viste, mai insieme: consegna (filtro Maturazione, «Analizza dal»)
+    // oppure rassegna dei consegnati (filtro «consegnati fra», per ritrovarli e annullarli).
+    if($('reg-cons-fd-wrap'))   $('reg-cons-fd-wrap').style.display   = mostraFatti ? 'inline-flex' : 'none';
+    if($('reg-cons-matur-row')) $('reg-cons-matur-row').style.display = mostraFatti ? 'none' : 'flex';
+    if($('reg-cons-oggi-wrap')) $('reg-cons-oggi-wrap').style.display = mostraFatti ? 'none' : 'flex';
+    // in rassegna non c'è niente da selezionare o da segnare: quei comandi si nascondono
+    ['reg-cons-all','reg-cons-none','reg-cons-ok'].forEach(id=>{ if($(id)) $(id).style.display = mostraFatti?'none':''; });
+    const inf=$('reg-cons-per-info');
+    if(inf && !mostraFatti){ const t=descrizionePeriodo(); inf.textContent=t; inf.style.display=t?'':'none'; }
+    const righe=consDaFare(c,mostraFatti), oggi=dataAnalisi();
+    // «SCADUTO» sulla singola riga deve riferirsi alla stessa data di analisi, non a oggi davvero
     if($('reg-cons-gg-w')) $('reg-cons-gg-w').style.display = (_cMode==='dl'?'none':'');
     if($('reg-cons-tit')) $('reg-cons-tit').textContent = (_cMode==='dl'?'🔬 Consegne DL':'📦 Consegne ICM');
+    const diversaDaOggi = !mostraFatti && (($('reg-cons-oggi')&&$('reg-cons-oggi').value)||'') !== '';
+    if($('reg-cons-box')) $('reg-cons-box').classList.toggle('reg-cons-simula', diversaDaOggi);
     if(!righe.length){
-      box.innerHTML='<div class="reg-cons-none">✓ Nessun cubetto in attesa di consegna.'
-        +(mostraFatti?'':' <span style="color:var(--muted);">Spunta «mostra già consegnati» per rivedere e correggere quelli fatti.</span>')+'</div>';
+      let msg;
+      if(mostraFatti){
+        const conFiltroData=!!filtroConsegnaDate();
+        msg = conFiltroData
+          ? '— Nessuna consegna trovata in questo periodo. Allarga l\'intervallo «consegnati fra».'
+          : '— Nessuna consegna ancora registrata per questo canale.';
+      } else {
+        const conFiltro=!!filtroPeriodo();
+        msg = conFiltro
+          ? '— Nessun prelievo in questo periodo. Cambia il filtro Maturazione per vedere gli altri.'
+          : '✓ Nessun cubetto in attesa di consegna.';
+        msg += ' <span style="color:var(--muted);">Spunta «mostra già consegnati» per rivedere e correggere quelli fatti.</span>';
+      }
+      box.innerHTML='<div class="reg-cons-none">'+msg+'</div>';
       if($('reg-cons-cnt')) $('reg-cons-cnt').textContent=''; return;
     }
     let html='', wbsOra='';
@@ -34870,13 +35004,16 @@ setTool("erase");
     });
     conta();
     function conta(){
-      const daFare=righe.filter(r=>!r.fatto);
-      const sel=daFare.filter(r=>_cSel[r.e.id]);
+      const el=$('reg-cons-cnt'); if(!el) return;
+      if(mostraFatti){
+        // rassegna: righe sono tutte già consegnate, nessuna selezione da fare
+        const cubTot=righe.reduce((s,r)=>{const rp=ripartizione(r.e); return s+(c==='dl'?rp.dl:(c===7?rp.icm7:rp.icm28));},0);
+        el.textContent = (righe.length===1?'1 consegna trovata':(righe.length+' consegne trovate'))+' · '+cubTot+' cubetti';
+        return;
+      }
+      const sel=righe.filter(r=>_cSel[r.e.id]);
       const cub=sel.reduce((s,r)=>{const rp=ripartizione(r.e); return s+(c==='dl'?rp.dl:(c===7?rp.icm7:rp.icm28));},0);
-      const el=$('reg-cons-cnt');
-      const fatti=righe.length-daFare.length;
-      if(el) el.textContent = sel.length ? (sel.length+' prelievi · '+cub+' cubetti')
-             : (daFare.length+' in attesa'+(fatti?(' · '+fatti+' già consegnati'):''));
+      el.textContent = sel.length ? (sel.length+' prelievi · '+cub+' cubetti') : (righe.length+' in attesa');
     }
   }
   async function segnaConsegnati(){
@@ -34889,9 +35026,311 @@ setTool("erase");
     righe.forEach(r=>{ if(c==='dl') r.e.consDl=d; else if(c===7) r.e.cons7=d; else r.e.cons28=d; });
     save();
     if(cloudOn()){ try{ await sbRegUpsertMany(righe.map(r=>r.e)); lastSig=''; }catch(err){ console.warn('consegna',err); } }
+    const vuoiDoc=!!($('reg-cons-doc')&&$('reg-cons-doc').checked);
+    if(vuoiDoc){
+      const numScelto=($('reg-cons-num')&&$('reg-cons-num').value)||'';
+      try{ await generaEScaricaVerbaleConsegna(c, d, righe, numScelto); }
+      catch(err){ console.warn('verbale consegna',err); toast('Consegna registrata, ma il verbale non è stato generato: '+((err&&err.message)||err)); }
+    }
     _cSel={}; refreshAll(); renderCons();
-    toast(righe.length+' prelievi segnati come consegnati.');
+    toast(righe.length+' prelievi segnati come consegnati.'+(vuoiDoc?' Verbale scaricato.':''));
     if(typeof addLog==='function') addLog('Consegna '+nome+': '+righe.length+' prelievi al '+fmtIt(d));
+  }
+  // Verbale di consegna cubetti in PDF — stessa identica struttura del Verbale CLS
+  // (intestazione, PRESENTI, frase narrativa, tabella a colonne dinamiche, firme),
+  // per coerenza fra i due documenti. Unica differenza: dice se è per ICM o per la DL,
+  // e la maturazione segue il canale scelto (7, 28, o 28 per la DL).
+  async function buildVerbaleConsegnaPDF(PDFDocument,rgb,StandardFonts,{num,canale,dataC,laboratorio,righe,icmNome,labNome,luogo}){
+    const doc=await PDFDocument.create();
+    const fontR=await doc.embedFont(StandardFonts.Helvetica);
+    const fontB=await doc.embedFont(StandardFonts.HelveticaBold);
+    const PW=841.89, PH=595.28, ML=36, MR=36, MT=32, MB=32;  // orizzontale
+    const UW=PW-ML-MR;
+    const BLACK=rgb(0,0,0),GREY=rgb(0.45,0.45,0.45),LGREY=rgb(0.72,0.72,0.72);
+    const WHITE=rgb(1,1,1),HDR_BG=rgb(0.08,0.15,0.28);
+    const ROW_EVEN=rgb(0.93,0.96,0.99),ROW_ODD=WHITE;
+    const fmtD2=d=>{ if(!d) return ''; const s=String(d).slice(0,10); const p=s.split('-');
+      return p.length===3 ? (p[2]+'/'+p[1]+'/'+p[0]) : s; };
+    // fmtD lavora su oggetti Date (come nel Verbale CLS), non su stringhe ISO come fmtIt.
+    const fmtD=d=>{ if(!(d instanceof Date)||isNaN(d)) return ''; return fmtD2(_isoOf(d)); };
+    const NUM_PAROLE=['ZERO','UNO','DUE','TRE','QUATTRO','CINQUE','SEI','SETTE','OTTO','NOVE','DIECI',
+      'UNDICI','DODICI','TREDICI','QUATTORDICI','QUINDICI','SEDICI','DICIASSETTE','DICIOTTO','DICIANNOVE','VENTI'];
+    const numToWords=n=>NUM_PAROLE[n]||String(n);
+    const giorniEff = canale==='dl' ? 28 : canale;   // la DL prova sempre a 28 giorni
+
+    // Righe nella stessa forma usata dal Verbale CLS: verb,getto,mix,rck,forn,ddt,wbs,parte,maturR
+    const rows = righe.map(r=>{
+      const e=r.e;
+      const mDate=maturDate(e, giorniEff);
+      return { verb:e.verbale||'', getto:e.data?new Date(e.data+'T00:00:00'):null, mix:e.mix||'',
+        rck:e.rck||mixCfgOf(e.mix||'').rck||'', forn:e.fornitore||'', ddt:String(e.ddt||''),
+        wbs:e.wbs||'', parte:[e.opera,e.parte].filter(Boolean).join(' - '),
+        maturR: mDate?fmtD2(_isoOf(mDate)):'' };
+    });
+
+    const HEADS=['N°','VP','Data','Maturazione','Mix','Rck','Impianto betonaggio','DDT','WBS',"Parte d'opera"];
+    const SZ=7;
+    const NO_WRAP_COLS=[0,1,2,3,5,7,8]; // 3 = Maturazione, è una data
+    function measureCol(colIdx,allRows2){
+      const header=HEADS[colIdx];
+      let maxW=fontB.widthOfTextAtSize(header,SZ)+6;
+      allRows2.forEach(r=>{
+        const cells=[String(allRows2.indexOf(r)+1),r.verb,fmtD(r.getto),r.maturR,r.mix,r.rck,r.forn,r.ddt,r.wbs,r.parte];
+        const txt=String(cells[colIdx]||'');
+        let wMeas;
+        if(NO_WRAP_COLS.includes(colIdx)){
+          wMeas=fontR.widthOfTextAtSize(txt,SZ)+8;
+        } else {
+          const words=txt.split(' '); let acc='';
+          for(const w of words){
+            const t2=acc?(acc+' '+w):w;
+            if(fontR.widthOfTextAtSize(t2,SZ)<=UW*0.35) acc=t2; else break;
+          }
+          wMeas=fontR.widthOfTextAtSize(acc||txt.slice(0,20),SZ)+8;
+        }
+        if(wMeas>maxW) maxW=wMeas;
+      });
+      return maxW;
+    }
+    const CW_MIN=[16,80,46,46,28,22,0,28,22,0];
+    const CW=HEADS.map((_,i)=>measureCol(i,rows));
+    CW.forEach((v,i)=>{if(CW_MIN[i]&&v<CW_MIN[i])CW[i]=CW_MIN[i];});
+    const cwScale=UW/CW.reduce((a,b)=>a+b,0);
+    CW.forEach((v,i)=>CW[i]=Math.round(v*cwScale*10)/10);
+    const cwDiff=UW-CW.reduce((a,b)=>a+b,0);
+    CW[CW.length-1]+=cwDiff;
+
+    const ROW_H=18,HEAD_H=20;
+    let page=null,y=0;
+
+    function newPage(){page=doc.addPage([PW,PH]);y=PH-MT;drawPageHeader();}
+    function drawPageHeader(){
+      const hH=60;
+      page.drawRectangle({x:ML,y:y-hH,width:UW,height:hH,color:WHITE,borderColor:BLACK,borderWidth:0.7});
+      const logoW=68;
+      page.drawLine({start:{x:ML+logoW,y:y},end:{x:ML+logoW,y:y-hH},thickness:0.7,color:BLACK});
+      page.drawText('ICM',{x:ML+12,y:y-26,size:20,font:fontB,color:rgb(0.85,0.08,0.08)});
+      page.drawText('S.p.A.',{x:ML+14,y:y-40,size:7,font:fontR,color:GREY});
+      const rBoxW=118;
+      page.drawLine({start:{x:PW-MR-rBoxW,y:y},end:{x:PW-MR-rBoxW,y:y-hH},thickness:0.7,color:BLACK});
+      page.drawLine({start:{x:ML+logoW,y:y-30},end:{x:PW-MR-rBoxW,y:y-30},thickness:0.7,color:BLACK});
+      const cx=ML+logoW+6;
+      page.drawText('LINEA POTENZA\u2013METAPONTO',{x:cx,y:y-12,size:7.5,font:fontB,color:BLACK});
+      page.drawText('INTERVENTI DI VELOCIZZAZIONE NELLA TRATTA GRASSANO-BERNALDA',{x:cx,y:y-22,size:6,font:fontR,color:BLACK});
+      const titoloCanale = canale==='dl' ? 'VERBALE DI CONSEGNA CUBETTI — DIREZIONE LAVORI' : 'VERBALE DI CONSEGNA CUBETTI — ICM';
+      page.drawText(titoloCanale,{x:cx,y:y-44,size:8.5,font:fontB,color:BLACK});
+      const bx=PW-MR-rBoxW+4;
+      page.drawLine({start:{x:PW-MR-rBoxW,y:y-30},end:{x:PW-MR,y:y-30},thickness:0.7,color:BLACK});
+      page.drawText('Mod:',{x:bx,y:y-10,size:6.5,font:fontR,color:BLACK});
+      page.drawText('MD-0789-CCLS-Q-0',{x:bx+24,y:y-10,size:6.5,font:fontB,color:BLACK});
+      page.drawText('N\u00b0',{x:bx,y:y-44,size:6.5,font:fontR,color:BLACK});
+      page.drawText(String(num),{x:bx+16,y:y-44,size:9,font:fontB,color:BLACK});
+      page.drawText('del',{x:bx+55,y:y-44,size:6.5,font:fontR,color:BLACK});
+      page.drawText(fmtD2(dataC),{x:bx+69,y:y-44,size:8,font:fontB,color:BLACK});
+      y-=hH+16;
+    }
+
+    function wrapLines(s,f,sz,w){
+      const mW=w-6; s=String(s||'');
+      if(!s) return [''];
+      if(f.widthOfTextAtSize(s,sz)<=mW) return [s];
+      const result=[]; let cur='';
+      const tokens=s.split(/(\s+|[-/])/);
+      for(const tok of tokens){
+        if(!tok) continue;
+        const test=cur+tok;
+        if(f.widthOfTextAtSize(test,sz)<=mW){ cur=test; }
+        else {
+          if(cur.trim()) result.push(cur.trim());
+          if(f.widthOfTextAtSize(tok,sz)>mW){
+            let t2='';
+            for(const ch of tok){
+              if(f.widthOfTextAtSize(t2+ch,sz)<=mW) t2+=ch;
+              else { if(t2) result.push(t2); t2=ch; }
+            }
+            cur=t2;
+          } else { cur=tok; }
+        }
+      }
+      if(cur.trim()) result.push(cur.trim());
+      return result.length?result:[''];
+    }
+    function cellH(t,f,sz,w,nw){
+      const lines=nw?[String(t||'')]:wrapLines(t,f,sz,w);
+      return Math.max(14,lines.length*sz*1.45+4);
+    }
+    function txtCell(t,x,cy,w,h,f,sz,c,align,noWrap){
+      align=align||'left';
+      const lines=noWrap?[String(t||'')]:wrapLines(t,f,sz,w);
+      const ld=sz*1.45;
+      const totalH=(lines.length-1)*ld;
+      let startY=cy+h/2+totalH/2-sz*0.3;
+      for(const line of lines){
+        const tw=f.widthOfTextAtSize(line,sz);
+        let tx=x+3;
+        if(align==='center') tx=x+(w-tw)/2;
+        if(align==='right') tx=x+w-tw-3;
+        page.drawText(line,{x:tx,y:startY,size:sz,font:f,color:c});
+        startY-=ld;
+      }
+    }
+    function drawTableHeader(){
+      let x=ML;
+      CW.forEach((w,ci)=>{
+        page.drawRectangle({x,y:y-HEAD_H,width:w,height:HEAD_H,color:HDR_BG,borderColor:LGREY,borderWidth:0.35});
+        txtCell(HEADS[ci],x,y-HEAD_H,w,HEAD_H,fontB,7,WHITE,'center',true);
+        x+=w;
+      });
+      y-=HEAD_H;
+    }
+    function drawDataRow(r,idx){
+      const bg=idx%2===0?ROW_ODD:ROW_EVEN;
+      const cells=[String(idx+1),r.verb,fmtD(r.getto),r.maturR,r.mix,r.rck,r.forn,r.ddt,r.wbs,r.parte];
+      const aligns=['center','left','center','center','left','center','left','center','center','left'];
+      const noWrap=[true,true,true,true,false,true,false,true,true,false];
+      const rowH=Math.max(14,...cells.map((cell,ci)=>cellH(cell,fontR,7,CW[ci],noWrap[ci])));
+      let x=ML;
+      CW.forEach((w,ci)=>{
+        page.drawRectangle({x,y:y-rowH,width:w,height:rowH,color:bg,borderColor:LGREY,borderWidth:0.25});
+        txtCell(cells[ci],x,y-rowH,w,rowH,fontR,7,BLACK,aligns[ci],noWrap[ci]);
+        x+=w;
+      });
+      y-=rowH;
+      return rowH;
+    }
+    function checkBreak(rowH){if(y-(rowH||18)<MB+130){newPage();drawTableHeader();}}
+
+    newPage();
+    page.drawText('Data/Ora:',{x:ML,y,size:8,font:fontB,color:BLACK});
+    page.drawText(fmtD2(dataC),{x:ML+52,y,size:8,font:fontR,color:BLACK});
+    page.drawText('Luogo della consegna:',{x:ML+120,y,size:8,font:fontB,color:BLACK});
+    page.drawText(String(luogo||''),{x:ML+238,y,size:8,font:fontR,color:BLACK});
+    page.drawText('Laboratorio:',{x:ML+420,y,size:8,font:fontB,color:BLACK});
+    page.drawText(String(laboratorio||''),{x:ML+480,y,size:8,font:fontR,color:BLACK});
+    y-=18;
+    page.drawText('PRESENTI:',{x:ML,y,size:8,font:fontB,color:BLACK}); y-=13;
+    const NX=ML+Math.max(fontR.widthOfTextAtSize('per ICM:',8),fontR.widthOfTextAtSize('per il Laboratorio:',8))+8;
+    page.drawText('per ICM:',{x:ML,y,size:8,font:fontR,color:BLACK});
+    page.drawText(icmNome||'',{x:NX,y,size:8,font:fontB,color:BLACK}); y-=13;
+    page.drawText('per il Laboratorio:',{x:ML,y,size:8,font:fontR,color:BLACK});
+    page.drawText(labNome||'',{x:NX,y,size:8,font:fontB,color:BLACK}); y-=16;
+    // Un'unica frase su una riga sola, come nel Verbale CLS: in orizzontale c'è spazio.
+    {
+      let xN=ML;
+      const seg=(txt,f,sz)=>{ page.drawText(txt,{x:xN,y,size:sz,font:f,color:BLACK}); xN+=f.widthOfTextAtSize(txt,sz); };
+      seg('si \u00e8 provveduto alla consegna al Laboratorio ',fontR,8);
+      seg(String(laboratorio||'')+' ',fontB,9);
+      seg('di n. ',fontR,8);
+      seg(rows.length+' ('+numToWords(rows.length)+') ',fontB,9);
+      seg('coppie di cubetti di conglomerato cementizio confezionati in cantiere e di seguito elencati:',fontR,8);
+    }
+    y-=16;
+    drawTableHeader();
+    rows.forEach((r,i)=>{const rh=drawDataRow(r,i);checkBreak(rh);});
+    y-=14;
+    if(y<MB+100){newPage();y-=8;}
+    {
+      const chiusura='per essere sottoposti alla prova di resistenza a compressione (per ogni provino) a '+giorniEff+' giorni. '
+        +'Perch\u00e9 ci\u00f2 consti, si \u00e8 redatto in unico originale il presente verbale che viene letto, confermato e sottoscritto dagli intervenuti.';
+      wrapLines(chiusura,fontR,8,UW).forEach(line=>{ page.drawText(line,{x:ML,y,size:8,font:fontR,color:BLACK}); y-=13; });
+    }
+    page.drawText('Note:',{x:ML,y,size:8,font:fontB,color:BLACK});
+    y-=36;
+    // Se il verbale ha poche righe, il foglio resterebbe per metà vuoto: le firme
+    // scendono verso il fondo invece di restare incollate subito sotto il testo.
+    const yFirme=MB+98;
+    if(y>yFirme) y=yFirme;
+    if(y<MB+70){newPage();y-=8;}
+    const col0W=UW*0.22,colW=(UW-col0W)/2;
+    const firmeH=[16,20,32];
+    ['DESCRIZIONE','ICM','Laboratorio'].forEach((label,ci)=>{
+      const cx=ci===0?ML:ML+col0W+(ci-1)*colW, cw=ci===0?col0W:colW;
+      page.drawRectangle({x:cx,y:y-firmeH[0],width:cw,height:firmeH[0],color:ci===0?rgb(0.88,0.88,0.88):rgb(0.93,0.93,0.93),borderColor:BLACK,borderWidth:0.5});
+      page.drawText(label,{x:cx+4,y:y-firmeH[0]+5,size:8,font:fontB,color:BLACK});
+    });
+    y-=firmeH[0];
+    const nomValues=['',icmNome||'',labNome||''];
+    ['NOMINATIVO','',''].forEach((label,ci)=>{
+      const cx=ci===0?ML:ML+col0W+(ci-1)*colW, cw=ci===0?col0W:colW;
+      page.drawRectangle({x:cx,y:y-firmeH[1],width:cw,height:firmeH[1],color:WHITE,borderColor:BLACK,borderWidth:0.5});
+      if(ci===0) page.drawText('NOMINATIVO',{x:cx+4,y:y-firmeH[1]+6,size:8,font:fontB,color:BLACK});
+      else if(nomValues[ci]){let s=nomValues[ci];while(s.length>1&&fontR.widthOfTextAtSize(s,7.5)>cw-8)s=s.slice(0,-1);if(s!==nomValues[ci])s=s.slice(0,-1)+'\u2026';page.drawText(s,{x:cx+4,y:y-firmeH[1]+6,size:7.5,font:fontR,color:BLACK});}
+    });
+    y-=firmeH[1];
+    ['FIRMA','',''].forEach((label,ci)=>{
+      const cx=ci===0?ML:ML+col0W+(ci-1)*colW, cw=ci===0?col0W:colW;
+      page.drawRectangle({x:cx,y:y-firmeH[2],width:cw,height:firmeH[2],color:WHITE,borderColor:BLACK,borderWidth:0.5});
+      if(ci===0) page.drawText('FIRMA',{x:cx+4,y:y-firmeH[2]+20,size:8,font:fontB,color:BLACK});
+    });
+    return await doc.save();
+  }
+
+  /* ── Verbale di consegna cubetti: numero progressivo, due sole serie ── */
+  // ICM (7 e 28 giorni insieme, una sola serie) · DL (la sua). "canale" arriva come
+  // 7, 28 o 'dl': qui si riduce alla chiave giusta, altrimenti 7 e 28 avrebbero
+  // finito per avere due contatori separati invece di uno solo come previsto.
+  function serieConsegna(canale){ return canale==='dl' ? 'dl' : 'icm'; }
+  function prossimoNumConsegna(canale){
+    const k=serieConsegna(canale);
+    const n=((db.consNum||{})[k]||0)+1;
+    return String(n).padStart(4,'0');
+  }
+  // Se il tecnico ha scritto un numero a mano lo si usa così com'è (normalizzato a 4 cifre),
+  // e il contatore avanza almeno fino a lì, per non riproporre più lo stesso in automatico.
+  async function assegnaNumConsegna(canale, numManuale){
+    const k=serieConsegna(canale);
+    db.consNum=Object.assign({icm:0,dl:0}, db.consNum||{});
+    let n;
+    if(numManuale!=null && numManuale!==''){
+      const m=parseInt(String(numManuale).replace(/\D/g,''),10);
+      n = isNaN(m) ? (db.consNum[k]||0)+1 : m;
+      db.consNum[k]=Math.max(db.consNum[k]||0, n);
+    } else {
+      db.consNum[k]=(db.consNum[k]||0)+1;
+      n=db.consNum[k];
+    }
+    save(); pushConfig();
+    return String(n).padStart(4,'0');
+  }
+  // Suggerisce il prossimo numero SOLO se il campo è vuoto: una volta scritto (o generato),
+  // il numero resta quello finché non lo cambi tu — rigenerare non lo fa avanzare da solo.
+  function aggiornaNumeroVerbale(){
+    const el=$('reg-cons-num'); if(el && !el.value.trim()) el.value=prossimoNumConsegna(canaleCons());
+  }
+  // Genera e scarica il verbale di consegna cubetti in PDF, stesso stile del verbale CLS.
+  // Se i prelievi selezionati riguardano più laboratori, un documento per laboratorio: il
+  // numero scelto a mano (se c'è) vale come PUNTO DI PARTENZA per l'intero invio:
+  // con più laboratori nella stessa consegna, i documenti proseguono in sequenza da lì
+  // (125, 126, 127...), invece di far ripartire i successivi da un contatore interno
+  // che potrebbe essere rimasto più avanti per conto suo.
+  async function generaEScaricaVerbaleConsegna(canale, dataC, righe, numManuale){
+    if(typeof PDFLib==='undefined') throw new Error('pdf-lib non caricato. Ricarica la pagina.');
+    const {PDFDocument,rgb,StandardFonts}=PDFLib;
+    const perLab={};
+    righe.forEach(r=>{ const l=r.e.lab||'—'; (perLab[l]=perLab[l]||[]).push(r); });
+    const baseNum = (numManuale!=null && String(numManuale).trim()!=='')
+      ? parseInt(String(numManuale).replace(/\D/g,''),10) : null;
+    let offset=0;
+    for(const lab of Object.keys(perLab)){
+      const numQuesto = (baseNum!=null && !isNaN(baseNum)) ? String(baseNum+offset) : undefined;
+      const num=await assegnaNumConsegna(canale, numQuesto);
+      offset++;
+      const icmNome=($('reg-cons-icm-nome')&&$('reg-cons-icm-nome').value.trim())||'FERRARA DANIELE';
+      const labNome=($('reg-cons-lab-nome')&&$('reg-cons-lab-nome').value.trim())||'';
+      const luogo=($('reg-cons-luogo')&&$('reg-cons-luogo').value.trim())||'';
+      const bytes=await buildVerbaleConsegnaPDF(PDFDocument,rgb,StandardFonts,{
+        num, canale, dataC, laboratorio:lab, righe:perLab[lab], icmNome, labNome, luogo
+      });
+      const pref = canale==='dl' ? 'CONS-DL-' : ('CONS-ICM-'+canale+'GG-');
+      const blob=new Blob([bytes],{type:'application/pdf'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='Verbale_Consegna_'+pref+num+'_'+lab.replace(/[^\w-]+/g,'')+'.pdf';
+      // Un anchor staccato dal documento non parte in tutti i browser: lo si aggancia
+      // davvero, si clicca, si toglie — lo stesso schema già in uso nel verbale CLS.
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    }
   }
   function scadenzeList(rows){
     const oggi=isoLocal(new Date());   // data locale: toISOString sposterebbe il giorno
@@ -35602,13 +36041,29 @@ setTool("erase");
       const bx=$('reg-cons-box'); if(!bx) return;
       bx.style.display='';
       if($('reg-cons-data') && !$('reg-cons-data').value) $('reg-cons-data').value=todayISO();
-      renderCons(); bx.scrollIntoView({behavior:'smooth',block:'start'});
+      aggiornaNumeroVerbale();
+      renderCons();
+      try{ if(bx.scrollIntoView) bx.scrollIntoView({behavior:'smooth',block:'start'}); }catch(_){ }
     };
     if($('reg-cons-icm')) $('reg-cons-icm').onclick=()=>apriCons('icm');
     if($('reg-cons-dl'))  $('reg-cons-dl').onclick =()=>apriCons('dl');
     if($('reg-cons-close')) $('reg-cons-close').onclick=()=>{ $('reg-cons-box').style.display='none'; };
-    if($('reg-cons-gg')) $('reg-cons-gg').onchange=()=>{ _cSel={}; renderCons(); };
+    if($('reg-cons-gg')) $('reg-cons-gg').onchange=()=>{ _cSel={}; aggiornaNumeroVerbale(); renderCons(); };
     if($('reg-cons-fatti')) $('reg-cons-fatti').onchange=()=>{ renderCons(); };
+    ['reg-cons-fd-da','reg-cons-fd-a'].forEach(id=>{ if($(id)) $(id).onchange=()=>{
+      if($('reg-cons-fatti') && !$('reg-cons-fatti').checked) $('reg-cons-fatti').checked=true;   // altrimenti il filtro non si vedrebbe
+      renderCons();
+    }; });
+    if($('reg-cons-oggi')) $('reg-cons-oggi').onchange=()=>{ _cSel={}; renderCons(); };
+    if($('reg-cons-oggi-reset')) $('reg-cons-oggi-reset').onclick=()=>{
+      if($('reg-cons-oggi')) $('reg-cons-oggi').value=''; _cSel={}; renderCons();
+    };
+    if($('reg-cons-per')) $('reg-cons-per').onchange=()=>{
+      const r=$('reg-cons-range');
+      if(r) r.style.display = ($('reg-cons-per').value==='range' ? 'inline-flex' : 'none');
+      _cSel={}; renderCons();
+    };
+    ['reg-cons-da','reg-cons-a'].forEach(id=>{ if($(id)) $(id).onchange=()=>{ _cSel={}; renderCons(); }; });
     if($('reg-cons-all')) $('reg-cons-all').onclick=()=>{ consDaFare(canaleCons()).forEach(r=>{_cSel[r.e.id]=true;}); renderCons(); };   // solo quelli da fare
     if($('reg-cons-none')) $('reg-cons-none').onclick=()=>{ _cSel={}; renderCons(); };
     if($('reg-cons-ok')) $('reg-cons-ok').onclick=segnaConsegnati;
@@ -35706,7 +36161,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 22.8';
+  window.APP_VERSION = 'Versione 25.5';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
