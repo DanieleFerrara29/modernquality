@@ -2963,6 +2963,18 @@ input[type="date"]{ color-scheme:dark; }
 #tab-registro .reg-verbinput.vw-warn,#tab-registro #reg-num.vw-warn{border-color:var(--accent)!important;box-shadow:0 0 0 2px rgba(var(--accent-rgb),.22)!important;}
 #tab-registro .reg-vwarn b{color:var(--accent);}
 #tab-registro .reg-vwarn.dup b{color:var(--red);}
+/* nota informativa (numeri saltati / buchi): calma, senza rosso e senza sirena */
+#tab-registro .reg-vwarn.info{background:rgba(var(--accent-rgb),.10);border:1px solid var(--border2);color:var(--text);font-weight:500;}
+#tab-registro .reg-vwarn.info .vw-t{color:var(--accent);font-weight:700;}
+/* avviso: progressivo non corretto (numeri saltati) — ben visibile ma senza sirena né blocco */
+#tab-registro .reg-vwarn.warn{background:rgba(var(--accent-rgb),.20);border:2px solid var(--accent);color:var(--text);
+  box-shadow:0 0 0 3px rgba(var(--accent-rgb),.12);}
+#tab-registro .reg-vwarn.warn .vw-t{color:var(--accent);}
+#tab-registro .reg-vwarn.warn b{color:var(--accent);}
+/* conferma: il progressivo è quello giusto (sempre visibile) */
+#tab-registro .reg-vok{margin-top:10px;padding:9px 14px;border-radius:8px;font-size:15px;font-weight:700;
+  color:var(--green);background:rgba(46,139,87,.14);border:1px solid var(--green);}
+#tab-registro .reg-vok b{color:var(--green);}
 </style>
 
 <div class="tab-panel" id="tab-registro">
@@ -3162,13 +3174,17 @@ input[type="date"]{ color-scheme:dark; }
           <select id="reg-cons-gg" class="reg-mtools-sel"><option value="28">28 giorni</option><option value="7">7 giorni</option></select></span>
         <label>Consegnati il</label>
         <input type="date" id="reg-cons-data" class="reg-mtools-sel"/>
-        <label>Luogo</label>
-        <input type="text" id="reg-cons-luogo" class="reg-mtools-sel reg-cons-nome" value="SALANDRA SCALO"/>
-        <label>N° verbale</label>
-        <input type="text" id="reg-cons-num" class="reg-mtools-sel" style="width:80px;" inputmode="numeric"
-               title="Numero proposto in automatico: puoi cambiarlo prima di generare il verbale"/>
+        <span id="reg-cons-pdf-campi-1" style="display:contents;">
+          <label>Luogo</label>
+          <input type="text" id="reg-cons-luogo" class="reg-mtools-sel reg-cons-nome" value="SALANDRA SCALO"/>
+          <span id="reg-cons-num-w" style="display:contents;">
+          <label id="reg-cons-num-lbl">Verbale prelievo</label>
+          <input type="text" id="reg-cons-num" class="reg-mtools-sel" style="width:150px;"
+                 title="ICM: richiama in automatico il verbale dell'ultimo prelievo consegnato. Puoi cambiarlo prima di generare il documento."/>
+          </span>
+        </span>
       </div>
-      <div class="reg-cons-bar">
+      <div class="reg-cons-bar" id="reg-cons-pdf-campi-2">
         <label>Per ICM</label>
         <input type="text" id="reg-cons-icm-nome" class="reg-mtools-sel reg-cons-nome" value="FERRARA DANIELE"/>
         <label>Per il Laboratorio</label>
@@ -32547,7 +32563,7 @@ setTool("erase");
   // salvataggio ROBUSTO: il numero di verbale viene assegnato dal database in modo atomico
   async function pushEntryAuto(e, prefix, width){
     e.updated_at=new Date().toISOString();
-    if(!cloudOn()){ e._pending=true; save(); setStatus('local');
+    if(!cloudOn()){ e._pending=true; delete e._assigning; save(); setStatus('local');
       toast('Salvato in locale (offline). Numero da confermare online.'); return; }
     try{
       const rows=await sbRpc('registro_add',{ p_entry:toRow(e), p_auto:true, p_prefix:prefix, p_width:width });
@@ -32569,8 +32585,8 @@ setTool("erase");
       }catch(err2){ console.warn('completamento colonne Rck/pk',err2); }
       if(row && row.verbale){
         const idx=db.entries.findIndex(x=>x.id===e.id);
-        if(idx>=0){ db.entries[idx].verbale=row.verbale; db.entries[idx].ripetuto=!!row.ripetuto; }
-        e.verbale=row.verbale; delete e._pending; save(); setStatus('ok'); renderTable();
+        if(idx>=0){ db.entries[idx].verbale=row.verbale; db.entries[idx].ripetuto=!!row.ripetuto; delete db.entries[idx]._assigning; }
+        e.verbale=row.verbale; delete e._pending; delete e._assigning; save(); setStatus('ok'); renderTable();
         // Il numero assegnato dal database può non coincidere con quello mostrato nel form
         // (un altro dispositivo può aver salvato nel frattempo). Se cambia, va detto forte:
         // il tecnico deve poterlo correggere sul cartellino e sui cubetti già segnati.
@@ -32586,12 +32602,12 @@ setTool("erase");
               + 'Correggi il numero sul cartellino e sui cubetti.');
         }
         toast('Prelievo salvato — verbale '+row.verbale);
-      }else{ delete e._pending; save(); setStatus('ok'); renderTable(); toast('Prelievo salvato.'); }
+      }else{ delete e._pending; delete e._assigning; save(); setStatus('ok'); renderTable(); toast('Prelievo salvato.'); }
     }catch(err){
       console.warn('pushEntryAuto',err);
       // ripiego: prova comunque il salvataggio normale
-      try{ await sbRegUpsert(e); delete e._pending; save(); setStatus('ok'); toast('Prelievo salvato.'); }
-      catch(e2){ e._pending=true; save(); setStatus('offline'); toast('Salvato in locale (offline).'); }
+      try{ await sbRegUpsert(e); delete e._pending; delete e._assigning; save(); setStatus('ok'); toast('Prelievo salvato.'); }
+      catch(e2){ e._pending=true; delete e._assigning; save(); setStatus('offline'); toast('Salvato in locale (offline).'); }
     }
   }
   // ── Righe cancellate: ne teniamo memoria finché non spariscono davvero dal cloud.
@@ -32646,7 +32662,9 @@ setTool("erase");
         // così nessun dispositivo (nemmeno uno rimasto offline a lungo) può farla riapparire.
       }
       const cloudIds=new Set(cloud.map(e=>e.id));
-      const stillPending=db.entries.filter(e=>e._pending && !cloudIds.has(e.id));
+      // teniamo anche le righe appena salvate a cui il database sta assegnando il numero
+      // (_assigning): non sono ancora sul cloud, ma non vanno perse dal registro locale.
+      const stillPending=db.entries.filter(e=>(e._pending||e._assigning) && !cloudIds.has(e.id));
       const merged=cloud.concat(stillPending);
       // se NON c'è una config condivisa, deduci laboratori/miscele dalle righe (fallback)
       if(!cfgLoaded){
@@ -33191,7 +33209,10 @@ setTool("erase");
   function isDup(verbale, exceptId){
     const key=String(verbale||'').trim().toLowerCase();
     if(!key)return false;
-    return db.entries.some(e=>e.id!==exceptId && String(e.verbale||'').trim().toLowerCase()===key);
+    // le righe a cui il database sta ancora assegnando il numero (_assigning) sono il
+    // salvataggio in corso: NON vanno contate come doppione di sé stesse, altrimenti
+    // durante il salvataggio scatta un falso allarme "numero già usato".
+    return db.entries.some(e=>e.id!==exceptId && !e._assigning && String(e.verbale||'').trim().toLowerCase()===key);
   }
 
   /* ---------- UI: barra laboratori ---------- */
@@ -33974,40 +33995,64 @@ setTool("erase");
     // ── Un unico avviso, con tutti i problemi di numerazione trovati ──
     const buchi=buchiSerie(pf);
     const W=db.cfg.width||5;
-    const problemi=[];
-    let stato='';
+    const errori=[];   // ⛔ doppione → rosso + sirena (salvato come "ripetuto", da correggere)
+    const avvisi=[];   // ⚠ progressivo NON corretto (numeri saltati) → ambra + sirena, sempre in evidenza
+    const note=[];     // ℹ promemoria: numeri lasciati liberi da recuperare, o numero libero ripreso
+    let stato='', ok=false;
     const n=currentNum();
     if(n!=null && n>0){
       const full=pf+pad(n,W);
       if(isDup(full, editId)){
-        problemi.push('Il numero <b>'+n+'</b> è <b>già stato usato</b>: salvando così il prelievo risulterà RIPETUTO.');
+        errori.push('Il numero <b>'+n+'</b> è <b>già stato usato</b>: salvando resta segnato come <b>RIPETUTO</b>. Puoi andare avanti e correggerlo dopo (il primo libero è <b>'+(last+1)+'</b>).');
       } else if(n>last+1){
         const q=n-last-1;
-        problemi.push('Stai <b>saltando '+q+' numer'+(q===1?'o':'i')+'</b>: l\'ultimo registrato è il <b>'+last+'</b>, il prossimo è il <b>'+(last+1)+'</b>.');
-      } else if(n<=last){
-        problemi.push('Il numero <b>'+n+'</b> viene <b>prima dell\'ultimo</b> registrato (<b>'+last+'</b>).');
+        avvisi.push('Stai <b>saltando '+q+' numer'+(q===1?'o':'i')+'</b>: l\'ultimo registrato è il <b>'+last+'</b>, il progressivo corretto è il <b>'+(last+1)+'</b>.');
+      } else if(n<last){
+        note.push('Stai riprendendo il numero <b>'+n+'</b>, rimasto libero prima dell\'ultimo (<b>'+last+'</b>): va bene se stai recuperando un salto.');
+      } else {
+        ok=true;   // n === last+1: progressivo corretto
       }
     }
     if(buchi.length && !(n!=null && buchi.indexOf(n)>=0)){
       // numeri senza zeri davanti: più leggibili
       const el=buchi.slice(0,12).join(', ');
-      problemi.push(buchi.length===1
-        ? 'Nella serie non è <b>mai stato usato</b> il numero <b>'+buchi[0]+'</b>.'
-        : 'Nella serie ci sono <b>'+buchi.length+' prelievi saltati</b>, mai usati: <b>'+el+(buchi.length>12?'…':'')+'</b>.');
+      note.push(buchi.length===1
+        ? 'Nella serie non è <b>mai stato usato</b> il numero <b>'+buchi[0]+'</b>: valuta se recuperarlo.'
+        : 'Nella serie ci sono <b>'+buchi.length+' numeri saltati</b>, mai usati: <b>'+el+(buchi.length>12?'…':'')+'</b>.');
     }
-    if(problemi.length){
+    // SIRENA: suona sia per il doppione sia per il progressivo errato (numeri saltati).
+    // Nessun blocco: il salvataggio è sempre possibile, si corregge in un secondo momento.
+    const suona = (errori.length>0 || avvisi.length>0);
+    if(suona){ if(!_bipAcceso){ bip(); _bipAcceso=true; } } else { _bipAcceso=false; }
+    // ⛔ DOPPIONE: rosso (si salva come "ripetuto")
+    if(errori.length){
       stato='bad';
-      if(!_bipAcceso){ bip(); _bipAcceso=true; }   // solo alla comparsa del problema
-      html+='<div class="reg-vwarn dup"><span class="vw-t">⛔ NUMERAZIONE DA CONTROLLARE</span>'
-        + '<ul class="vw-l"><li>'+problemi.join('</li><li>')+'</li></ul>'
+      html+='<div class="reg-vwarn dup"><span class="vw-t">⛔ NUMERO GIÀ USATO (DOPPIONE)</span>'
+        + '<ul class="vw-l"><li>'+errori.join('</li><li>')+'</li></ul>'
         + '<button type="button" class="vw-bip" id="reg-bip-toggle" title="Attiva o disattiva il segnale acustico">'
         + (bipAttivo()?'🔔 suono attivo':'🔕 suono spento')+'</button></div>';
     }
-    if(!problemi.length) _bipAcceso=false;        // rientrato: il prossimo problema suonerà
+    // ⛔ PROGRESSIVO NON CORRETTO (salti): STESSA gravità del doppione → rosso, come l'errore
+    if(avvisi.length){
+      stato='bad';
+      html+='<div class="reg-vwarn dup"><span class="vw-t">⛔ PROGRESSIVO NON CORRETTO</span>'
+        + '<ul class="vw-l"><li>'+avvisi.join('</li><li>')+'</li></ul>'
+        + (errori.length?'':'<button type="button" class="vw-bip" id="reg-bip-toggle" title="Attiva o disattiva il segnale acustico">'
+        + (bipAttivo()?'🔔 suono attivo':'🔕 suono spento')+'</button>')+'</div>';
+    }
+    // ℹ NOTE calme: buchi da recuperare o numero libero ripreso
+    if(note.length){
+      html+='<div class="reg-vwarn info"><span class="vw-t">ℹ NUMERAZIONE</span>'
+        + '<ul class="vw-l"><li>'+note.join('</li><li>')+'</li></ul></div>';
+    }
+    // ✓ CONFERMA: quando il numero è quello giusto, lo si dice sempre in chiaro
+    if(ok){
+      html+='<div class="reg-vok">✓ Progressivo corretto: <b>'+n+'</b></div>';
+    }
     h.innerHTML=html;
     const bt=document.getElementById('reg-bip-toggle');
     if(bt) bt.onclick=(ev)=>{ ev.preventDefault(); setBip(!bipAttivo()); if(bipAttivo()) bip(); updateVerbHint(); };
-    // accende anche il campo del numero, così l'errore si vede dove si scrive
+    // accende anche il campo del numero, così lo stato si vede dove si scrive
     ['reg-num','reg-verbale'].forEach(id=>{
       const el=$(id); if(!el) return;
       el.classList.remove('vw-bad','vw-warn');
@@ -34192,6 +34237,9 @@ setTool("erase");
     }
     // fallback (nel caso non ci siano campi obbligatori configurati): evita di salvare una riga completamente vuota
     if(!Object.values(req).some(Boolean) && !entry.data && !entry.ddt && !entry.impresa && !entry.verbale && !entry.wbs && !entry.mix){ toast('Compila almeno un campo prima di salvare.'); return; }
+    // Numerazione: NON si blocca il salvataggio. Un progressivo saltato o un doppione vengono
+    // segnalati (avviso + sirena mentre si scrive) e — se doppione — salvati come "ripetuto",
+    // così si può andare avanti e correggere in un secondo momento.
     // contrassegna il prelievo settimanale (resiste ai futuri cambi di protocollo)
     try{
       const _cfg=mixCfgOf(entry.mix||'');
@@ -34227,6 +34275,11 @@ setTool("erase");
     const autoVerbale = prel && !verbaleManual && !editId;
     if(autoVerbale){
       entry._numAtteso = currentNum();
+      // La riga è appena stata messa in db.entries ma NON è ancora sul cloud: la marchiamo
+      // così la sincronizzazione qui sotto non la scarta. Senza questo, la sync la faceva
+      // sparire dal registro locale e il prelievo successivo ripartiva dallo STESSO numero
+      // (85 invece di 86), con l'avviso "numero già registrato" al ritorno dal cloud.
+      entry._assigning=true;
       // prima di lasciar decidere al database, allinea i dati locali: così la previsione
       // mostrata è basata su quello che c'è davvero sul cloud, non su una copia vecchia
       if(cloudOn()){ try{ await cloudSync(); }catch(_){ } }
@@ -34849,6 +34902,26 @@ setTool("erase");
   // più quelli già scaduti e non ancora provati. Pensato da mandare ai laboratori.
   /* ── Consegne: elenco raggruppato per WBS ── */
   let _cSel={}, _cMode='icm';
+  let _consNumAuto='';   // ultimo valore proposto in automatico nel campo "Verbale prelievo" (ICM)
+  // Verbale del prelievo PIÙ RECENTE fra un insieme di righe di consegna:
+  // si ordina per data del getto e, a parità, per numero del verbale.
+  function ultimoVerbalePrelievo(righe){
+    let best='', bestKey='';
+    (righe||[]).forEach(r=>{
+      const e=(r&&r.e)?r.e:r; const v=String((e&&e.verbale)||'').trim(); if(!v) return;
+      const key=String((e&&e.data)||'').slice(0,10)+'#'+String(numOf(v)||0).padStart(9,'0');
+      if(!bestKey || key>bestKey){ bestKey=key; best=v; }
+    });
+    return best;
+  }
+  // Le righe su cui ragionare per il suggerimento: quelle selezionate se ce ne sono,
+  // altrimenti tutte quelle in attesa di consegna per il canale corrente.
+  function righeConsegnaCorrenti(){
+    const c=canaleCons();
+    const tutte=consDaFare(c);
+    const sel=tutte.filter(r=>_cSel[r.e.id]);
+    return sel.length?sel:tutte;
+  }
   function canaleCons(){ return _cMode==='dl' ? 'dl' : parseInt(($('reg-cons-gg')||{}).value||'28',10); }
   // Filtro per periodo di maturazione: scelte rapide oppure un intervallo di date.
   // Data su cui si ragiona: quella scelta nel campo, o oggi se non è stata toccata.
@@ -34933,8 +35006,20 @@ setTool("erase");
     toast('Consegna annullata.');
     if(typeof addLog==='function') addLog('Annullata consegna di '+(e.verbale||''));
   }
+  // I campi che servono solo al PDF (Luogo, N° verbale, i due nomi) compaiono
+  // solo se «genera il verbale» è acceso: altrimenti non servono a niente.
+  function aggiornaVisibilitaCampiPdf(){
+    const on=!$('reg-cons-doc') || $('reg-cons-doc').checked;
+    // il primo è uno <span style="display:contents">: va ripristinato a "contents",
+    // non lasciato vuoto, altrimenti perderebbe quel comportamento una volta riacceso.
+    const s1=$('reg-cons-pdf-campi-1'); if(s1) s1.style.display = on ? 'contents' : 'none';
+    const s2=$('reg-cons-pdf-campi-2'); if(s2) s2.style.display = on ? '' : 'none';
+    // La Direzione Lavori non usa il numero di verbale: il campo si nasconde in modalità DL.
+    const nw=$('reg-cons-num-w'); if(nw) nw.style.display = (on && _cMode!=='dl') ? 'contents' : 'none';
+  }
   function renderCons(){
     const box=$('reg-cons-list'); if(!box) return;
+    aggiornaVisibilitaCampiPdf();
     const c=canaleCons();
     const mostraFatti=!!($('reg-cons-fatti')&&$('reg-cons-fatti').checked);
     // Due modalità viste, mai insieme: consegna (filtro Maturazione, «Analizza dal»)
@@ -35000,9 +35085,10 @@ setTool("erase");
       b.onclick=(ev)=>{ ev.preventDefault(); annullaConsegna(b.dataset.undo, canaleCons()); };
     });
     box.querySelectorAll('input[data-ck]').forEach(cb=>{
-      cb.onchange=()=>{ if(cb.checked)_cSel[cb.dataset.ck]=true; else delete _cSel[cb.dataset.ck]; conta(); };
+      cb.onchange=()=>{ if(cb.checked)_cSel[cb.dataset.ck]=true; else delete _cSel[cb.dataset.ck]; conta(); aggiornaNumeroVerbale(); };
     });
     conta();
+    aggiornaNumeroVerbale();
     function conta(){
       const el=$('reg-cons-cnt'); if(!el) return;
       if(mostraFatti){
@@ -35028,7 +35114,11 @@ setTool("erase");
     if(cloudOn()){ try{ await sbRegUpsertMany(righe.map(r=>r.e)); lastSig=''; }catch(err){ console.warn('consegna',err); } }
     const vuoiDoc=!!($('reg-cons-doc')&&$('reg-cons-doc').checked);
     if(vuoiDoc){
-      const numScelto=($('reg-cons-num')&&$('reg-cons-num').value)||'';
+      // Se il tecnico non ha toccato il valore proposto, lascio decidere alla generazione
+      // (per ICM: il verbale dell'ultimo prelievo di CIASCUN laboratorio). Se invece l'ha
+      // scritto a mano, quello vale. In DL il campo è nascosto: resta comunque senza numero.
+      const campoNum=($('reg-cons-num')&&$('reg-cons-num').value.trim())||'';
+      const numScelto = (campoNum && campoNum!==(_consNumAuto||'')) ? campoNum : '';
       try{ await generaEScaricaVerbaleConsegna(c, d, righe, numScelto); }
       catch(err){ console.warn('verbale consegna',err); toast('Consegna registrata, ma il verbale non è stato generato: '+((err&&err.message)||err)); }
     }
@@ -35123,10 +35213,19 @@ setTool("erase");
       page.drawLine({start:{x:PW-MR-rBoxW,y:y-30},end:{x:PW-MR,y:y-30},thickness:0.7,color:BLACK});
       page.drawText('Mod:',{x:bx,y:y-10,size:6.5,font:fontR,color:BLACK});
       page.drawText('MD-0789-CCLS-Q-0',{x:bx+24,y:y-10,size:6.5,font:fontB,color:BLACK});
-      page.drawText('N\u00b0',{x:bx,y:y-44,size:6.5,font:fontR,color:BLACK});
-      page.drawText(String(num),{x:bx+16,y:y-44,size:9,font:fontB,color:BLACK});
-      page.drawText('del',{x:bx+55,y:y-44,size:6.5,font:fontR,color:BLACK});
-      page.drawText(fmtD2(dataC),{x:bx+69,y:y-44,size:8,font:fontB,color:BLACK});
+      const numStr=String(num||'').trim();
+      if(numStr){
+        // ICM: N° = verbale dell'ultimo prelievo consegnato. Può essere un codice lungo
+        // (es. SL04-CZ-00085): si riduce il corpo quanto basta per restare nel riquadro.
+        page.drawText('N\u00b0',{x:bx,y:y-42,size:6.5,font:fontR,color:BLACK});
+        let ns=9; const maxW=rBoxW-8-16;
+        while(ns>6 && fontB.widthOfTextAtSize(numStr,ns)>maxW) ns-=0.5;
+        page.drawText(numStr,{x:bx+16,y:y-42,size:ns,font:fontB,color:BLACK});
+        page.drawText('del '+fmtD2(dataC),{x:bx,y:y-54,size:7.5,font:fontR,color:BLACK});
+      } else {
+        // DL: nessun numero di verbale, solo la data della consegna.
+        page.drawText('del '+fmtD2(dataC),{x:bx,y:y-44,size:8,font:fontB,color:BLACK});
+      }
       y-=hH+16;
     }
 
@@ -35292,40 +35391,44 @@ setTool("erase");
     save(); pushConfig();
     return String(n).padStart(4,'0');
   }
-  // Suggerisce il prossimo numero SOLO se il campo è vuoto: una volta scritto (o generato),
-  // il numero resta quello finché non lo cambi tu — rigenerare non lo fa avanzare da solo.
+  // Suggerisce il numero di verbale del documento:
+  //  · ICM → il verbale dell'ultimo prelievo consegnato (richiamo al prelievo, non un contatore a parte)
+  //  · DL  → niente: la Direzione Lavori non usa il numero di verbale
+  // Il suggerimento segue la selezione, ma se il tecnico scrive un valore a mano quello resta.
   function aggiornaNumeroVerbale(){
-    const el=$('reg-cons-num'); if(el && !el.value.trim()) el.value=prossimoNumConsegna(canaleCons());
+    const el=$('reg-cons-num'); if(!el) return;
+    if(_cMode==='dl'){ return; }
+    const sugg = ultimoVerbalePrelievo(righeConsegnaCorrenti()) || '';
+    const attuale = el.value.trim();
+    if(!attuale || attuale===(_consNumAuto||'')){ el.value=sugg; _consNumAuto=sugg; }
   }
   // Genera e scarica il verbale di consegna cubetti in PDF, stesso stile del verbale CLS.
-  // Se i prelievi selezionati riguardano più laboratori, un documento per laboratorio: il
-  // numero scelto a mano (se c'è) vale come PUNTO DI PARTENZA per l'intero invio:
-  // con più laboratori nella stessa consegna, i documenti proseguono in sequenza da lì
-  // (125, 126, 127...), invece di far ripartire i successivi da un contatore interno
-  // che potrebbe essere rimasto più avanti per conto suo.
+  // Numero del documento:
+  //  · ICM → richiama il verbale dell'ultimo prelievo consegnato di quel laboratorio
+  //          (se il tecnico ha scritto un valore a mano, vale quello, uguale per tutti i lab).
+  //  · DL  → nessun numero: la Direzione Lavori non ne ha bisogno.
+  // Con più laboratori nella stessa consegna si produce un documento per laboratorio.
   async function generaEScaricaVerbaleConsegna(canale, dataC, righe, numManuale){
     if(typeof PDFLib==='undefined') throw new Error('pdf-lib non caricato. Ricarica la pagina.');
     const {PDFDocument,rgb,StandardFonts}=PDFLib;
     const perLab={};
     righe.forEach(r=>{ const l=r.e.lab||'—'; (perLab[l]=perLab[l]||[]).push(r); });
-    const baseNum = (numManuale!=null && String(numManuale).trim()!=='')
-      ? parseInt(String(numManuale).replace(/\D/g,''),10) : null;
-    let offset=0;
+    const manuale = (numManuale!=null && String(numManuale).trim()!=='') ? String(numManuale).trim() : '';
     for(const lab of Object.keys(perLab)){
-      const numQuesto = (baseNum!=null && !isNaN(baseNum)) ? String(baseNum+offset) : undefined;
-      const num=await assegnaNumConsegna(canale, numQuesto);
-      offset++;
+      // DL: nessun numero. ICM: valore scritto a mano, oppure il verbale dell'ultimo prelievo consegnato di questo lab.
+      const num = (canale==='dl') ? '' : (manuale || ultimoVerbalePrelievo(perLab[lab]) || '');
       const icmNome=($('reg-cons-icm-nome')&&$('reg-cons-icm-nome').value.trim())||'FERRARA DANIELE';
       const labNome=($('reg-cons-lab-nome')&&$('reg-cons-lab-nome').value.trim())||'';
       const luogo=($('reg-cons-luogo')&&$('reg-cons-luogo').value.trim())||'';
       const bytes=await buildVerbaleConsegnaPDF(PDFDocument,rgb,StandardFonts,{
         num, canale, dataC, laboratorio:lab, righe:perLab[lab], icmNome, labNome, luogo
       });
-      const pref = canale==='dl' ? 'CONS-DL-' : ('CONS-ICM-'+canale+'GG-');
+      const pref = canale==='dl' ? 'CONS-DL' : ('CONS-ICM-'+canale+'GG');
+      const numTag = num ? ('_'+String(num).replace(/[^\w-]+/g,'')) : '';
       const blob=new Blob([bytes],{type:'application/pdf'});
       const a=document.createElement('a');
       a.href=URL.createObjectURL(blob);
-      a.download='Verbale_Consegna_'+pref+num+'_'+lab.replace(/[^\w-]+/g,'')+'.pdf';
+      a.download='Verbale_Consegna_'+pref+numTag+'_'+lab.replace(/[^\w-]+/g,'')+'.pdf';
       // Un anchor staccato dal documento non parte in tutti i browser: lo si aggancia
       // davvero, si clicca, si toglie — lo stesso schema già in uso nel verbale CLS.
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
@@ -36041,6 +36144,7 @@ setTool("erase");
       const bx=$('reg-cons-box'); if(!bx) return;
       bx.style.display='';
       if($('reg-cons-data') && !$('reg-cons-data').value) $('reg-cons-data').value=todayISO();
+      if($('reg-cons-num')) $('reg-cons-num').value=''; _consNumAuto='';   // riparte pulito per la modalità scelta
       aggiornaNumeroVerbale();
       renderCons();
       try{ if(bx.scrollIntoView) bx.scrollIntoView({behavior:'smooth',block:'start'}); }catch(_){ }
@@ -36050,6 +36154,7 @@ setTool("erase");
     if($('reg-cons-close')) $('reg-cons-close').onclick=()=>{ $('reg-cons-box').style.display='none'; };
     if($('reg-cons-gg')) $('reg-cons-gg').onchange=()=>{ _cSel={}; aggiornaNumeroVerbale(); renderCons(); };
     if($('reg-cons-fatti')) $('reg-cons-fatti').onchange=()=>{ renderCons(); };
+    if($('reg-cons-doc')) $('reg-cons-doc').onchange=aggiornaVisibilitaCampiPdf;
     ['reg-cons-fd-da','reg-cons-fd-a'].forEach(id=>{ if($(id)) $(id).onchange=()=>{
       if($('reg-cons-fatti') && !$('reg-cons-fatti').checked) $('reg-cons-fatti').checked=true;   // altrimenti il filtro non si vedrebbe
       renderCons();
@@ -36161,7 +36266,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 25.5';
+  window.APP_VERSION = 'Versione 26.3';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
