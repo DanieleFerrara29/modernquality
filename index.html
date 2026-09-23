@@ -2977,6 +2977,8 @@ input[type="date"]{ color-scheme:dark; }
 #tab-registro .reg-vok b{color:var(--green);}
 </style>
 
+
+
 <div class="tab-panel" id="tab-registro">
   <div class="reg-wrap">
 
@@ -3134,7 +3136,6 @@ input[type="date"]{ color-scheme:dark; }
     </div>
     <div class="reg-toolbar reg-toolbar-btns">
       <button class="reg-btn excel" id="reg-exp-go">⬇ Esporta in Excel</button>
-      <button class="reg-btn ghost" id="reg-scad-go" title="Elenco dei cubetti da provare: scaduti, in scadenza questa settimana e la prossima (7 e 28 giorni)">⏰ Scadenze prove</button>
       <button class="reg-btn ghost" id="reg-cons-icm" title="Segna i cubetti ICM consegnati al laboratorio">📦 Consegne ICM</button>
       <button class="reg-btn ghost" id="reg-cons-dl" title="Segna i cubetti della Direzione Lavori consegnati">🔬 Consegne DL</button>
       <button class="reg-btn ghost" id="reg-imp-btn">⬆ Carica / aggiorna da Excel</button>
@@ -3178,9 +3179,9 @@ input[type="date"]{ color-scheme:dark; }
           <label>Luogo</label>
           <input type="text" id="reg-cons-luogo" class="reg-mtools-sel reg-cons-nome" value="SALANDRA SCALO"/>
           <span id="reg-cons-num-w" style="display:contents;">
-          <label id="reg-cons-num-lbl">Verbale prelievo</label>
-          <input type="text" id="reg-cons-num" class="reg-mtools-sel" style="width:150px;"
-                 title="ICM: richiama in automatico il verbale dell'ultimo prelievo consegnato. Puoi cambiarlo prima di generare il documento."/>
+          <label id="reg-cons-num-lbl">N° verbale</label>
+          <input type="text" id="reg-cons-num" class="reg-mtools-sel" style="width:90px;" inputmode="numeric"
+                 title="N° del verbale di consegna. Riparte sempre dall'ultimo progressivo usato. Con più laboratori i documenti proseguono in sequenza (134, 135, ...)."/>
           </span>
         </span>
       </div>
@@ -3188,7 +3189,7 @@ input[type="date"]{ color-scheme:dark; }
         <label>Per ICM</label>
         <input type="text" id="reg-cons-icm-nome" class="reg-mtools-sel reg-cons-nome" value="FERRARA DANIELE"/>
         <label>Per il Laboratorio</label>
-        <input type="text" id="reg-cons-lab-nome" class="reg-mtools-sel reg-cons-nome" placeholder="es. MARIO ROSSI"/>
+        <span id="reg-cons-lab-nome-box" style="display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap;"></span>
       </div>
       <div class="reg-cons-bar">
         <button class="reg-btn ghost" id="reg-cons-all">Tutti</button>
@@ -26315,7 +26316,7 @@ function renderScadenze(){
       +'<td style="padding:6px 8px;">'+(escHtml(r.wbs)||'—')+'</td></tr>';
   });
   h+='</tbody></table></div>';
-  if(rows.length>60) h+='<div style="color:var(--muted);font-size:11px;margin-top:6px;">… e altre '+(rows.length-60)+' righe (scaricabili con «Scadenze prove» nel registro).</div>';
+  if(rows.length>60) h+='<div style="color:var(--muted);font-size:11px;margin-top:6px;">… e altre '+(rows.length-60)+' righe.</div>';
   box.innerHTML=h;
 }
 // pulsante: contrassegna i prelievi settimanali già registrati
@@ -34902,18 +34903,8 @@ setTool("erase");
   // più quelli già scaduti e non ancora provati. Pensato da mandare ai laboratori.
   /* ── Consegne: elenco raggruppato per WBS ── */
   let _cSel={}, _cMode='icm';
-  let _consNumAuto='';   // ultimo valore proposto in automatico nel campo "Verbale prelievo" (ICM)
-  // Verbale del prelievo PIÙ RECENTE fra un insieme di righe di consegna:
-  // si ordina per data del getto e, a parità, per numero del verbale.
-  function ultimoVerbalePrelievo(righe){
-    let best='', bestKey='';
-    (righe||[]).forEach(r=>{
-      const e=(r&&r.e)?r.e:r; const v=String((e&&e.verbale)||'').trim(); if(!v) return;
-      const key=String((e&&e.data)||'').slice(0,10)+'#'+String(numOf(v)||0).padStart(9,'0');
-      if(!bestKey || key>bestKey){ bestKey=key; best=v; }
-    });
-    return best;
-  }
+  let _consNumAuto='';   // ultimo valore proposto in automatico nel campo N° verbale
+  let _consLabNome={};   // per laboratorio: chi firma per quel laboratorio (resta fra un invio e l'altro)
   // Le righe su cui ragionare per il suggerimento: quelle selezionate se ce ne sono,
   // altrimenti tutte quelle in attesa di consegna per il canale corrente.
   function righeConsegnaCorrenti(){
@@ -35114,12 +35105,9 @@ setTool("erase");
     if(cloudOn()){ try{ await sbRegUpsertMany(righe.map(r=>r.e)); lastSig=''; }catch(err){ console.warn('consegna',err); } }
     const vuoiDoc=!!($('reg-cons-doc')&&$('reg-cons-doc').checked);
     if(vuoiDoc){
-      // Se il tecnico non ha toccato il valore proposto, lascio decidere alla generazione
-      // (per ICM: il verbale dell'ultimo prelievo di CIASCUN laboratorio). Se invece l'ha
-      // scritto a mano, quello vale. In DL il campo è nascosto: resta comunque senza numero.
-      const campoNum=($('reg-cons-num')&&$('reg-cons-num').value.trim())||'';
-      const numScelto = (campoNum && campoNum!==(_consNumAuto||'')) ? campoNum : '';
-      try{ await generaEScaricaVerbaleConsegna(c, d, righe, numScelto); }
+      // Numero unico di partenza: con più laboratori i documenti proseguono in sequenza.
+      const numIniziale=($('reg-cons-num')&&$('reg-cons-num').value.trim())||'';
+      try{ await generaEScaricaVerbaleConsegna(c, d, righe, numIniziale); }
       catch(err){ console.warn('verbale consegna',err); toast('Consegna registrata, ma il verbale non è stato generato: '+((err&&err.message)||err)); }
     }
     _cSel={}; refreshAll(); renderCons();
@@ -35215,13 +35203,11 @@ setTool("erase");
       page.drawText('MD-0789-CCLS-Q-0',{x:bx+24,y:y-10,size:6.5,font:fontB,color:BLACK});
       const numStr=String(num||'').trim();
       if(numStr){
-        // ICM: N° = verbale dell'ultimo prelievo consegnato. Può essere un codice lungo
-        // (es. SL04-CZ-00085): si riduce il corpo quanto basta per restare nel riquadro.
-        page.drawText('N\u00b0',{x:bx,y:y-42,size:6.5,font:fontR,color:BLACK});
-        let ns=9; const maxW=rBoxW-8-16;
-        while(ns>6 && fontB.widthOfTextAtSize(numStr,ns)>maxW) ns-=0.5;
-        page.drawText(numStr,{x:bx+16,y:y-42,size:ns,font:fontB,color:BLACK});
-        page.drawText('del '+fmtD2(dataC),{x:bx,y:y-54,size:7.5,font:fontR,color:BLACK});
+        // ICM: progressivo del verbale di consegna (numero breve)
+        page.drawText('N\u00b0',{x:bx,y:y-44,size:6.5,font:fontR,color:BLACK});
+        page.drawText(numStr,{x:bx+16,y:y-44,size:9,font:fontB,color:BLACK});
+        page.drawText('del',{x:bx+55,y:y-44,size:6.5,font:fontR,color:BLACK});
+        page.drawText(fmtD2(dataC),{x:bx+69,y:y-44,size:8,font:fontB,color:BLACK});
       } else {
         // DL: nessun numero di verbale, solo la data della consegna.
         page.drawText('del '+fmtD2(dataC),{x:bx,y:y-44,size:8,font:fontB,color:BLACK});
@@ -35364,61 +35350,85 @@ setTool("erase");
     return await doc.save();
   }
 
-  /* ── Verbale di consegna cubetti: numero progressivo, due sole serie ── */
-  // ICM (7 e 28 giorni insieme, una sola serie) · DL (la sua). "canale" arriva come
-  // 7, 28 o 'dl': qui si riduce alla chiave giusta, altrimenti 7 e 28 avrebbero
-  // finito per avere due contatori separati invece di uno solo come previsto.
+  /* ── Verbale di consegna cubetti: progressivo PROPRIO, indipendente dai prelievi ── */
+  // Non ha nulla a che vedere con la numerazione dei verbali di prelievo del registro:
+  // è la numerazione dei documenti di consegna, che avanza per conto suo.
+  // È COMUNE: una sola serie per tutti i laboratori (ICM e DL restano separate).
+  // Con più laboratori nella stessa consegna i documenti proseguono in sequenza: 128, 129, ...
   function serieConsegna(canale){ return canale==='dl' ? 'dl' : 'icm'; }
   function prossimoNumConsegna(canale){
-    const k=serieConsegna(canale);
-    const n=((db.consNum||{})[k]||0)+1;
-    return String(n).padStart(4,'0');
+    return String(((db.consNum||{})[serieConsegna(canale)]||0)+1);
   }
-  // Se il tecnico ha scritto un numero a mano lo si usa così com'è (normalizzato a 4 cifre),
-  // e il contatore avanza almeno fino a lì, per non riproporre più lo stesso in automatico.
-  async function assegnaNumConsegna(canale, numManuale){
+  // Registra il numero usato: il contatore avanza almeno fino a lì, così in automatico
+  // non viene mai riproposto uno già emesso.
+  function registraNumConsegna(canale, numUsato){
     const k=serieConsegna(canale);
-    db.consNum=Object.assign({icm:0,dl:0}, db.consNum||{});
-    let n;
-    if(numManuale!=null && numManuale!==''){
-      const m=parseInt(String(numManuale).replace(/\D/g,''),10);
-      n = isNaN(m) ? (db.consNum[k]||0)+1 : m;
-      db.consNum[k]=Math.max(db.consNum[k]||0, n);
-    } else {
-      db.consNum[k]=(db.consNum[k]||0)+1;
-      n=db.consNum[k];
-    }
+    db.consNum=Object.assign({}, db.consNum||{});
+    const m=parseInt(String(numUsato).replace(/\D/g,''),10);
+    if(!isNaN(m)) db.consNum[k]=Math.max(db.consNum[k]||0, m);
     save(); pushConfig();
-    return String(n).padStart(4,'0');
   }
-  // Suggerisce il numero di verbale del documento:
-  //  · ICM → il verbale dell'ultimo prelievo consegnato (richiamo al prelievo, non un contatore a parte)
-  //  · DL  → niente: la Direzione Lavori non usa il numero di verbale
-  // Il suggerimento segue la selezione, ma se il tecnico scrive un valore a mano quello resta.
+  // I campi del N° verbale: uno per laboratorio presente nella selezione, col suo nome,
+  // così si vede e si può correggere il numero di ciascun documento. I numeri proposti
+  // seguono però la SERIE COMUNE: primo lab 128, secondo 129, e così via.
+  function labSlug(l){ return 'L'+String(l||'').replace(/[^\w]+/g,'_'); }
+  function labDellaSelezione(){
+    const out=[]; righeConsegnaCorrenti().forEach(r=>{ const l=(r.e.lab||'—'); if(out.indexOf(l)<0) out.push(l); });
+    return out.sort();
+  }
   function aggiornaNumeroVerbale(){
+    const labs=labDellaSelezione();
+    aggiornaNomiLaboratorio(labs, labs.length<=1);
     const el=$('reg-cons-num'); if(!el) return;
-    if(_cMode==='dl'){ return; }
-    const sugg = ultimoVerbalePrelievo(righeConsegnaCorrenti()) || '';
-    const attuale = el.value.trim();
+    if(_cMode==='dl'){ return; }                 // la DL non usa il numero di verbale
+    const sugg=prossimoNumConsegna(canaleCons());  // riparte sempre dall'ultimo progressivo usato
+    const attuale=el.value.trim();
     if(!attuale || attuale===(_consNumAuto||'')){ el.value=sugg; _consNumAuto=sugg; }
   }
+  // Un campo NOME per ogni laboratorio: con due laboratori insieme, ciascuno ha la sua
+  // persona che firma il verbale. I nomi già scritti si conservano quando si ridisegna.
+  function aggiornaNomiLaboratorio(labs, unico){
+    const box=$('reg-cons-lab-nome-box'); if(!box) return;
+    const prec={}; (labs||[]).forEach(l=>{ const el=$('reg-cons-lab-nome__'+labSlug(l)); if(el) prec[l]=el.value; });
+    box.innerHTML = (labs||[]).map(l=>
+      '<span style="display:inline-flex;align-items:center;gap:6px;">'
+      + (unico?'':'<span style="font-size:11px;color:var(--muted);white-space:nowrap;">'+esc(l)+'</span>')
+      + '<input type="text" id="reg-cons-lab-nome__'+labSlug(l)+'" class="reg-mtools-sel reg-cons-nome" '
+      + 'value="'+esc(prec[l]||_consLabNome[l]||'')+'" placeholder="es. MARIO ROSSI" '
+      + 'title="Chi firma per '+esc(l)+'"/></span>'
+    ).join('');
+    // memorizza quanto scritto, così non si perde cambiando selezione o riaprendo
+    (labs||[]).forEach(l=>{ const el=$('reg-cons-lab-nome__'+labSlug(l));
+      if(el) el.oninput=()=>{ _consLabNome[l]=el.value; }; });
+  }
+  function nomeLaboratorio(lab){
+    const el=$('reg-cons-lab-nome__'+labSlug(lab));
+    return (el ? el.value.trim() : String(_consLabNome[lab]||'').trim());
+  }
   // Genera e scarica il verbale di consegna cubetti in PDF, stesso stile del verbale CLS.
-  // Numero del documento:
-  //  · ICM → richiama il verbale dell'ultimo prelievo consegnato di quel laboratorio
-  //          (se il tecnico ha scritto un valore a mano, vale quello, uguale per tutti i lab).
+  // Numero del documento: progressivo PROPRIO dei verbali di consegna, indipendente dalla
+  // numerazione dei prelievi del registro, e UNICO (una sola serie per ICM, una per DL).
+  //  · ICM → si parte dal numero indicato (che riprende sempre dall'ultimo usato) e, con
+  //          più laboratori, i documenti proseguono in sequenza: 134, 135, ...
+  //          L'ultimo numero emesso viene registrato, così non si ripete mai.
   //  · DL  → nessun numero: la Direzione Lavori non ne ha bisogno.
-  // Con più laboratori nella stessa consegna si produce un documento per laboratorio.
-  async function generaEScaricaVerbaleConsegna(canale, dataC, righe, numManuale){
+  async function generaEScaricaVerbaleConsegna(canale, dataC, righe, numIniziale){
     if(typeof PDFLib==='undefined') throw new Error('pdf-lib non caricato. Ricarica la pagina.');
     const {PDFDocument,rgb,StandardFonts}=PDFLib;
     const perLab={};
     righe.forEach(r=>{ const l=r.e.lab||'—'; (perLab[l]=perLab[l]||[]).push(r); });
-    const manuale = (numManuale!=null && String(numManuale).trim()!=='') ? String(numManuale).trim() : '';
+    let base=parseInt(String(numIniziale==null?'':numIniziale).replace(/\D/g,''),10);
+    if(isNaN(base)) base=parseInt(prossimoNumConsegna(canale),10)||1;
+    let offset=0;
     for(const lab of Object.keys(perLab)){
-      // DL: nessun numero. ICM: valore scritto a mano, oppure il verbale dell'ultimo prelievo consegnato di questo lab.
-      const num = (canale==='dl') ? '' : (manuale || ultimoVerbalePrelievo(perLab[lab]) || '');
+      let num='';
+      if(canale!=='dl'){
+        num=String(base+offset);      // un numero per documento, in sequenza
+        offset++;
+        registraNumConsegna(canale,num);
+      }
       const icmNome=($('reg-cons-icm-nome')&&$('reg-cons-icm-nome').value.trim())||'FERRARA DANIELE';
-      const labNome=($('reg-cons-lab-nome')&&$('reg-cons-lab-nome').value.trim())||'';
+      const labNome=nomeLaboratorio(lab);   // chi firma per QUESTO laboratorio
       const luogo=($('reg-cons-luogo')&&$('reg-cons-luogo').value.trim())||'';
       const bytes=await buildVerbaleConsegnaPDF(PDFDocument,rgb,StandardFonts,{
         num, canale, dataC, laboratorio:lab, righe:perLab[lab], icmNome, labNome, luogo
@@ -35441,7 +35451,16 @@ setTool("erase");
     const out=[];
     rows.forEach(e=>{
       if(!isPrelievo(e)) return;
+      const r=ripartizione(e);
       [28,7].forEach(gg=>{
+        // Solo le prove per cui il prelievo ha DAVVERO dei cubetti da provare:
+        //   7 gg  → cubetti ICM a 7 giorni
+        //   28 gg → cubetti ICM a 28 giorni oppure i cubetti DL
+        const nIcm=(gg===7?r.icm7:r.icm28), nDl=(gg===28?r.dl:0);
+        if(!nIcm && !nDl) return;
+        // COERENZA CON LE CONSEGNE: se i cubetti di questa prova sono GIÀ stati consegnati,
+        // la scadenza è a posto e non va più elencata — resta solo ciò che va ancora dato.
+        if(tuttoConsegnato(e,gg)) return;
         const m=maturDate(e,gg); if(!m) return;
         const iso=_isoOf(m);
         const lun=mondayOf(iso);
@@ -36204,13 +36223,6 @@ setTool("erase");
       // CERCA.X di altri fogli continuano a trovarlo. La data è dentro, in prima riga.
       exportRows(rows,'Registro_'+tag+'.xlsx');
     };
-    if($('reg-scad-go')) $('reg-scad-go').onclick=()=>{
-      const all=(curLab==='__ALL__');
-      const rows= all ? db.entries.slice() : db.entries.filter(e=>(e.lab||'')===curLab);
-      if(!rows.length){ toast('Nessun dato disponibile.'); return; }
-      const tag=(all?'CLS':curLab).replace(/[^\w]+/g,'_');
-      exportScadenze(rows,'Scadenze_prove_'+tag+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
-    };
     applyViewerUI();
     $('reg-imp-btn').onclick=()=>$('reg-imp-file').click();
     $('reg-imp-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)importFile(f); ev.target.value=''; };
@@ -36266,7 +36278,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 26.3';
+  window.APP_VERSION = 'Versione 27.3';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
