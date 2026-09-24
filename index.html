@@ -25516,7 +25516,12 @@ async function sbFetch(path,opts={}){
   return txt?JSON.parse(txt):[];
 }
 
-async function sbGetUsers(){
+// opts.soloCloud = true → NON si ripiega mai sulla copia locale.
+// La copia locale serve solo a mostrare l'elenco quando il database non risponde:
+// usarla per far entrare qualcuno permetterebbe a un utente cancellato di accedere
+// da un dispositivo che ha ancora la vecchia copia. Per l'accesso vale solo il database.
+async function sbGetUsers(opts){
+  const soloCloud = !!(opts && opts.soloCloud);
   try{
     const rows=await sbFetch('utenti?select=*&order=username');
     const mapped=rows.map(r=>({
@@ -25527,7 +25532,8 @@ async function sbGetUsers(){
     try{localStorage.setItem('mq_users_cache',JSON.stringify(mapped));}catch(e){}
     return mapped;
   }catch(e){
-    console.warn('Supabase non raggiungibile, uso cache locale',e);
+    console.warn('Supabase non raggiungibile',e);
+    if(soloCloud) throw e;                 // accesso: nessun ripiego, si blocca
     return JSON.parse(localStorage.getItem('mq_users_cache')||'[]');
   }
 }
@@ -25558,6 +25564,8 @@ async function sbUpdateUser(username,patch){
 async function sbDeleteUser(username){
   try{
     await sbFetch('utenti?username=eq.'+encodeURIComponent(username),{method:'DELETE'});
+    // via anche la copia locale: non deve restare traccia dell'utente cancellato
+    try{localStorage.removeItem('mq_users_cache');}catch(_){}
   }catch(e){console.warn('sbDeleteUser:',e);}
 }
 
@@ -25644,9 +25652,17 @@ async function doLogin(){
   const password=document.getElementById('login-pass').value||'';
   const errEl=document.getElementById('login-err');
   if(!username||!password){errEl.textContent='Compila username e password.';errEl.classList.add('show');return;}
-  // Tutti gli accessi sono gestiti dal database (nessun accesso scritto nel codice)
+  // Tutti gli accessi sono gestiti dal database (nessun accesso scritto nel codice,
+  // e nessun ripiego sulla copia locale: un utente cancellato non deve poter entrare).
   let users=[];
-  try{users=await sbGetUsers();}catch(e){console.warn('Supabase:',e);}
+  try{
+    users=await sbGetUsers({soloCloud:true});
+  }catch(e){
+    console.warn('Supabase:',e);
+    errEl.textContent='Database non raggiungibile: impossibile accedere. Controlla la connessione.';
+    errEl.classList.add('show');
+    return;
+  }
   const all=[...users];
   const user=all.find(u=>u.username.toLowerCase()===username.toLowerCase()&&u.password===password);
   if(!user){errEl.textContent='Username o password errati.';errEl.classList.add('show');return;}
@@ -25787,20 +25803,45 @@ document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key===
 document.getElementById('btn-otp-cancel').addEventListener('click',resetLoginForm);
 
 window.addEventListener('DOMContentLoaded',()=>{
-  // Controlla sessione attiva (valida 2 ore)
-  try{
-    const raw=localStorage.getItem('mq_session');
-    if(raw){
-      const s=JSON.parse(raw);
-      if(s&&s.expires&&Date.now()<s.expires&&s.username){
-        loginAs(s);
-        return;
-      } else {
-        localStorage.removeItem('mq_session');
+  // Sessione salvata: si riapre solo se l'utente ESISTE ANCORA ed è attivo.
+  // Senza questo controllo, un utente cancellato continuava a entrare dal proprio
+  // dispositivo fino alla scadenza della sessione, perché non si chiedeva più nulla
+  // al database. Ora la sessione viene sempre riverificata all'apertura.
+  (async ()=>{
+    try{
+      const raw=localStorage.getItem('mq_session');
+      if(raw){
+        const s=JSON.parse(raw);
+        if(s&&s.expires&&Date.now()<s.expires&&s.username){
+          let attuale=null, verificato=false;
+          try{
+            const users=await sbGetUsers({soloCloud:true});   // elenco vero, mai la copia locale
+            if(Array.isArray(users) && users.length){
+              verificato=true;
+              attuale=users.find(u=>String(u.username||'').toLowerCase()===String(s.username).toLowerCase());
+            }
+          }catch(e){ console.warn('verifica sessione:',e); }
+          if(verificato){
+            // l'utente non c'è più, è disattivato o la password è cambiata: si esce
+            if(!attuale || attuale.active===false || (attuale.password && s.password && attuale.password!==s.password)){
+              localStorage.removeItem('mq_session');
+              try{localStorage.removeItem('mq_users_cache');}catch(_){}
+              setTimeout(()=>tgGet('deleteWebhook',{drop_pending_updates:false}),500);
+              return;                                   // resta la schermata di accesso
+            }
+            // ruolo aggiornato all'ultimo valore sul database
+            s.role=attuale.role||s.role; s.active=attuale.active;
+          }
+          loginAs(s);
+          setTimeout(()=>tgGet('deleteWebhook',{drop_pending_updates:false}),500);
+          return;
+        } else {
+          localStorage.removeItem('mq_session');
+        }
       }
-    }
-  }catch(e){}
-  setTimeout(()=>tgGet('deleteWebhook',{drop_pending_updates:false}),500);
+    }catch(e){}
+    setTimeout(()=>tgGet('deleteWebhook',{drop_pending_updates:false}),500);
+  })();
 });
 
 
@@ -35111,6 +35152,7 @@ setTool("erase");
       catch(err){ console.warn('verbale consegna',err); toast('Consegna registrata, ma il verbale non è stato generato: '+((err&&err.message)||err)); }
     }
     _cSel={}; refreshAll(); renderCons();
+    if(vuoiDoc) forzaNumeroVerbale();   // il campo passa al numero successivo a quelli appena emessi
     toast(righe.length+' prelievi segnati come consegnati.'+(vuoiDoc?' Verbale scaricato.':''));
     if(typeof addLog==='function') addLog('Consegna '+nome+': '+righe.length+' prelievi al '+fmtIt(d));
   }
@@ -35359,13 +35401,15 @@ setTool("erase");
   function prossimoNumConsegna(canale){
     return String(((db.consNum||{})[serieConsegna(canale)]||0)+1);
   }
-  // Registra il numero usato: il contatore avanza almeno fino a lì, così in automatico
-  // non viene mai riproposto uno già emesso.
-  function registraNumConsegna(canale, numUsato){
+  // Registra il numero usato come ULTIMO emesso, così il prossimo è quello dopo.
+  // Se il numero è stato scritto a mano (esatto=true) comanda quello, anche se è più
+  // basso del contatore: la numerazione segue sempre quello che decide il tecnico.
+  // In automatico il contatore non torna mai indietro.
+  function registraNumConsegna(canale, numUsato, esatto){
     const k=serieConsegna(canale);
     db.consNum=Object.assign({}, db.consNum||{});
     const m=parseInt(String(numUsato).replace(/\D/g,''),10);
-    if(!isNaN(m)) db.consNum[k]=Math.max(db.consNum[k]||0, m);
+    if(!isNaN(m)) db.consNum[k] = esatto ? m : Math.max(db.consNum[k]||0, m);
     save(); pushConfig();
   }
   // I campi del N° verbale: uno per laboratorio presente nella selezione, col suo nome,
@@ -35375,6 +35419,15 @@ setTool("erase");
   function labDellaSelezione(){
     const out=[]; righeConsegnaCorrenti().forEach(r=>{ const l=(r.e.lab||'—'); if(out.indexOf(l)<0) out.push(l); });
     return out.sort();
+  }
+  // Porta il campo al PROSSIMO numero, anche se il tecnico ne aveva scritto uno a mano.
+  // Serve dopo la generazione: si riparte sempre da dove si è arrivati, mai fermi sul
+  // numero appena usato. (Senza questo, dopo aver scritto 131 il campo restava su 131.)
+  function forzaNumeroVerbale(){
+    const el=$('reg-cons-num'); if(!el) return;
+    if(_cMode==='dl'){ el.value=''; _consNumAuto=''; return; }
+    const sugg=prossimoNumConsegna(canaleCons());
+    el.value=sugg; _consNumAuto=sugg;
   }
   function aggiornaNumeroVerbale(){
     const labs=labDellaSelezione();
@@ -35418,6 +35471,7 @@ setTool("erase");
     const perLab={};
     righe.forEach(r=>{ const l=r.e.lab||'—'; (perLab[l]=perLab[l]||[]).push(r); });
     let base=parseInt(String(numIniziale==null?'':numIniziale).replace(/\D/g,''),10);
+    const scrittoAMano=!isNaN(base);            // il numero l'ha deciso il tecnico: comanda quello
     if(isNaN(base)) base=parseInt(prossimoNumConsegna(canale),10)||1;
     let offset=0;
     for(const lab of Object.keys(perLab)){
@@ -35425,7 +35479,7 @@ setTool("erase");
       if(canale!=='dl'){
         num=String(base+offset);      // un numero per documento, in sequenza
         offset++;
-        registraNumConsegna(canale,num);
+        registraNumConsegna(canale,num,scrittoAMano);
       }
       const icmNome=($('reg-cons-icm-nome')&&$('reg-cons-icm-nome').value.trim())||'FERRARA DANIELE';
       const labNome=nomeLaboratorio(lab);   // chi firma per QUESTO laboratorio
@@ -36278,7 +36332,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 27.3';
+  window.APP_VERSION = 'Versione 27.5';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
