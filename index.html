@@ -37757,7 +37757,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 31.5';
+  window.APP_VERSION = 'Versione 31.6';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
@@ -38301,18 +38301,77 @@ setTool("erase");
   }
   // caricamento: "resumable" (va bene anche per file grandi) con barra di avanzamento
   function caricaFile(files){
-    files = [].slice.call(files || []); if (!files.length || !st.cur) return;
-    var dest = st.cur, esistenti = {}; st.voci.forEach(function(v){ if (v.mimeType !== CARTELLA) esistenti[v.name] = v; });
-    var gia = files.filter(function(f){ return esistenti[f.name]; });
-    if (flOn()) {   // flusso firme: prima si sceglie lo stato di ogni file
-      return sceltaStato(files, esistenti).then(function(scelte){ if (scelte) avviaCoda(scelte, dest); });
+    files = [].slice.call(files || []);
+    caricaVoci(files.map(function(f){ return { file: f, path: f.webkitRelativePath || f.name }; }));
+  }
+  // file e cartelle (con sottocartelle): stessa struttura dentro la cartella aperta. Cartelle con lo stesso nome già presenti vengono riusate.
+  var SISTEMA = /(^|\/)(\.DS_Store|Thumbs\.db|desktop\.ini|\._[^\/]*|~\$[^\/]*)$/i;
+  function cartellaDi(p){ var i = p.lastIndexOf('/'); return i < 0 ? '' : p.slice(0, i); }
+  function caricaVoci(voci){
+    voci = (voci || []).filter(function(v){ return v && v.file && !SISTEMA.test(v.path); });
+    if (!voci.length || !st.cur) return;
+    var root = st.cur, dirs = {};
+    voci.forEach(function(v){ var d = cartellaDi(v.path); while (d) { dirs[d] = 1; d = cartellaDi(d); } });
+    var elencoDirs = Object.keys(dirs).sort(function(a, b){ return a.split('/').length - b.split('/').length || a.localeCompare(b); });
+    if (elencoDirs.length && !confirm('Caricare ' + voci.length + ' file in ' + elencoDirs.length + ' cartell' + (elencoDirs.length === 1 ? 'a' : 'e') + ' dentro «' + ((st.percorso[st.percorso.length - 1] || {}).nome || '') + '»?\n\nLa struttura delle cartelle viene mantenuta. Se una cartella con lo stesso nome c\'è già, i file finiscono dentro quella.')) return;
+    var idDi = { '': root }, figli = {}; figli[root] = st.voci;
+    var nomeDi = function(d){ var i = d.lastIndexOf('/'); return i < 0 ? d : d.slice(i + 1); };
+    // 1) cerco le cartelle che esistono già (senza creare nulla: se poi si annulla, Drive resta com'era)
+    var cerca = elencoDirs.reduce(function(pr, d){ return pr.then(function(){
+      var pid = idDi[cartellaDi(d)]; if (!pid) { idDi[d] = null; return; }
+      return (figli[pid] ? Promise.resolve(figli[pid]) : elenco(pid).then(function(l){ figli[pid] = l; return l; })).then(function(l){
+        var c = l.find(function(x){ return x.mimeType === CARTELLA && x.name === nomeDi(d); }); idDi[d] = c ? c.id : null;
+        if (c && !figli[c.id]) return elenco(c.id).then(function(l2){ figli[c.id] = l2; });
+      });
+    }); }, Promise.resolve());
+    if (elencoDirs.length) avviso('Controllo le cartelle già presenti…');
+    cerca.then(function(){
+      var items = voci.map(function(v){
+        var d = cartellaDi(v.path), pid = idDi[d], es = null;
+        if (pid && figli[pid]) es = figli[pid].find(function(x){ return x.mimeType !== CARTELLA && x.name === v.file.name; }) || null;
+        return { file: v.file, label: v.path, es: es, dir: d };
+      });
+      var scelta;
+      if (flOn()) scelta = sceltaStato(items);
+      else {
+        var gia = items.filter(function(x){ return x.es; }), sostituisci = false;
+        if (gia.length) sostituisci = confirm(gia.length === 1 ? 'Il file "' + gia[0].label + '" c\'è già.\n\nOK = sostituiscilo con la nuova versione (Drive tiene la versione precedente)\nAnnulla = caricalo come file in più' : gia.length + ' file ci sono già.\n\nOK = sostituiscili con la nuova versione (Drive tiene le versioni precedenti)\nAnnulla = caricali come file in più');
+        scelta = Promise.resolve(items.map(function(x){ return { file: x.file, label: x.label, dir: x.dir, sost: sostituisci && x.es ? x.es.id : null }; }));
+      }
+      return scelta.then(function(scelte){
+        if (!scelte) return;
+        // 2) creo le cartelle che mancano, dalla più esterna alla più interna
+        var manca = elencoDirs.filter(function(d){ return !idDi[d]; });
+        if (manca.length) avviso('Creo ' + manca.length + ' cartell' + (manca.length === 1 ? 'a' : 'e') + '…');
+        return manca.reduce(function(pr, d){ return pr.then(function(){
+          var pid = idDi[cartellaDi(d)];
+          return (st.srv ? srv('crea', { parent: pid, nome: nomeDi(d) }) : chiama('POST', API + '/files?' + DR + '&fields=id', { name: nomeDi(d), mimeType: CARTELLA, parents: [pid] })).then(function(j){ idDi[d] = j.id; });
+        }); }, Promise.resolve()).then(function(){
+          scelte.forEach(function(x){ x.dest = idDi[x.dir || ''] || root; });
+          avviaCoda(scelte, root);
+        });
+      });
+    }).catch(function(e){ avviso(e.message, 'error'); aggiorna(); });
+  }
+  // cartelle trascinate dal PC: leggo tutto il contenuto, sottocartelle comprese
+  function leggiTrascinati(dt){
+    var entries = [].slice.call(dt.items || []).map(function(it){ return it.webkitGetAsEntry ? it.webkitGetAsEntry() : null; }).filter(Boolean);
+    if (!entries.some(function(en){ return en.isDirectory; })) return null;
+    var out = [];
+    function visita(en){
+      return new Promise(function(ok){
+        if (en.isFile) en.file(function(f){ out.push({ file: f, path: en.fullPath.replace(/^\//, '') }); ok(); }, function(){ ok(); });
+        else if (en.isDirectory) {
+          var r = en.createReader(), tutte = [];
+          var leggi = function(){ r.readEntries(function(b){ if (!b.length) Promise.all(tutte.map(visita)).then(ok); else { tutte = tutte.concat([].slice.call(b)); leggi(); } }, function(){ ok(); }); };
+          leggi();
+        } else ok();
+      });
     }
-    var sostituisci = false;
-    if (gia.length) sostituisci = confirm(gia.length === 1 ? 'Il file "' + gia[0].name + '" c\'è già in questa cartella.\n\nOK = sostituiscilo con la nuova versione (Drive tiene la versione precedente)\nAnnulla = caricalo come file in più' : gia.length + ' file ci sono già in questa cartella.\n\nOK = sostituiscili con la nuova versione (Drive tiene le versioni precedenti)\nAnnulla = caricali come file in più');
-    avviaCoda(files.map(function(f){ return { file: f, sost: sostituisci && esistenti[f.name] ? esistenti[f.name].id : null }; }), dest);
+    return Promise.all(entries.map(visita)).then(function(){ return out; });
   }
   function avviaCoda(scelte, dest){
-    var coda = scelte.map(function(x){ return { file: x.file, nome: x.file.name, pct: 0, stato: 'attesa', sost: x.sost || null, st: x.st || null }; });
+    var coda = scelte.map(function(x){ return { file: x.file, nome: x.label || x.file.name, pct: 0, stato: 'attesa', sost: x.sost || null, st: x.st || null, dest: x.dest || dest }; });
     st.carica = st.carica.filter(function(c){ return c.stato !== 'ok'; }).concat(coda); disegnaCoda();
     var i = 0;
     function prossimo(){
@@ -38320,7 +38379,7 @@ setTool("erase");
       var c = coda[i++]; c.stato = 'su'; disegnaCoda();
       if (st.srv) {
         var fl = c.st ? FLAG[c.st] : {};
-        srv('carica', { parent: dest, nome: c.file.name, tipo: c.file.type || 'application/octet-stream', dim: c.file.size, sost: c.sost || '', icm: fl.icm, dl: fl.dl }).then(function(j){
+        srv('carica', { parent: c.dest, nome: c.file.name, tipo: c.file.type || 'application/octet-stream', dim: c.file.size, sost: c.sost || '', icm: fl.icm, dl: fl.dl }).then(function(j){
           return new Promise(function(ok, ko){
             var x = new XMLHttpRequest(); x.open('PUT', j.location);
             x.upload.onprogress = function(e){ if (e.lengthComputable) { c.pct = Math.round(e.loaded / e.total * 100); disegnaCoda(); } };
@@ -38344,7 +38403,7 @@ setTool("erase");
       (st.token && st.scade > Date.now() + 60000 ? Promise.resolve() : chiediToken(true)).then(function(){
         var u = c.sost ? UP + '/files/' + c.sost + '?uploadType=resumable&' + DR : UP + '/files?uploadType=resumable&' + DR;
         return fetch(u, { method: c.sost ? 'PATCH' : 'POST', headers: { Authorization: 'Bearer ' + st.token, 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': c.file.type || 'application/octet-stream' },
-          body: JSON.stringify(c.sost ? {} : { name: c.file.name, parents: [dest] }) });
+          body: JSON.stringify(c.sost ? {} : { name: c.file.name, parents: [c.dest] }) });
       }).then(function(r){
         if (!r.ok) return r.json().catch(function(){ return {}; }).then(function(j){ throw new Error(spiega(r.status, j)); });
         var loc = r.headers.get('Location') || r.headers.get('location'); if (!loc) throw new Error('Google non ha risposto come previsto.');
@@ -38365,6 +38424,7 @@ setTool("erase");
   var STATI = { bozza: 'Bozza', icm: 'Firmato ICM', dl: 'Firmato DL', completo: 'Completo' };
   var ATTESA = { bozza: 'firme ICM e DL', icm: 'firma DL', dl: 'firma ICM', completo: '' };
   var FLAG = { bozza: { icm: false, dl: false }, icm: { icm: true, dl: false }, dl: { icm: false, dl: true }, completo: { icm: true, dl: true } };
+  var CARTELLE_OK = (function(){ try { var i = document.createElement('input'); return 'webkitdirectory' in i && !/iPhone|iPad|iPod/.test(navigator.userAgent); } catch(e){ return false; } })();
   function flOn(){ return !!(st.srv && st.flusso && st.flusso.attivo); }
   function statoF(f){ var a = f.appProperties || f || {}; var i = a.mq_icm === '1', d = a.mq_dl === '1'; return i && d ? 'completo' : i ? 'icm' : d ? 'dl' : 'bozza'; }
   function dataCorta(iso){ if (!iso) return ''; var d = new Date(iso); if (isNaN(d)) return ''; var p = function(x){ return String(x).padStart(2, '0'); }; return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(2); }
@@ -38413,7 +38473,8 @@ setTool("erase");
       + '</div>';
   }
   // finestra di caricamento: stato obbligatorio per ogni file (anche n file insieme)
-  function sceltaStato(files, esistenti){
+  function sceltaStato(items){
+    var files = items.map(function(x){ return x.file; });
     return new Promise(function(fine){
       var adm = isAdmin(), opz = adm ? ['bozza', 'icm', 'dl', 'completo'] : ['bozza', 'dl'];
       var sel = function(cls, val){ return '<select class="' + cls + '">' + (cls === 'ix-st-tutti' ? '<option value="">— scegli —</option>' : '<option value="">— scegli —</option>') + opz.map(function(o){ return '<option value="' + o + '"' + (val === o ? ' selected' : '') + '>' + STATI[o] + '</option>'; }).join('') + '</select>'; };
@@ -38422,8 +38483,8 @@ setTool("erase");
         + '<p class="ix-nota">Il flusso firme è attivo in questa cartella: ogni file deve avere uno stato.' + (adm ? '' : ' La firma ICM la mette ICM; una nuova versione riparte senza firma ICM.') + '</p>'
         + '<label class="ix-st-all">Stato per tutti ' + sel('ix-st-tutti', '') + '</label>'
         + '<div class="ix-mod-list ix-st-list">' + files.map(function(f, i){
-            var es = esistenti[f.name];
-            return '<div class="ix-st-riga" data-i="' + i + '"><span class="ix-st-n" title="' + esc(f.name) + '">' + icona({ name: f.name, mimeType: f.type }) + ' ' + esc(f.name) + '<small>' + dimensione(f.size) + (es ? ' · <b>esiste già</b> (' + STATI[statoF(es)] + ')' : '') + '</small></span>'
+            var es = items[i].es, lab = items[i].label || f.name;
+            return '<div class="ix-st-riga" data-i="' + i + '"><span class="ix-st-n" title="' + esc(lab) + '">' + icona({ name: f.name, mimeType: f.type }) + ' ' + esc(lab) + '<small>' + dimensione(f.size) + (es ? ' · <b>esiste già</b> (' + STATI[statoF(es)] + ')' : '') + '</small></span>'
               + (es ? '<label class="ix-st-sost"><input type="checkbox" checked> nuova versione</label>' : '<span></span>') + sel('ix-st-sel', '') + '</div>';
           }).join('') + '</div>'
         + '<div class="ix-err" id="ix-st-err" hidden></div>'
@@ -38440,7 +38501,8 @@ setTool("erase");
         box.querySelectorAll('.ix-st-riga').forEach(function(r){
           var f = files[+r.dataset.i], s = r.querySelector('.ix-st-sel'), cb = r.querySelector('.ix-st-sost input');
           if (!s.value) { mancano++; s.classList.add('manca'); }
-          out.push({ file: f, st: s.value, sost: cb && cb.checked ? esistenti[f.name].id : null });
+          var it = items[+r.dataset.i];
+          out.push({ file: f, label: it.label, dir: it.dir, dest: it.dest, st: s.value, sost: cb && cb.checked && it.es ? it.es.id : null });
         });
         if (mancano) { var e = box.querySelector('#ix-st-err'); e.hidden = false; e.textContent = 'Scegli lo stato per ' + (mancano === 1 ? 'il file evidenziato' : 'i ' + mancano + ' file evidenziati') + ' (o usa "Stato per tutti").'; return; }
         chiudi(out);
@@ -38661,8 +38723,8 @@ setTool("erase");
       var v = ordinate(), dove = st.percorso[st.percorso.length - 1] || {};
       box.innerHTML = '<div class="ix-bar">'
         + '<nav class="ix-path" aria-label="Percorso">' + st.percorso.map(function(p, i){ return '<button class="ix-bc" data-i="' + i + '" data-drop="' + esc(p.id) + '">' + (i === 0 ? '🏠 ' : '') + esc(p.nome) + '</button>'; }).join('<span class="ix-sep">›</span>') + '</nav>'
-        + '<div class="ix-azioni"><button class="ix-btn pri" id="ix-up">⬆ Carica file</button><button class="ix-btn" id="ix-new">＋ Nuova cartella</button><button class="ix-btn" id="ix-ref" title="Aggiorna">⟳</button>' + (adm ? '<a class="ix-btn" id="ix-drive" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/' + esc(st.cur) + '">Apri in Drive ↗</a>' : '') + '</div>'
-        + '<input type="file" id="ix-file" multiple hidden></div>'
+        + '<div class="ix-azioni"><button class="ix-btn pri" id="ix-up">⬆ Carica file</button>' + (CARTELLE_OK ? '<button class="ix-btn" id="ix-updir">📁 Carica cartella</button>' : '') + '<button class="ix-btn" id="ix-new">＋ Nuova cartella</button><button class="ix-btn" id="ix-ref" title="Aggiorna">⟳</button>' + (adm ? '<a class="ix-btn" id="ix-drive" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/' + esc(st.cur) + '">Apri in Drive ↗</a>' : '') + '</div>'
+        + '<input type="file" id="ix-file" multiple hidden>' + (CARTELLE_OK ? '<input type="file" id="ix-dir" webkitdirectory multiple hidden>' : '') + '</div>'
         + '<div class="ix-tools"><input id="ix-cerca" type="search" placeholder="Cerca in questa cartella…" value="' + esc(st.filtro) + '"><label class="ix-ordl">Ordina <select id="ix-ord"><option value="nome"' + (st.ord === 'nome' ? ' selected' : '') + '>per nome</option><option value="data"' + (st.ord === 'data' ? ' selected' : '') + '>più recenti</option></select></label></div>'
         + (st.errore ? '<div class="ix-err">' + esc(st.errore) + '</div>' : '')
         + '<div id="ix-coda"></div>'
@@ -38680,7 +38742,7 @@ setTool("erase");
               + (cap.canMoveItemWithinDrive === false ? '' : '<button class="ix-ib" data-act="sposta" title="Sposta in…" aria-label="Sposta">⇄</button>')
               + (cap.canTrash === false ? '' : '<button class="ix-ib del" data-act="elimina" title="Sposta nel cestino" aria-label="Elimina">🗑</button>') + '</span></div>';
           }).join('') : '<div class="ix-vuoto">' + (st.filtro ? 'Nessun elemento corrisponde alla ricerca.' : 'Cartella vuota: trascina qui i file o usa "Carica file".') + '</div>')) + '</div>'
-        + '<p class="ix-nota">Trascina i file dal PC sulla lista per caricarli; trascina un elemento su una cartella (o sul percorso in alto) per spostarlo. "Elimina" sposta nel cestino di Drive: si recupera per 30 giorni.</p>'
+        + '<p class="ix-nota">Trascina file o intere cartelle dal PC sulla lista per caricarli; trascina un elemento su una cartella (o sul percorso in alto) per spostarlo. "Elimina" sposta nel cestino di Drive: si recupera per 30 giorni.</p>'
         + impost;
       disegnaCoda();
     }
@@ -38699,6 +38761,8 @@ setTool("erase");
     };
     if ((b = $('ix-esci'))) b.onclick = esci;
     if ((b = $('ix-up'))) b.onclick = function(){ $('ix-file').click(); };
+    if ((b = $('ix-updir'))) b.onclick = function(){ $('ix-dir').click(); };
+    if ((b = $('ix-dir'))) b.onchange = function(){ caricaFile(this.files); this.value = ''; };
     if ((b = $('ix-file'))) b.onchange = function(){ caricaFile(this.files); this.value = ''; };
     if ((b = $('ix-new'))) b.onclick = nuovaCartella;
     if ((b = $('ix-ref'))) b.onclick = aggiorna;
@@ -38744,7 +38808,12 @@ setTool("erase");
     if (L) {
       L.addEventListener('dragover', function(e){ if ([].indexOf.call(e.dataTransfer.types, 'Files') >= 0) { e.preventDefault(); L.classList.add('drop'); } });
       L.addEventListener('dragleave', function(e){ if (e.target === L) L.classList.remove('drop'); });
-      L.addEventListener('drop', function(e){ if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); L.classList.remove('drop'); caricaFile(e.dataTransfer.files); } });
+      L.addEventListener('drop', function(e){
+        if (!(e.dataTransfer.files && e.dataTransfer.files.length)) return;
+        e.preventDefault(); L.classList.remove('drop');
+        var files = [].slice.call(e.dataTransfer.files), t = leggiTrascinati(e.dataTransfer);
+        if (t) t.then(caricaVoci); else caricaFile(files);
+      });
     }
   }
   function azzera(){   // cambio di utente (accesso/uscita): nessuna traccia del precedente
@@ -38772,7 +38841,7 @@ setTool("erase");
         .catch(function(){ st.token = null; st.occupato = false; disegna(); });
     } else disegna();
   }
-  window.MQInterscambio = { apri: avvia, utente: utente, mostra: mostra, _st: st };
+  window.MQInterscambio = { apri: avvia, utente: utente, mostra: mostra, _st: st, _caricaVoci: caricaVoci };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia); else avvia();
 })();
 </script>
