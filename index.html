@@ -822,6 +822,7 @@ tr.new-row{animation:rowIn .2s ease both;}
             <select id="new-role">
               <option value="user">Utente (sola consultazione)</option>
               <option value="laboratorio">Laboratorio</option>
+              <option value="direzione">Direzione Lavori (solo Interscambio)</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -838,7 +839,7 @@ tr.new-row{animation:rowIn .2s ease both;}
         <div id="add-user-err" style="font-size:11px;color:var(--red);display:none;"></div>
         <details style="margin-top:12px;">
           <summary style="cursor:pointer;font-size:11px;color:var(--orange);">⬆ Importa utenti da Excel (incolla)</summary>
-          <div style="font-size:11px;color:var(--muted);margin:6px 0;">Una riga per utente, con le colonne separate da TAB (come si incolla da Excel) o da <b>;</b> :<br><b>Nome · Cognome · Password · Ruolo · Laboratorio</b><br>Ruolo: <i>utente</i>, <i>laboratorio</i> o <i>admin</i> (se vuoto = utente). Il Laboratorio serve solo per il ruolo laboratorio.</div>
+          <div style="font-size:11px;color:var(--muted);margin:6px 0;">Una riga per utente, con le colonne separate da TAB (come si incolla da Excel) o da <b>;</b> :<br><b>Nome · Cognome · Password · Ruolo · Laboratorio</b><br>Ruolo: <i>utente</i>, <i>laboratorio</i>, <i>direzione</i> (Direzione Lavori, solo Interscambio) o <i>admin</i> (se vuoto = utente). Il Laboratorio serve solo per il ruolo laboratorio.</div>
           <textarea id="bulk-users" rows="5" placeholder="Mario;Rossi;password1;laboratorio;Lab 1&#10;Anna;Bianchi;password2;utente&#10;Luca;Verdi;password3;admin" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;box-sizing:border-box;"></textarea>
           <button class="btn btn-blue btn-sm" id="btn-bulk-users" style="margin-top:6px;">Importa utenti</button>
           <div id="bulk-users-msg" style="font-size:11px;margin-top:6px;"></div>
@@ -26866,6 +26867,12 @@ async function doLogin(){
     markLastLogin(user.username);          // registra l'ultimo accesso anche senza approvazione
     loginAs(user);return;
   }
+  // Direzione Lavori: accesso diretto (vede solo l'Interscambio)
+  if((user.role||'').toLowerCase().trim()==='direzione'){
+    sendTelegram('📁 Direzione Lavori: '+user.username).catch(()=>{});
+    markLastLogin(user.username);
+    loginAs(user);return;
+  }
   // Laboratorio: accesso diretto, senza richiesta di approvazione
   if((user.role||'').toLowerCase().trim()==='laboratorio'){
     sendTelegram('🧪 Laboratorio: '+user.username).catch(()=>{});
@@ -27221,7 +27228,7 @@ function loginAs(user){
     document.getElementById('hdr-avatar').textContent=initials;
     document.getElementById('hdr-username').textContent=user.username;
     const roleEl=document.getElementById('hdr-role');
-    if(roleEl){const _r=(user.role||'').toLowerCase().trim();roleEl.textContent=_r==='admin'?'Admin':(_r==='laboratorio'?'Laboratorio':'Utente');roleEl.className='user-role '+(_r==='admin'?'role-admin':'role-user');}
+    if(roleEl){const _r=(user.role||'').toLowerCase().trim();roleEl.textContent=_r==='admin'?'Admin':(_r==='laboratorio'?'Laboratorio':(_r==='direzione'?'Direzione Lavori':'Utente'));roleEl.className='user-role '+(_r==='admin'?'role-admin':'role-user');}
     const adminBtn=document.getElementById('btn-open-admin');
     if(adminBtn) adminBtn.style.display=user.role==='admin'?'':'none';
     applyRoleUI();
@@ -27239,7 +27246,7 @@ async function renderAdminUsers() {
   const _RA=window.RegAdmin;
   const _labs=_RA?_RA.getLabs():[];
   const _assign=_RA?_RA.getLabUsers():{};
-  const ROLES=[['user','Utente (sola consultazione)'],['laboratorio','Laboratorio'],['admin','Admin']];
+  const ROLES=[['user','Utente (sola consultazione)'],['laboratorio','Laboratorio'],['direzione','Direzione Lavori'],['admin','Admin']];
   const roleSelHtml=(usr,role)=>{
     const r=(role||'user').toLowerCase().trim();
     const cur=ROLES.some(x=>x[0]===r)?r:'user';
@@ -27257,7 +27264,7 @@ async function renderAdminUsers() {
   };
   // ordine: prima gli Admin, poi i Laboratori raggruppati per laboratorio, infine gli utenti in sola consultazione.
   // Dentro ogni gruppo, ordine alfabetico per nome.
-  const _rank=r=>{ const x=(r||'user').toLowerCase().trim(); return x==='admin'?0:(x==='laboratorio'?1:2); };
+  const _rank=r=>{ const x=(r||'user').toLowerCase().trim(); return x==='admin'?0:(x==='laboratorio'?1:(x==='direzione'?2:3)); };
   const _sorted=users.slice().sort((a,b)=>{
     const ra=_rank(a.role), rb=_rank(b.role);
     if(ra!==rb) return ra-rb;
@@ -27272,7 +27279,7 @@ async function renderAdminUsers() {
   _sorted.forEach(u => {
     // intestazione di gruppo (Admin · Laboratorio X · Sola consultazione)
     const _r=_rank(u.role);
-    const _g = _r===0 ? 'Admin' : (_r===1 ? ('Laboratorio '+((_assign[u.username]||'').trim()||'— non assegnato')) : 'Sola consultazione');
+    const _g = _r===0 ? 'Admin' : (_r===1 ? ('Laboratorio '+((_assign[u.username]||'').trim()||'— non assegnato')) : (_r===2 ? 'Direzione Lavori (solo Interscambio)' : 'Sola consultazione'));
     if(_g!==_prevGroup){
       _prevGroup=_g;
       const gtr=document.createElement('tr');
@@ -27347,9 +27354,9 @@ async function renderAdminUsers() {
       const np = prompt('Password (lascia invariata per confermarla):', u.password||'');
       if(np===null) return;
       const newPass = np;
-      const roleIn = prompt('Ruolo: utente / laboratorio / admin  (lascia com\'è per non cambiarlo):', u.role||'user');
+      const roleIn = prompt('Ruolo: utente / laboratorio / direzione / admin  (lascia com\'è per non cambiarlo):', u.role||'user');
       if(roleIn===null) return;
-      const roleMap={'utente':'user','user':'user','visualizzatore':'user','viewer':'user','sola lettura':'user','laboratorio':'laboratorio','lab':'laboratorio','admin':'admin'};
+      const roleMap={'utente':'user','user':'user','visualizzatore':'user','viewer':'user','sola lettura':'user','laboratorio':'laboratorio','lab':'laboratorio','direzione':'direzione','direzione lavori':'direzione','dl':'direzione','admin':'admin'};
       const newRole = roleMap[(roleIn||'').trim().toLowerCase()] || u.role || 'user';
       const nameChanged = newName.toLowerCase() !== oldName.toLowerCase();
       if(nameChanged && getUsers().find(x => (x.username||'').toLowerCase() === newName.toLowerCase())) { alert('Esiste già un utente con questo nome.'); return; }
@@ -27404,16 +27411,25 @@ function applyRoleUI(){
     const role=(currentUser&&(currentUser.role||'').toLowerCase().trim())||'';
     const isLab=(role==='laboratorio'||role==='lab');
     const isViewerRole=(role==='user'||role==='utente'||role==='viewer'||role==='visualizzatore');
+    const isDL=(role==='direzione');
     const onlyReg=(isLab||isViewerRole);           // laboratorio e utente: solo il Registro
     const btns=[...document.querySelectorAll('.tab-nav .tab-btn')];
     const isReg=b=>((b.getAttribute('onclick')||'').indexOf("'registro'")>=0);
+    const isIx=b=>((b.getAttribute('onclick')||'').indexOf("'interscambio'")>=0);
     btns.forEach(b=>{
-      if(onlyReg)        b.style.display=isReg(b)?'':'none';   // laboratorio e utente: solo Registro
+      if(isDL)           b.style.display=isIx(b)?'':'none';    // Direzione Lavori: solo Interscambio
+      else if(onlyReg)   b.style.display=isReg(b)?'':'none';   // laboratorio e utente: solo Registro
       else               b.style.display='';                    // admin: tutto
     });
-    if(onlyReg){
+    if(window.MQInterscambio && window.MQInterscambio.utente){ try{ window.MQInterscambio.utente(); }catch(e){} }
+    if(isDL){
+      const ib=btns.find(isIx);
+      if(ib){ try{ switchMainTab('interscambio',ib); }catch(e){} }
+    } else if(onlyReg){
       const rb=btns.find(isReg);
       if(rb){ try{ switchMainTab('registro',rb); }catch(e){} }
+    } else {
+      // admin dopo un utente Direzione Lavori: non deve restare sulla sola sezione Interscambio senza menu
     }
     if(window.RegApplyRole){ try{ window.RegApplyRole(); }catch(e){} }   // aggiorna i permessi del registro dopo il login
   }catch(e){ console.warn('role tabs',e); }
@@ -27475,7 +27491,7 @@ document.getElementById('btn-bulk-users').addEventListener('click', async () => 
   if(!lines.length){ msg.style.color='var(--red)'; msg.textContent='Incolla almeno una riga.'; return; }
   const btn=document.getElementById('btn-bulk-users'); btn.disabled=true; btn.textContent='⏳ Importazione...';
   const existing=getUsers().map(u=>(u.username||'').toLowerCase());
-  const roleMap={'utente':'user','user':'user','laboratorio':'laboratorio','lab':'laboratorio','visualizzatore':'viewer','viewer':'viewer','sola lettura':'viewer','admin':'admin'};
+  const roleMap={'utente':'user','user':'user','laboratorio':'laboratorio','lab':'laboratorio','visualizzatore':'viewer','viewer':'viewer','sola lettura':'viewer','direzione':'direzione','direzione lavori':'direzione','dl':'direzione','admin':'admin'};
   let added=0, skipped=0; const errors=[];
   for(const line of lines){
     const c=line.split(/\t|;/).map(s=>s.trim());
@@ -28737,6 +28753,7 @@ function switchMainTab(name, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   if(name==='firma-pdf' && window._firmaInit) window._firmaInit();
   if(name==='editor-pdf'&&window._epInit) window._epInit();
+  if(name==='interscambio'&&window.MQInterscambio&&window.MQInterscambio.mostra) setTimeout(()=>{ try{ window.MQInterscambio.mostra(); }catch(e){} },0);
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
@@ -37614,7 +37631,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 31.1';
+  window.APP_VERSION = 'Versione 31.2';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
@@ -37773,7 +37790,7 @@ setTool("erase");
   var manuale=false, ultimo=0;
   function segnaManuale(){ manuale=true; }
   function annulla(){ manuale=false; }
-  function ruolo(u){ var r=String((u&&u.role)||'').toLowerCase().trim(); return r==='admin'?'Admin':(r==='laboratorio'||r==='lab'?'Laboratorio':'Consultazione'); }
+  function ruolo(u){ var r=String((u&&u.role)||'').toLowerCase().trim(); return r==='admin'?'Admin':(r==='laboratorio'||r==='lab'?'Laboratorio':(r==='direzione'?'Direzione Lavori':'Consultazione')); }
   function iniziali(n){ return String(n||'?').split(/\s+/).filter(Boolean).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase(); }
   function foto(){
     try{ var s=getComputedStyle(document.getElementById('login-screen'),'::before').backgroundImage; return (s&&s!=='none')?s:''; }catch(e){ return ''; }
@@ -37920,7 +37937,7 @@ setTool("erase");
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',avvia); else avvia();
 })();
 </script>
-<script>window.MQ_INTERSCAMBIO = { clientId: '251190963213-0o6tfgpg57orbu0hvit235euhfhn6na7.apps.googleusercontent.com', cartella: 'https://drive.google.com/drive/folders/1fsAN246nl5VRVo1-fGWc0JewtcHipOLg' };</script>
+<script>window.MQ_INTERSCAMBIO = { clientId: '251190963213-0o6tfgpg57orbu0hvit235euhfhn6na7.apps.googleusercontent.com', cartella: 'https://drive.google.com/drive/folders/1fsAN246nl5VRVo1-fGWc0JewtcHipOLg', server: 'https://pxbfgthyoyuucvqayvdh.supabase.co/functions/v1/interscambio' };</script>
 <script id="mq-interscambio">
 /* ═══════════════════════════════════════════════════════════════
    INTERSCAMBIO CON IL COMMITTENTE — cartella Google Drive gestita dal sito
@@ -37935,7 +37952,33 @@ setTool("erase");
   var CARTELLA = 'application/vnd.google-apps.folder';
   var K = { cid: 'mq_ix_clientid', root: 'mq_ix_cartella', tok: 'mq_ix_token' };
   var DEF = window.MQ_INTERSCAMBIO || {};                 // valori predefiniti messi nel sito (facoltativi)
-  var st = { token: null, scade: 0, root: null, rootNome: '', cur: null, percorso: [], voci: [], filtro: '', ord: 'nome', cli: null, carica: [], occupato: false };
+  var st = { token: null, scade: 0, root: null, rootNome: '', cur: null, percorso: [], voci: [], filtro: '', ord: 'nome', cli: null, carica: [], occupato: false, srv: false, srvAssente: false, utente: '' };
+  /* ---------- utente del sito e "modalità sito" (funzione Supabase: niente account Google per chi entra) ---------- */
+  function utenteSito(){
+    var u = null;
+    try { if (typeof currentUser !== 'undefined' && currentUser) u = currentUser; } catch(e){}
+    if (!u) { try { u = JSON.parse(localStorage.getItem('mq_session') || 'null'); } catch(e){} }
+    return u && u.username ? { nome: u.username, pw: u.password || '', ruolo: String(u.role || '').toLowerCase().trim() } : null;
+  }
+  function isAdmin(){ var u = utenteSito(); return !!(u && u.ruolo === 'admin'); }
+  function isDL(){ var u = utenteSito(); return !!(u && u.ruolo === 'direzione'); }
+  function chiaveSb(){ try { if (typeof SB_KEY !== 'undefined' && SB_KEY) return SB_KEY; } catch(e){} return DEF.anon || ''; }
+  function NonAttivo(){ var e = new Error('L\'Interscambio per la Direzione Lavori non è ancora attivo: avvisa l\'amministratore.'); e.assente = true; return e; }
+  function srv(a, dati, binario){
+    var u = utenteSito(); if (!u) return Promise.reject(new Error('Accedi al sito per usare l\'Interscambio.'));
+    var corpo = Object.assign({}, dati || {}, { a: a, u: u.nome, p: u.pw }), k = chiaveSb();
+    return fetch(DEF.server, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: k, Authorization: 'Bearer ' + k }, body: JSON.stringify(corpo) })
+      .catch(function(){ throw NonAttivo(); })
+      .then(function(r){
+        if (r.ok && binario) return r;
+        return r.text().then(function(t){
+          var j = {}; try { j = JSON.parse(t); } catch(e){}
+          if (r.status === 404 && !j.errore) throw NonAttivo();
+          if (!r.ok) throw new Error(j.errore || j.message || ('Errore del server (' + r.status + ').'));
+          return j;
+        });
+      });
+  }
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
   function lsGet(k){ try { return localStorage.getItem(k) || ''; } catch(e){ return ''; } }
@@ -38029,6 +38072,10 @@ setTool("erase");
   var DR = 'supportsAllDrives=true';
   function elenco(id){
     var tutti = [];
+    if (st.srv) {
+      var pg = function(tok){ return srv('elenco', { id: id, tok: tok || '' }).then(function(j){ tutti = tutti.concat(j.files || []); return j.nextPageToken ? pg(j.nextPageToken) : tutti; }); };
+      return pg('');
+    }
     function pagina(tok){
       var q = encodeURIComponent("'" + id + "' in parents and trashed=false");
       var u = API + '/files?q=' + q + '&pageSize=500&orderBy=folder,name&' + DR + '&includeItemsFromAllDrives=true'
@@ -38038,7 +38085,7 @@ setTool("erase");
     }
     return pagina('');
   }
-  function info(id){ return chiama('GET', API + '/files/' + encodeURIComponent(id) + '?' + DR + '&fields=id,name,mimeType,parents,webViewLink,capabilities(canAddChildren)'); }
+  function info(id){ if (st.srv) return srv('info', { id: id }); return chiama('GET', API + '/files/' + encodeURIComponent(id) + '?' + DR + '&fields=id,name,mimeType,parents,webViewLink,capabilities(canAddChildren)'); }
 
   /* ---------- operazioni ---------- */
   function apri(id, nome){
@@ -38052,6 +38099,23 @@ setTool("erase");
   }
   function aggiorna(){ if (st.cur) return apri(st.cur); }
   function collega(){
+    if (DEF.server && !st.srvAssente) {
+      st.occupato = true; st.errore = ''; disegna();
+      srv('stato').then(function(j){
+        st.srv = true; st.root = j.root.id; st.rootNome = j.root.name; st.percorso = [{ id: j.root.id, nome: j.root.name }];
+        return apri(j.root.id, j.root.name);
+      }).catch(function(e){
+        st.occupato = false;
+        if (e.assente && isAdmin()) {   // funzione non ancora pubblicata: l'admin usa Google (e se ha già un accesso valido, riapre da solo)
+          st.srvAssente = true; st.errore = '';
+          if (tokenSalvato() && rootId() && clientId()) { st.occupato = true; disegna(); info(rootId()).then(function(f){ st.root = f.id; st.rootNome = f.name; st.percorso = [{ id: f.id, nome: f.name }]; return apri(f.id, f.name); }).catch(function(){ st.token = null; st.occupato = false; disegna(); }); return; }
+          disegna(); return;
+        }
+        st.errore = e.message; disegna();
+      });
+      return;
+    }
+    if (!isAdmin()) { st.errore = NonAttivo().message; disegna(); return; }
     var root = rootId();
     if (location.protocol === 'file:') { st.errore = 'Hai aperto il file index.html dal computer: Google permette l\'accesso solo dal sito online. Apri https://danieleferrara29.github.io/modernquality/ e riprova.'; disegna(); avviso('Apri il sito online per collegarti a Drive.', 'error'); return; }
     if (!clientId()) { st.impost = true; disegna(); avviso('Prima inserisci l\'ID client di Google in Impostazioni.', 'error'); return; }
@@ -38065,26 +38129,40 @@ setTool("erase");
   }
   function nuovaCartella(){
     var n = prompt('Nome della nuova cartella:'); if (!n || !n.trim()) return;
-    chiama('POST', API + '/files?' + DR + '&fields=id', { name: n.trim(), mimeType: CARTELLA, parents: [st.cur] })
+    (st.srv ? srv('crea', { parent: st.cur, nome: n.trim() }) : chiama('POST', API + '/files?' + DR + '&fields=id', { name: n.trim(), mimeType: CARTELLA, parents: [st.cur] }))
       .then(function(){ avviso('Cartella "' + n.trim() + '" creata', 'success'); aggiorna(); }).catch(function(e){ avviso(e.message, 'error'); });
   }
   function rinomina(f){
     var n = prompt('Nuovo nome:', f.name); if (!n || !n.trim() || n.trim() === f.name) return;
-    chiama('PATCH', API + '/files/' + f.id + '?' + DR + '&fields=id', { name: n.trim() })
+    (st.srv ? srv('rinomina', { id: f.id, nome: n.trim() }) : chiama('PATCH', API + '/files/' + f.id + '?' + DR + '&fields=id', { name: n.trim() }))
       .then(function(){ avviso('Rinominato in "' + n.trim() + '"', 'success'); aggiorna(); }).catch(function(e){ avviso(e.message, 'error'); });
   }
   function elimina(f){
     var cart = f.mimeType === CARTELLA;
     if (!confirm('Spostare nel cestino ' + (cart ? 'la cartella' : 'il file') + ' "' + f.name + '"' + (cart ? ' con tutto il suo contenuto' : '') + '?\n\nSi può recuperare dal cestino di Drive per 30 giorni.')) return;
-    chiama('PATCH', API + '/files/' + f.id + '?' + DR + '&fields=id', { trashed: true })
+    (st.srv ? srv('cestina', { id: f.id }) : chiama('PATCH', API + '/files/' + f.id + '?' + DR + '&fields=id', { trashed: true }))
       .then(function(){ avviso('"' + f.name + '" spostato nel cestino', 'success'); aggiorna(); }).catch(function(e){ avviso(e.message, 'error'); });
   }
   function sposta(f, dest, destNome){
     if (!dest || dest === st.cur || dest === f.id) return Promise.resolve();
-    return chiama('PATCH', API + '/files/' + f.id + '?' + DR + '&addParents=' + encodeURIComponent(dest) + '&removeParents=' + encodeURIComponent(st.cur) + '&fields=id', {})
+    return (st.srv ? srv('sposta', { id: f.id, da: st.cur, dest: dest }) : chiama('PATCH', API + '/files/' + f.id + '?' + DR + '&addParents=' + encodeURIComponent(dest) + '&removeParents=' + encodeURIComponent(st.cur) + '&fields=id', {}))
       .then(function(){ avviso('"' + f.name + '" spostato in "' + destNome + '"', 'success'); aggiorna(); }).catch(function(e){ avviso(e.message, 'error'); });
   }
+  function scaricaSrv(f, vedi){
+    var w = vedi ? window.open('', '_blank') : null;
+    avviso((vedi ? 'Apro "' : 'Scarico "') + f.name + '"…');
+    srv('scarica', { id: f.id }, true).then(function(r){
+      var nome = f.name; try { var h = r.headers.get('x-mq-nome'); if (h) nome = decodeURIComponent(h); } catch(e){}
+      return r.blob().then(function(b){ return { b: b, nome: nome }; });
+    }).then(function(x){
+      var url = URL.createObjectURL(x.b);
+      if (w && /^(application\/pdf|image\/|text\/plain)/.test(x.b.type)) { w.location.href = url; setTimeout(function(){ URL.revokeObjectURL(url); }, 120000); return; }
+      if (w) try { w.close(); } catch(e){}
+      var a = document.createElement('a'); a.href = url; a.download = x.nome; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 4000);
+    }).catch(function(e){ if (w) try { w.close(); } catch(_){} avviso(e.message, 'error'); });
+  }
   function scarica(f){
+    if (st.srv) return scaricaSrv(f, false);
     if (/^application\/vnd\.google-apps\./.test(f.mimeType)) { window.open(f.webViewLink, '_blank', 'noopener'); return; }
     avviso('Scarico "' + f.name + '"…');
     (st.token && st.scade > Date.now() + 30000 ? Promise.resolve() : chiediToken(true)).then(function(){
@@ -38106,6 +38184,25 @@ setTool("erase");
     function prossimo(){
       if (i >= coda.length) { aggiorna(); var ok = coda.filter(function(c){ return c.stato === 'ok'; }).length; avviso(ok + ' file caricat' + (ok === 1 ? 'o' : 'i') + (ok < coda.length ? ', ' + (coda.length - ok) + ' non riuscit' + (coda.length - ok === 1 ? 'o' : 'i') : ''), ok === coda.length ? 'success' : 'error'); return; }
       var c = coda[i++]; c.stato = 'su'; disegnaCoda();
+      if (st.srv) {
+        srv('carica', { parent: dest, nome: c.file.name, tipo: c.file.type || 'application/octet-stream', dim: c.file.size, sost: c.sost || '' }).then(function(j){
+          return new Promise(function(ok, ko){
+            var x = new XMLHttpRequest(); x.open('PUT', j.location);
+            x.upload.onprogress = function(e){ if (e.lengthComputable) { c.pct = Math.round(e.loaded / e.total * 100); disegnaCoda(); } };
+            x.onload = function(){ if (x.status >= 200 && x.status < 300) ok(); else ko(new Error('Caricamento interrotto (' + x.status + ')')); };
+            x.onerror = function(){ // il browser non può inviare direttamente a Google: il file passa dal server
+              var u = utenteSito() || {}, b64 = function(t){ try { return btoa(unescape(encodeURIComponent(t || ''))); } catch(e){ return ''; } }, k = chiaveSb();
+              c.pct = 0; disegnaCoda();
+              fetch(DEF.server + '?a=put', { method: 'POST', headers: { apikey: k, Authorization: 'Bearer ' + k, 'Content-Type': c.file.type || 'application/octet-stream', 'x-mq-u': b64(u.nome), 'x-mq-p': b64(u.pw), 'x-mq-loc': j.location }, body: c.file })
+                .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(z){ if (!r.ok) throw new Error(z.errore || 'Caricamento non riuscito'); ok(); }); })
+                .catch(function(e){ ko(e); });
+            };
+            x.send(c.file);
+          });
+        }).then(function(){ c.stato = 'ok'; c.pct = 100; disegnaCoda(); prossimo(); })
+          .catch(function(e){ c.stato = 'ko'; c.err = e.message; disegnaCoda(); prossimo(); });
+        return;
+      }
       (st.token && st.scade > Date.now() + 60000 ? Promise.resolve() : chiediToken(true)).then(function(){
         var u = c.sost ? UP + '/files/' + c.sost + '?uploadType=resumable&' + DR : UP + '/files?uploadType=resumable&' + DR;
         return fetch(u, { method: c.sost ? 'PATCH' : 'POST', headers: { Authorization: 'Bearer ' + st.token, 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': c.file.type || 'application/octet-stream' },
@@ -38157,6 +38254,7 @@ setTool("erase");
       + (c.every(function(x){ return x.stato === 'ok' || x.stato === 'ko'; }) ? '<button class="ix-link" id="ix-coda-chiudi">Nascondi</button>' : '');
     var ch = $('ix-coda-chiudi'); if (ch) ch.onclick = function(){ st.carica = []; disegnaCoda(); };
   }
+  function autore(f){ return (f.appProperties && f.appProperties.mq_utente) || (f.lastModifyingUser && f.lastModifyingUser.displayName) || ''; }
   function ordinate(){
     var v = st.voci.slice(), f = st.filtro.trim().toLowerCase();
     if (f) v = v.filter(function(x){ return x.name.toLowerCase().indexOf(f) >= 0; });
@@ -38170,11 +38268,12 @@ setTool("erase");
   }
   function disegna(){
     var box = $('ix-box'); if (!box) return;
-    var connesso = !!(st.token && st.root);
-    var impost = '<details class="ix-impost" ' + (st.impost || !clientId() || !rootId() ? 'open' : '') + '><summary>⚙ Impostazioni</summary>'
+    var connesso = !!((st.token || st.srv) && st.root), adm = isAdmin();
+    var impost = !adm ? '' : '<details class="ix-impost" ' + (st.impost || !clientId() || !rootId() ? 'open' : '') + '><summary>⚙ Impostazioni</summary>'
       + '<label class="ix-l">Link della cartella su Google Drive<input id="ix-in-root" type="text" placeholder="https://drive.google.com/drive/folders/…" value="' + esc(lsGet(K.root) || DEF.cartella || '') + '"></label>'
       + '<label class="ix-l">ID client di Google (OAuth)<input id="ix-in-cid" type="text" placeholder="123456789-abc….apps.googleusercontent.com" value="' + esc(clientId()) + '"></label>'
-      + '<div class="ix-row"><button class="ix-btn pri" id="ix-salva">Salva</button>' + (connesso ? '<button class="ix-btn" id="ix-esci">Scollega Google</button>' : '') + '</div>'
+      + (DEF.server ? '<p class="ix-nota">' + (st.srv ? '✓ Modalità sito attiva: Admin e Direzione Lavori entrano con l\'utente del sito, senza account Google.' : 'Modalità sito (Direzione Lavori senza account Google) non ancora attiva: si entra con Google.') + '</p>' : '')
+      + '<div class="ix-row"><button class="ix-btn pri" id="ix-salva">Salva</button>' + (connesso && !st.srv ? '<button class="ix-btn" id="ix-esci">Scollega Google</button>' : '') + '</div>'
       + '<details class="ix-guida"><summary>Come ottenere l\'ID client (una volta sola, circa 15 minuti)</summary><ol>'
       + '<li>Apri <b>console.cloud.google.com</b> con l\'account aziendale e crea un progetto (es. "Modern Quality").</li>'
       + '<li>In <b>API e servizi → Libreria</b> cerca <b>Google Drive API</b> e premi <b>Abilita</b>.</li>'
@@ -38184,15 +38283,16 @@ setTool("erase");
       + '</ol><p>Se un passaggio è bloccato, l\'amministratore Google dell\'azienda deve consentire le app interne o l\'accesso a Drive da applicazioni di terze parti.</p></details>'
       + '</details>';
     if (!connesso) {
-      box.innerHTML = '<div class="ix-vuoto-card"><div class="ix-big">🔗</div><h3>Collega la cartella di Drive condivisa con il committente</h3>'
-        + '<p>Dal sito potrai sfogliare la cartella, creare, rinominare, spostare ed eliminare cartelle, caricare e scaricare file. Le modifiche sono subito visibili anche al committente in Google Drive.</p>'
+      var conGoogle = !(DEF.server && !st.srvAssente);
+      box.innerHTML = '<div class="ix-vuoto-card"><div class="ix-big">🔗</div><h3>' + (adm ? 'Collega la cartella di Drive condivisa con il committente' : 'Cartella di interscambio') + '</h3>'
+        + '<p>' + (adm ? 'Dal sito potrai sfogliare la cartella, creare, rinominare, spostare ed eliminare cartelle, caricare e scaricare file. Le modifiche sono subito visibili anche al committente in Google Drive.' : 'Qui trovi i documenti condivisi: puoi aprirli, scaricarli, caricare file e creare cartelle.') + '</p>'
         + (st.errore ? '<div class="ix-err">' + esc(st.errore) + '</div>' : '')
-        + '<button class="ix-btn pri big" id="ix-collega"' + (st.occupato ? ' disabled' : '') + '>' + (st.occupato ? 'Collegamento…' : 'Accedi con Google e apri la cartella') + '</button></div>' + impost;
+        + '<button class="ix-btn pri big" id="ix-collega"' + (st.occupato ? ' disabled' : '') + '>' + (st.occupato ? 'Collegamento…' : (conGoogle ? 'Accedi con Google e apri la cartella' : 'Apri la cartella')) + '</button></div>' + impost;
     } else {
       var v = ordinate(), dove = st.percorso[st.percorso.length - 1] || {};
       box.innerHTML = '<div class="ix-bar">'
         + '<nav class="ix-path" aria-label="Percorso">' + st.percorso.map(function(p, i){ return '<button class="ix-bc" data-i="' + i + '" data-drop="' + esc(p.id) + '">' + (i === 0 ? '🏠 ' : '') + esc(p.nome) + '</button>'; }).join('<span class="ix-sep">›</span>') + '</nav>'
-        + '<div class="ix-azioni"><button class="ix-btn pri" id="ix-up">⬆ Carica file</button><button class="ix-btn" id="ix-new">＋ Nuova cartella</button><button class="ix-btn" id="ix-ref" title="Aggiorna">⟳</button><a class="ix-btn" id="ix-drive" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/' + esc(st.cur) + '">Apri in Drive ↗</a></div>'
+        + '<div class="ix-azioni"><button class="ix-btn pri" id="ix-up">⬆ Carica file</button><button class="ix-btn" id="ix-new">＋ Nuova cartella</button><button class="ix-btn" id="ix-ref" title="Aggiorna">⟳</button>' + (adm ? '<a class="ix-btn" id="ix-drive" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/' + esc(st.cur) + '">Apri in Drive ↗</a>' : '') + '</div>'
         + '<input type="file" id="ix-file" multiple hidden></div>'
         + '<div class="ix-tools"><input id="ix-cerca" type="search" placeholder="Cerca in questa cartella…" value="' + esc(st.filtro) + '"><label class="ix-ordl">Ordina <select id="ix-ord"><option value="nome"' + (st.ord === 'nome' ? ' selected' : '') + '>per nome</option><option value="data"' + (st.ord === 'data' ? ' selected' : '') + '>più recenti</option></select></label></div>'
         + (st.errore ? '<div class="ix-err">' + esc(st.errore) + '</div>' : '')
@@ -38201,7 +38301,7 @@ setTool("erase");
             var c = f.mimeType === CARTELLA, cap = f.capabilities || {};
             return '<div class="ix-riga' + (c ? ' cart' : '') + '" data-i="' + i + '" draggable="' + (cap.canMoveItemWithinDrive === false ? 'false' : 'true') + '"' + (c ? ' data-drop="' + esc(f.id) + '"' : '') + '>'
               + '<button class="ix-nome" data-act="apri" title="' + (c ? 'Apri la cartella' : 'Apri il file in Drive') + '"><span class="ix-ico">' + icona(f) + '</span><span class="ix-n">' + esc(f.name) + '</span></button>'
-              + '<span class="ix-meta">' + esc(quando(f.modifiedTime)) + (f.lastModifyingUser && f.lastModifyingUser.displayName ? ' · ' + esc(f.lastModifyingUser.displayName) : '') + (c ? '' : (f.size ? ' · ' + dimensione(f.size) : '')) + '</span>'
+              + '<span class="ix-meta">' + esc(quando(f.modifiedTime)) + (autore(f) ? ' · ' + esc(autore(f)) : '') + (c ? '' : (f.size ? ' · ' + dimensione(f.size) : '')) + '</span>'
               + '<span class="ix-act">' + (c ? '' : '<button class="ix-ib" data-act="scarica" title="Scarica" aria-label="Scarica">⬇</button>')
               + (cap.canRename === false ? '' : '<button class="ix-ib" data-act="rinomina" title="Rinomina" aria-label="Rinomina">✎</button>')
               + (cap.canMoveItemWithinDrive === false ? '' : '<button class="ix-ib" data-act="sposta" title="Sposta in…" aria-label="Sposta">⇄</button>')
@@ -38236,7 +38336,7 @@ setTool("erase");
     document.querySelectorAll('#ix-lista .ix-riga').forEach(function(r){
       var f = v[+r.dataset.i];
       r.querySelectorAll('[data-act]').forEach(function(x){ x.onclick = function(e){ e.stopPropagation(); var a = x.dataset.act;
-        if (a === 'apri') { if (f.mimeType === CARTELLA) { st.filtro = ''; apri(f.id, f.name); } else window.open(f.webViewLink, '_blank', 'noopener'); }
+        if (a === 'apri') { if (f.mimeType === CARTELLA) { st.filtro = ''; apri(f.id, f.name); } else if (st.srv && !isAdmin()) scaricaSrv(f, true); else window.open(f.webViewLink, '_blank', 'noopener'); }
         else if (a === 'scarica') scarica(f); else if (a === 'rinomina') rinomina(f); else if (a === 'sposta') sceltaCartella(f); else if (a === 'elimina') elimina(f); }; });
       r.addEventListener('dragstart', function(e){ e.dataTransfer.setData('text/mq-ix', f.id); e.dataTransfer.effectAllowed = 'move'; r.classList.add('trascina'); });
       r.addEventListener('dragend', function(){ r.classList.remove('trascina'); });
@@ -38261,8 +38361,24 @@ setTool("erase");
       L.addEventListener('drop', function(e){ if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); L.classList.remove('drop'); caricaFile(e.dataTransfer.files); } });
     }
   }
+  function azzera(){   // cambio di utente (accesso/uscita): nessuna traccia del precedente
+    st.srv = false; st.srvAssente = false; st.root = null; st.cur = null; st.percorso = []; st.voci = []; st.errore = ''; st.filtro = ''; st.carica = []; st.occupato = false;
+  }
+  function utente(){
+    var u = utenteSito(), chi = u ? u.nome + '|' + u.ruolo : '';
+    if (chi !== st.utente) { st.utente = chi; azzera(); }
+    var tab = $('tab-interscambio');
+    if (tab && tab.classList.contains('active')) mostra(); else disegna();
+  }
+  function mostra(){   // sezione aperta: in modalità sito la cartella si apre da sola
+    if (!$('ix-box')) return;
+    if (DEF.server && !st.srvAssente && !st.srv && !st.occupato && utenteSito()) { collega(); return; }
+    if (!st.root) disegna();
+  }
+  document.addEventListener('click', function(e){ if (e.target && e.target.closest && e.target.closest('#btn-logout')) { st.utente = ''; azzera(); try { sessionStorage.removeItem(K.tok); } catch(_){} st.token = null; disegna(); } }, true);
   function avvia(){
     if (!$('ix-box')) return;
+    if (DEF.server) { var u0 = utenteSito(); st.utente = u0 ? u0.nome + '|' + u0.ruolo : ''; var t0 = $('tab-interscambio'); return (t0 && t0.classList.contains('active')) ? mostra() : disegna(); }
     // all'apertura della sezione: se c'è un accesso valido in questa sessione, riapre la cartella senza chiedere nulla
     if (tokenSalvato() && rootId() && clientId()) {
       st.occupato = true; disegna();
@@ -38270,7 +38386,7 @@ setTool("erase");
         .catch(function(){ st.token = null; st.occupato = false; disegna(); });
     } else disegna();
   }
-  window.MQInterscambio = { apri: avvia, _st: st };
+  window.MQInterscambio = { apri: avvia, utente: utente, mostra: mostra, _st: st };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia); else avvia();
 })();
 </script>
