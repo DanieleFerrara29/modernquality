@@ -1049,6 +1049,7 @@ tr.new-row{animation:rowIn .2s ease both;}
       <button class="tab-btn" onclick="switchMainTab('spacchetta-targhette',this)">&#127991;&#65039; Spacchetta Targhette</button>
       <button class="tab-btn" onclick="switchMainTab('editor-cartellini',this)">&#128397;&#65039; Editor Cartellini</button>
       <button class="tab-btn" onclick="switchMainTab('verifica-verbali',this)">&#128270; Verifica Verbali</button>
+      <button class="tab-btn" onclick="switchMainTab('interscambio',this)">&#128193; Interscambio</button>
     </nav>
 
     <!-- ══ TAB 1: RINOMINA ══ -->
@@ -4073,6 +4074,85 @@ td.cell.selected{position:relative;z-index:3;}
   #mq-benvenuto.via{transform:none;filter:none;}
 }
 
+/* ── Interscambio con il committente (cartella Google Drive) ───────────── */
+#tab-interscambio .ix-head h2{font-family:var(--display);font-size:24px;font-weight:800;margin:0 0 4px;color:var(--text);}
+#tab-interscambio .ix-head p{margin:0 0 16px;color:var(--muted);font-size:14px;}
+#ix-box{display:flex;flex-direction:column;gap:12px;}
+.ix-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--border2);background:var(--card2);color:var(--text);font:600 14px var(--ui);cursor:pointer;text-decoration:none;white-space:nowrap;}
+.ix-btn:hover{border-color:var(--muted);}
+.ix-btn.pri{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff;}
+.ix-btn.pri:hover{background:#A8380A;}
+.ix-btn.big{min-height:48px;padding:0 22px;font-size:15px;}
+.ix-btn:disabled{opacity:.6;cursor:default;}
+.ix-link{background:none;border:0;color:var(--ambra);text-decoration:underline;cursor:pointer;font:inherit;padding:4px 0;}
+.ix-vuoto-card{border:1px solid var(--border);border-radius:16px;background:var(--surface);padding:28px;text-align:center;}
+.ix-vuoto-card h3{margin:8px 0 6px;font-size:18px;color:var(--text);}
+.ix-vuoto-card p{margin:0 auto 18px;max-width:62ch;color:var(--muted);font-size:14px;line-height:1.55;}
+.ix-big{font-size:40px;}
+.ix-err{border:1px solid rgba(255,107,91,.55);background:rgba(255,107,91,.12);color:#FFD2CC;border-radius:10px;padding:10px 12px;font-size:14px;margin:0 0 12px;text-align:left;}
+.ix-bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;}
+.ix-path{display:flex;flex-wrap:wrap;align-items:center;gap:2px;min-width:0;}
+.ix-bc{background:none;border:1px solid transparent;color:var(--text);font:700 15px var(--ui);padding:6px 8px;border-radius:8px;cursor:pointer;max-width:min(440px,70vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ix-bc:hover{background:var(--card2);}
+.ix-bc:last-child{color:var(--ambra);}
+.ix-sep{color:var(--muted);padding:0 2px;}
+.ix-azioni{display:flex;flex-wrap:wrap;gap:8px;}
+.ix-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.ix-tools input[type=search]{flex:1;min-width:200px;min-height:40px;border-radius:10px;border:1px solid var(--border2);background:var(--field);color:var(--text);padding:0 12px;font:14px var(--ui);}
+.ix-ordl{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:6px;}
+.ix-ordl select{min-height:40px;border-radius:10px;border:1px solid var(--border2);background:var(--field);color:var(--text);padding:0 10px;font:14px var(--ui);}
+.ix-lista{border:1px solid var(--border);border-radius:14px;background:var(--surface);overflow:hidden;min-height:120px;transition:box-shadow .15s;}
+.ix-lista.drop{box-shadow:0 0 0 2px var(--accent) inset;background:rgba(232,102,30,.06);}
+.ix-riga{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:6px 10px 6px 6px;border-top:1px solid var(--border);}
+.ix-riga:first-child{border-top:0;}
+.ix-riga:hover{background:var(--card2);}
+.ix-riga.trascina{opacity:.45;}
+.ix-riga.sopra,.ix-bc.sopra{box-shadow:0 0 0 2px var(--accent) inset;background:rgba(232,102,30,.12);}
+.ix-nome{display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;color:var(--text);font:500 14.5px var(--ui);text-align:left;cursor:pointer;padding:8px 6px;border-radius:8px;}
+.ix-riga.cart .ix-nome{font-weight:700;}
+.ix-ico{font-size:20px;flex:none;width:26px;text-align:center;}
+.ix-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ix-nome:hover .ix-n{text-decoration:underline;}
+.ix-meta{color:var(--muted);font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.ix-act{display:flex;gap:4px;}
+.ix-ib{width:36px;height:36px;border-radius:9px;border:1px solid transparent;background:none;color:var(--text2);font-size:16px;cursor:pointer;display:grid;place-items:center;}
+.ix-ib:hover{background:var(--field);border-color:var(--border2);}
+.ix-ib.del:hover{color:#FF8A7D;border-color:rgba(255,107,91,.5);}
+.ix-vuoto{padding:28px 16px;text-align:center;color:var(--muted);font-size:14px;}
+.ix-nota{color:var(--muted);font-size:12.5px;margin:0;}
+#ix-coda{display:flex;flex-direction:column;gap:6px;}
+.ix-up{display:grid;grid-template-columns:minmax(0,1fr) 160px auto;gap:10px;align-items:center;font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;}
+.ix-up-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ix-up-bar{height:6px;border-radius:6px;background:var(--field);overflow:hidden;}
+.ix-up-bar i{display:block;height:100%;background:var(--accent);transition:width .2s;}
+.ix-up.ok .ix-up-bar i{background:var(--green);} .ix-up.ok .ix-up-s{color:#7FD6A0;}
+.ix-up.ko .ix-up-s{color:#FF8A7D;}
+.ix-up-s{color:var(--muted);white-space:nowrap;}
+.ix-impost{border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:12px 16px;}
+.ix-impost>summary{cursor:pointer;font-weight:700;min-height:28px;display:flex;align-items:center;}
+.ix-l{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:13px;margin-top:12px;}
+.ix-l input{min-height:42px;border-radius:10px;border:1px solid var(--border2);background:var(--field);color:var(--text);padding:0 12px;font:14px var(--ui);}
+.ix-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.ix-guida{margin-top:14px;color:var(--text2);font-size:13.5px;}
+.ix-guida summary{cursor:pointer;color:var(--ambra);}
+.ix-guida ol{margin:10px 0 6px;padding-left:20px;line-height:1.6;}
+.ix-guida p{color:var(--muted);margin:6px 0 0;}
+.ix-modale{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px;}
+.ix-mod-card{width:min(520px,100%);max-height:80vh;display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.ix-mod-t{font-weight:700;font-size:16px;}
+.ix-mod-path{display:flex;flex-wrap:wrap;align-items:center;}
+.ix-mod-list{overflow:auto;border:1px solid var(--border);border-radius:10px;min-height:120px;}
+.ix-mod-cart{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--border);color:var(--text);padding:11px 12px;font:600 14px var(--ui);cursor:pointer;}
+.ix-mod-cart:first-child{border-top:0;}
+.ix-mod-cart:hover{background:var(--card2);}
+.ix-mod-act{display:flex;justify-content:flex-end;gap:8px;}
+@media (max-width:760px){
+  .ix-riga{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n a" "m m";row-gap:0;}
+  .ix-nome{grid-area:n;} .ix-act{grid-area:a;} .ix-meta{grid-area:m;padding:0 0 8px 42px;white-space:normal;}
+  .ix-azioni{width:100%;} .ix-azioni .ix-btn{flex:1;justify-content:center;}
+  .ix-up{grid-template-columns:minmax(0,1fr) 80px;} .ix-up-s{grid-column:1/-1;}
+}
+
 header > .header-left{align-items:center;}
 
 </style>
@@ -4350,6 +4430,11 @@ header > .header-left{align-items:center;}
     <!-- ══ TAB: VERIFICA VERBALI (strumento incorporato) ══ -->
     <div class="tab-panel" id="tab-verifica-verbali">
       <iframe id="vv-frame" title="Verifica verbali CLS"></iframe>
+    </div>
+    <!-- ══ TAB: INTERSCAMBIO CON IL COMMITTENTE (cartella Google Drive) ══ -->
+    <div class="tab-panel" id="tab-interscambio">
+      <div class="ix-head"><h2>Interscambio con il committente</h2><p>La cartella di Google Drive condivisa con il committente: cartelle e file si aggiungono, modificano ed eliminano da qui.</p></div>
+      <div id="ix-box"></div>
     </div>
   </main>
 </div>
@@ -37529,7 +37614,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 30.7';
+  window.APP_VERSION = 'Versione 31.1';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
@@ -37833,6 +37918,360 @@ setTool("erase");
       .observe(p,{attributes:true,attributeFilter:['class']});
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',avvia); else avvia();
+})();
+</script>
+<script>window.MQ_INTERSCAMBIO = { clientId: '251190963213-0o6tfgpg57orbu0hvit235euhfhn6na7.apps.googleusercontent.com', cartella: 'https://drive.google.com/drive/folders/1fsAN246nl5VRVo1-fGWc0JewtcHipOLg' };</script>
+<script id="mq-interscambio">
+/* ═══════════════════════════════════════════════════════════════
+   INTERSCAMBIO CON IL COMMITTENTE — cartella Google Drive gestita dal sito
+   Si collega con l'account Google aziendale (Google Identity Services) e usa le API di Drive:
+   sfoglia, crea, rinomina, sposta, carica, scarica, elimina (cestino). Funziona anche sui Drive condivisi.
+   Nessun dato passa da altri server: il browser parla direttamente con Google.
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var API = 'https://www.googleapis.com/drive/v3', UP = 'https://www.googleapis.com/upload/drive/v3';
+  var SCOPE = 'https://www.googleapis.com/auth/drive';
+  var CARTELLA = 'application/vnd.google-apps.folder';
+  var K = { cid: 'mq_ix_clientid', root: 'mq_ix_cartella', tok: 'mq_ix_token' };
+  var DEF = window.MQ_INTERSCAMBIO || {};                 // valori predefiniti messi nel sito (facoltativi)
+  var st = { token: null, scade: 0, root: null, rootNome: '', cur: null, percorso: [], voci: [], filtro: '', ord: 'nome', cli: null, carica: [], occupato: false };
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+  function lsGet(k){ try { return localStorage.getItem(k) || ''; } catch(e){ return ''; } }
+  function lsSet(k, v){ try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch(e){} }
+  function avviso(m, t){ if (window.mqAvviso) window.mqAvviso(m, t || 'info'); }
+  function idDaLink(s){
+    s = String(s || '').trim(); if (!s) return '';
+    var m = s.match(/\/folders\/([A-Za-z0-9_-]{10,})/) || s.match(/[?&]id=([A-Za-z0-9_-]{10,})/) || s.match(/^([A-Za-z0-9_-]{10,})$/);
+    return m ? m[1] : '';
+  }
+  function clientId(){ return lsGet(K.cid) || DEF.clientId || ''; }
+  function rootId(){ return idDaLink(lsGet(K.root) || DEF.cartella || ''); }
+  function dimensione(n){ n = +n; if (!n && n !== 0 || isNaN(n)) return ''; if (n < 1024) return n + ' B'; if (n < 1048576) return (n / 1024).toFixed(0) + ' KB'; if (n < 1073741824) return (n / 1048576).toFixed(1).replace('.', ',') + ' MB'; return (n / 1073741824).toFixed(2).replace('.', ',') + ' GB'; }
+  function quando(iso){
+    if (!iso) return ''; var d = new Date(iso); if (isNaN(d)) return '';
+    var p = function(x){ return String(x).padStart(2, '0'); };
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function icona(f){
+    var m = f.mimeType || '', n = (f.name || '').toLowerCase();
+    if (m === CARTELLA) return '📁';
+    if (/pdf/.test(m) || /\.pdf$/.test(n)) return '📕';
+    if (/spreadsheet|excel/.test(m) || /\.(xlsx?|xlsm|csv)$/.test(n)) return '📗';
+    if (/document|word/.test(m) || /\.docx?$/.test(n)) return '📘';
+    if (/presentation|powerpoint/.test(m) || /\.pptx?$/.test(n)) return '📙';
+    if (/^image\//.test(m)) return '🖼️';
+    if (/zip|compressed/.test(m) || /\.(zip|rar|7z)$/.test(n)) return '🗜️';
+    if (/\.(dwg|dxf)$/.test(n)) return '📐';
+    return '📄';
+  }
+
+  /* ---------- accesso a Google ---------- */
+  function caricaGis(){
+    if (window.google && google.accounts && google.accounts.oauth2) return Promise.resolve();
+    return new Promise(function(ok, ko){
+      var s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+      s.onload = function(){ ok(); }; s.onerror = function(){ ko(new Error('Non riesco a raggiungere Google: controlla la connessione.')); };
+      document.head.appendChild(s);
+    });
+  }
+  function tokenSalvato(){
+    try { var t = JSON.parse(sessionStorage.getItem(K.tok) || 'null'); if (t && t.scade > Date.now() + 60000) { st.token = t.token; st.scade = t.scade; return true; } } catch(e){}
+    return false;
+  }
+  function chiediToken(silenzioso){
+    var cid = clientId(); if (!cid) return Promise.reject(new Error('Manca l\'ID client di Google: inseriscilo in Impostazioni.'));
+    return caricaGis().then(function(){
+      return new Promise(function(ok, ko){
+        if (!st.cli || st.cli._cid !== cid) {
+          st.cli = google.accounts.oauth2.initTokenClient({ client_id: cid, scope: SCOPE, callback: function(){} , error_callback: function(){} });
+          st.cli._cid = cid;
+        }
+        st.cli.callback = function(r){
+          if (r && r.access_token) {
+            st.token = r.access_token; st.scade = Date.now() + ((+r.expires_in || 3600) * 1000);
+            try { sessionStorage.setItem(K.tok, JSON.stringify({ token: st.token, scade: st.scade })); } catch(e){}
+            ok();
+          } else ko(new Error(r && r.error_description || 'Accesso a Google non riuscito.'));
+        };
+        st.cli.error_callback = function(e){ ko(new Error(e && e.type === 'popup_closed' ? 'Finestra di accesso chiusa.' : e && e.type === 'popup_failed_to_open' ? 'Il browser ha bloccato la finestra di accesso: consenti i popup per questo sito.' : 'Accesso a Google non riuscito.')); };
+        st.cli.requestAccessToken({ prompt: silenzioso ? '' : '' });
+      });
+    });
+  }
+  function esci(){
+    try { if (st.token && window.google && google.accounts && google.accounts.oauth2) google.accounts.oauth2.revoke(st.token, function(){}); } catch(e){}
+    st.token = null; st.scade = 0; try { sessionStorage.removeItem(K.tok); } catch(e){}
+    disegna();
+  }
+  function spiega(stato, j){
+    var r = j && j.error && (j.error.errors && j.error.errors[0] && j.error.errors[0].reason || j.error.status) || '';
+    if (stato === 404) return 'Cartella o file non trovato, oppure il tuo account non ha accesso.';
+    if (stato === 403 && /insufficient|forbidden|permission/i.test(r + ' ' + (j && j.error && j.error.message || ''))) return 'Non hai i permessi per questa operazione su questa cartella (serve almeno "Editor"/"Gestore contenuti").';
+    if (stato === 403 && /storageQuota/i.test(r)) return 'Spazio di Drive esaurito.';
+    if (stato === 403 && /accessNotConfigured|SERVICE_DISABLED/i.test(r + JSON.stringify(j || {}))) return 'Nel progetto Google Cloud non è attiva la "Google Drive API": attivala e riprova.';
+    if (stato === 429 || /rateLimit/i.test(r)) return 'Troppe richieste a Google in poco tempo: riprova tra qualche secondo.';
+    return (j && j.error && j.error.message) || ('Errore di Google Drive (' + stato + ').');
+  }
+  function chiama(metodo, url, corpo, giro){
+    var pronto = st.token && st.scade > Date.now() + 30000 ? Promise.resolve() : chiediToken(true);
+    return pronto.then(function(){
+      var o = { method: metodo, headers: { Authorization: 'Bearer ' + st.token } };
+      if (corpo !== undefined) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(corpo); }
+      return fetch(url, o);
+    }).then(function(r){
+      if (r.status === 401 && !giro) { st.token = null; return chiama(metodo, url, corpo, 1); }
+      if (r.status === 204) return {};
+      return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(spiega(r.status, j)); return j; });
+    });
+  }
+  var DR = 'supportsAllDrives=true';
+  function elenco(id){
+    var tutti = [];
+    function pagina(tok){
+      var q = encodeURIComponent("'" + id + "' in parents and trashed=false");
+      var u = API + '/files?q=' + q + '&pageSize=500&orderBy=folder,name&' + DR + '&includeItemsFromAllDrives=true'
+        + '&fields=' + encodeURIComponent('nextPageToken,files(id,name,mimeType,size,modifiedTime,lastModifyingUser(displayName),webViewLink,capabilities(canEdit,canRename,canTrash,canAddChildren,canMoveItemWithinDrive))')
+        + (tok ? '&pageToken=' + encodeURIComponent(tok) : '');
+      return chiama('GET', u).then(function(j){ tutti = tutti.concat(j.files || []); return j.nextPageToken ? pagina(j.nextPageToken) : tutti; });
+    }
+    return pagina('');
+  }
+  function info(id){ return chiama('GET', API + '/files/' + encodeURIComponent(id) + '?' + DR + '&fields=id,name,mimeType,parents,webViewLink,capabilities(canAddChildren)'); }
+
+  /* ---------- operazioni ---------- */
+  function apri(id, nome){
+    st.occupato = true; disegna();
+    return elenco(id).then(function(v){
+      st.voci = v; st.cur = id;
+      var i = st.percorso.findIndex(function(p){ return p.id === id; });
+      if (i >= 0) st.percorso = st.percorso.slice(0, i + 1); else st.percorso.push({ id: id, nome: nome || '…' });
+      st.occupato = false; st.errore = ''; disegna();
+    }).catch(function(e){ st.occupato = false; st.errore = e.message; disegna(); });
+  }
+  function aggiorna(){ if (st.cur) return apri(st.cur); }
+  function collega(){
+    var root = rootId();
+    if (location.protocol === 'file:') { st.errore = 'Hai aperto il file index.html dal computer: Google permette l\'accesso solo dal sito online. Apri https://danieleferrara29.github.io/modernquality/ e riprova.'; disegna(); avviso('Apri il sito online per collegarti a Drive.', 'error'); return; }
+    if (!clientId()) { st.impost = true; disegna(); avviso('Prima inserisci l\'ID client di Google in Impostazioni.', 'error'); return; }
+    if (!root) { st.impost = true; disegna(); avviso('Prima incolla il link della cartella di Drive in Impostazioni.', 'error'); return; }
+    st.occupato = true; st.errore = ''; disegna();
+    chiediToken(false).then(function(){ return info(root); }).then(function(f){
+      if (f.mimeType !== CARTELLA) throw new Error('Il link indicato non è una cartella.');
+      st.root = root; st.rootNome = f.name; st.percorso = [{ id: root, nome: f.name }];
+      return apri(root, f.name);
+    }).catch(function(e){ st.occupato = false; st.errore = e.message; disegna(); });
+  }
+  function nuovaCartella(){
+    var n = prompt('Nome della nuova cartella:'); if (!n || !n.trim()) return;
+    chiama('POST', API + '/files?' + DR + '&fields=id', { name: n.trim(), mimeType: CARTELLA, parents: [st.cur] })
+      .then(function(){ avviso('Cartella "' + n.trim() + '" creata', 'success'); aggiorna(); }).catch(function(e){ avviso(e.message, 'error'); });
+  }
+  function rinomina(f){
+    var n = prompt('Nuovo nome:', f.name); if (!n || !n.trim() || n.trim() === f.name) return;
+    chiama('PATCH', API + '/files/' + f.id + '?' + DR + '&fields=id', { name: n.trim() })
+      .then(function(){ avviso('Rinominato in "' + n.trim() + '"', 'success'); aggiorna(); }).catch(function(e){ avviso(e.message, 'error'); });
+  }
+  function elimina(f){
+    var cart = f.mimeType === CARTELLA;
+    if (!confirm('Spostare nel cestino ' + (cart ? 'la cartella' : 'il file') + ' "' + f.name + '"' + (cart ? ' con tutto il suo contenuto' : '') + '?\n\nSi può recuperare dal cestino di Drive per 30 giorni.')) return;
+    chiama('PATCH', API + '/files/' + f.id + '?' + DR + '&fields=id', { trashed: true })
+      .then(function(){ avviso('"' + f.name + '" spostato nel cestino', 'success'); aggiorna(); }).catch(function(e){ avviso(e.message, 'error'); });
+  }
+  function sposta(f, dest, destNome){
+    if (!dest || dest === st.cur || dest === f.id) return Promise.resolve();
+    return chiama('PATCH', API + '/files/' + f.id + '?' + DR + '&addParents=' + encodeURIComponent(dest) + '&removeParents=' + encodeURIComponent(st.cur) + '&fields=id', {})
+      .then(function(){ avviso('"' + f.name + '" spostato in "' + destNome + '"', 'success'); aggiorna(); }).catch(function(e){ avviso(e.message, 'error'); });
+  }
+  function scarica(f){
+    if (/^application\/vnd\.google-apps\./.test(f.mimeType)) { window.open(f.webViewLink, '_blank', 'noopener'); return; }
+    avviso('Scarico "' + f.name + '"…');
+    (st.token && st.scade > Date.now() + 30000 ? Promise.resolve() : chiediToken(true)).then(function(){
+      return fetch(API + '/files/' + f.id + '?alt=media&' + DR, { headers: { Authorization: 'Bearer ' + st.token } });
+    }).then(function(r){ if (!r.ok) throw new Error('Download non riuscito (' + r.status + ')'); return r.blob(); })
+      .then(function(b){ var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = f.name; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 4000); })
+      .catch(function(e){ avviso(e.message, 'error'); });
+  }
+  // caricamento: "resumable" (va bene anche per file grandi) con barra di avanzamento
+  function caricaFile(files){
+    files = [].slice.call(files || []); if (!files.length || !st.cur) return;
+    var dest = st.cur, esistenti = {}; st.voci.forEach(function(v){ if (v.mimeType !== CARTELLA) esistenti[v.name] = v; });
+    var gia = files.filter(function(f){ return esistenti[f.name]; });
+    var sostituisci = false;
+    if (gia.length) sostituisci = confirm(gia.length === 1 ? 'Il file "' + gia[0].name + '" c\'è già in questa cartella.\n\nOK = sostituiscilo con la nuova versione (Drive tiene la versione precedente)\nAnnulla = caricalo come file in più' : gia.length + ' file ci sono già in questa cartella.\n\nOK = sostituiscili con la nuova versione (Drive tiene le versioni precedenti)\nAnnulla = caricali come file in più');
+    var coda = files.map(function(f){ return { file: f, nome: f.name, pct: 0, stato: 'attesa', sost: sostituisci && esistenti[f.name] ? esistenti[f.name].id : null }; });
+    st.carica = st.carica.filter(function(c){ return c.stato !== 'ok'; }).concat(coda); disegnaCoda();
+    var i = 0;
+    function prossimo(){
+      if (i >= coda.length) { aggiorna(); var ok = coda.filter(function(c){ return c.stato === 'ok'; }).length; avviso(ok + ' file caricat' + (ok === 1 ? 'o' : 'i') + (ok < coda.length ? ', ' + (coda.length - ok) + ' non riuscit' + (coda.length - ok === 1 ? 'o' : 'i') : ''), ok === coda.length ? 'success' : 'error'); return; }
+      var c = coda[i++]; c.stato = 'su'; disegnaCoda();
+      (st.token && st.scade > Date.now() + 60000 ? Promise.resolve() : chiediToken(true)).then(function(){
+        var u = c.sost ? UP + '/files/' + c.sost + '?uploadType=resumable&' + DR : UP + '/files?uploadType=resumable&' + DR;
+        return fetch(u, { method: c.sost ? 'PATCH' : 'POST', headers: { Authorization: 'Bearer ' + st.token, 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': c.file.type || 'application/octet-stream' },
+          body: JSON.stringify(c.sost ? {} : { name: c.file.name, parents: [dest] }) });
+      }).then(function(r){
+        if (!r.ok) return r.json().catch(function(){ return {}; }).then(function(j){ throw new Error(spiega(r.status, j)); });
+        var loc = r.headers.get('Location') || r.headers.get('location'); if (!loc) throw new Error('Google non ha risposto come previsto.');
+        return new Promise(function(ok, ko){
+          var x = new XMLHttpRequest(); x.open('PUT', loc);
+          x.upload.onprogress = function(e){ if (e.lengthComputable) { c.pct = Math.round(e.loaded / e.total * 100); disegnaCoda(); } };
+          x.onload = function(){ if (x.status >= 200 && x.status < 300) ok(); else ko(new Error('Caricamento interrotto (' + x.status + ')')); };
+          x.onerror = function(){ ko(new Error('Connessione interrotta')); };
+          x.send(c.file);
+        });
+      }).then(function(){ c.stato = 'ok'; c.pct = 100; disegnaCoda(); prossimo(); })
+        .catch(function(e){ c.stato = 'ko'; c.err = e.message; disegnaCoda(); prossimo(); });
+    }
+    prossimo();
+  }
+
+  /* ---------- finestra "Sposta in…" ---------- */
+  function sceltaCartella(f){
+    var box = document.createElement('div'); box.className = 'ix-modale'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+    var pila = st.percorso.slice();
+    box.innerHTML = '<div class="ix-mod-card"><div class="ix-mod-t">Sposta "' + esc(f.name) + '" in…</div><div class="ix-mod-path"></div><div class="ix-mod-list"></div><div class="ix-mod-act"><button class="ix-btn" data-a="no">Annulla</button><button class="ix-btn pri" data-a="si">Sposta qui</button></div></div>';
+    document.body.appendChild(box);
+    function mostra(){
+      var cur = pila[pila.length - 1];
+      box.querySelector('.ix-mod-path').innerHTML = pila.map(function(p, i){ return '<button class="ix-bc" data-i="' + i + '">' + esc(p.nome) + '</button>'; }).join('<span class="ix-sep">›</span>');
+      box.querySelector('.ix-mod-list').innerHTML = '<div class="ix-vuoto">Caricamento…</div>';
+      box.querySelectorAll('.ix-mod-path .ix-bc').forEach(function(b){ b.onclick = function(){ pila = pila.slice(0, +b.dataset.i + 1); mostra(); }; });
+      elenco(cur.id).then(function(v){
+        var c = v.filter(function(x){ return x.mimeType === CARTELLA && x.id !== f.id; });
+        box.querySelector('.ix-mod-list').innerHTML = c.length ? c.map(function(x){ return '<button class="ix-mod-cart" data-id="' + esc(x.id) + '" data-n="' + esc(x.name) + '">📁 ' + esc(x.name) + '</button>'; }).join('') : '<div class="ix-vuoto">Nessuna sottocartella</div>';
+        box.querySelectorAll('.ix-mod-cart').forEach(function(b){ b.onclick = function(){ pila.push({ id: b.dataset.id, nome: b.dataset.n }); mostra(); }; });
+      }).catch(function(e){ box.querySelector('.ix-mod-list').innerHTML = '<div class="ix-err">' + esc(e.message) + '</div>'; });
+    }
+    box.querySelector('[data-a="no"]').onclick = function(){ box.remove(); };
+    box.querySelector('[data-a="si"]').onclick = function(){ var d = pila[pila.length - 1]; box.remove(); sposta(f, d.id, d.nome); };
+    box.addEventListener('click', function(e){ if (e.target === box) box.remove(); });
+    mostra();
+  }
+
+  /* ---------- disegno ---------- */
+  function disegnaCoda(){
+    var el = $('ix-coda'); if (!el) return;
+    var c = st.carica; if (!c.length) { el.innerHTML = ''; return; }
+    el.innerHTML = c.map(function(x){ return '<div class="ix-up ' + x.stato + '"><span class="ix-up-n">' + esc(x.nome) + '</span><span class="ix-up-bar"><i style="width:' + x.pct + '%"></i></span><span class="ix-up-s">' + (x.stato === 'ok' ? '✓ caricato' : x.stato === 'ko' ? '✕ ' + esc(x.err || 'errore') : x.stato === 'su' ? x.pct + '%' : 'in coda') + '</span></div>'; }).join('')
+      + (c.every(function(x){ return x.stato === 'ok' || x.stato === 'ko'; }) ? '<button class="ix-link" id="ix-coda-chiudi">Nascondi</button>' : '');
+    var ch = $('ix-coda-chiudi'); if (ch) ch.onclick = function(){ st.carica = []; disegnaCoda(); };
+  }
+  function ordinate(){
+    var v = st.voci.slice(), f = st.filtro.trim().toLowerCase();
+    if (f) v = v.filter(function(x){ return x.name.toLowerCase().indexOf(f) >= 0; });
+    var cart = function(x){ return x.mimeType === CARTELLA ? 0 : 1; };
+    v.sort(function(a, b){
+      if (cart(a) !== cart(b)) return cart(a) - cart(b);
+      if (st.ord === 'data') return String(b.modifiedTime).localeCompare(String(a.modifiedTime));
+      return a.name.localeCompare(b.name, 'it', { numeric: true, sensitivity: 'base' });
+    });
+    return v;
+  }
+  function disegna(){
+    var box = $('ix-box'); if (!box) return;
+    var connesso = !!(st.token && st.root);
+    var impost = '<details class="ix-impost" ' + (st.impost || !clientId() || !rootId() ? 'open' : '') + '><summary>⚙ Impostazioni</summary>'
+      + '<label class="ix-l">Link della cartella su Google Drive<input id="ix-in-root" type="text" placeholder="https://drive.google.com/drive/folders/…" value="' + esc(lsGet(K.root) || DEF.cartella || '') + '"></label>'
+      + '<label class="ix-l">ID client di Google (OAuth)<input id="ix-in-cid" type="text" placeholder="123456789-abc….apps.googleusercontent.com" value="' + esc(clientId()) + '"></label>'
+      + '<div class="ix-row"><button class="ix-btn pri" id="ix-salva">Salva</button>' + (connesso ? '<button class="ix-btn" id="ix-esci">Scollega Google</button>' : '') + '</div>'
+      + '<details class="ix-guida"><summary>Come ottenere l\'ID client (una volta sola, circa 15 minuti)</summary><ol>'
+      + '<li>Apri <b>console.cloud.google.com</b> con l\'account aziendale e crea un progetto (es. "Modern Quality").</li>'
+      + '<li>In <b>API e servizi → Libreria</b> cerca <b>Google Drive API</b> e premi <b>Abilita</b>.</li>'
+      + '<li>In <b>Schermata consenso OAuth</b> scegli tipo <b>Interno</b> (solo utenti dell\'azienda: nessuna verifica di Google), nome app "Modern Quality", la tua email; nell\'elenco degli ambiti aggiungi <b>…/auth/drive</b>.</li>'
+      + '<li>In <b>Credenziali → Crea credenziali → ID client OAuth</b>: tipo <b>Applicazione web</b>; in <b>Origini JavaScript autorizzate</b> aggiungi <b>https://danieleferrara29.github.io</b>.</li>'
+      + '<li>Copia l\'<b>ID client</b> (finisce con .apps.googleusercontent.com) e incollalo qui sopra.</li>'
+      + '</ol><p>Se un passaggio è bloccato, l\'amministratore Google dell\'azienda deve consentire le app interne o l\'accesso a Drive da applicazioni di terze parti.</p></details>'
+      + '</details>';
+    if (!connesso) {
+      box.innerHTML = '<div class="ix-vuoto-card"><div class="ix-big">🔗</div><h3>Collega la cartella di Drive condivisa con il committente</h3>'
+        + '<p>Dal sito potrai sfogliare la cartella, creare, rinominare, spostare ed eliminare cartelle, caricare e scaricare file. Le modifiche sono subito visibili anche al committente in Google Drive.</p>'
+        + (st.errore ? '<div class="ix-err">' + esc(st.errore) + '</div>' : '')
+        + '<button class="ix-btn pri big" id="ix-collega"' + (st.occupato ? ' disabled' : '') + '>' + (st.occupato ? 'Collegamento…' : 'Accedi con Google e apri la cartella') + '</button></div>' + impost;
+    } else {
+      var v = ordinate(), dove = st.percorso[st.percorso.length - 1] || {};
+      box.innerHTML = '<div class="ix-bar">'
+        + '<nav class="ix-path" aria-label="Percorso">' + st.percorso.map(function(p, i){ return '<button class="ix-bc" data-i="' + i + '" data-drop="' + esc(p.id) + '">' + (i === 0 ? '🏠 ' : '') + esc(p.nome) + '</button>'; }).join('<span class="ix-sep">›</span>') + '</nav>'
+        + '<div class="ix-azioni"><button class="ix-btn pri" id="ix-up">⬆ Carica file</button><button class="ix-btn" id="ix-new">＋ Nuova cartella</button><button class="ix-btn" id="ix-ref" title="Aggiorna">⟳</button><a class="ix-btn" id="ix-drive" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/' + esc(st.cur) + '">Apri in Drive ↗</a></div>'
+        + '<input type="file" id="ix-file" multiple hidden></div>'
+        + '<div class="ix-tools"><input id="ix-cerca" type="search" placeholder="Cerca in questa cartella…" value="' + esc(st.filtro) + '"><label class="ix-ordl">Ordina <select id="ix-ord"><option value="nome"' + (st.ord === 'nome' ? ' selected' : '') + '>per nome</option><option value="data"' + (st.ord === 'data' ? ' selected' : '') + '>più recenti</option></select></label></div>'
+        + (st.errore ? '<div class="ix-err">' + esc(st.errore) + '</div>' : '')
+        + '<div id="ix-coda"></div>'
+        + '<div class="ix-lista" id="ix-lista">' + (st.occupato ? '<div class="ix-vuoto">Caricamento…</div>' : (v.length ? v.map(function(f, i){
+            var c = f.mimeType === CARTELLA, cap = f.capabilities || {};
+            return '<div class="ix-riga' + (c ? ' cart' : '') + '" data-i="' + i + '" draggable="' + (cap.canMoveItemWithinDrive === false ? 'false' : 'true') + '"' + (c ? ' data-drop="' + esc(f.id) + '"' : '') + '>'
+              + '<button class="ix-nome" data-act="apri" title="' + (c ? 'Apri la cartella' : 'Apri il file in Drive') + '"><span class="ix-ico">' + icona(f) + '</span><span class="ix-n">' + esc(f.name) + '</span></button>'
+              + '<span class="ix-meta">' + esc(quando(f.modifiedTime)) + (f.lastModifyingUser && f.lastModifyingUser.displayName ? ' · ' + esc(f.lastModifyingUser.displayName) : '') + (c ? '' : (f.size ? ' · ' + dimensione(f.size) : '')) + '</span>'
+              + '<span class="ix-act">' + (c ? '' : '<button class="ix-ib" data-act="scarica" title="Scarica" aria-label="Scarica">⬇</button>')
+              + (cap.canRename === false ? '' : '<button class="ix-ib" data-act="rinomina" title="Rinomina" aria-label="Rinomina">✎</button>')
+              + (cap.canMoveItemWithinDrive === false ? '' : '<button class="ix-ib" data-act="sposta" title="Sposta in…" aria-label="Sposta">⇄</button>')
+              + (cap.canTrash === false ? '' : '<button class="ix-ib del" data-act="elimina" title="Sposta nel cestino" aria-label="Elimina">🗑</button>') + '</span></div>';
+          }).join('') : '<div class="ix-vuoto">' + (st.filtro ? 'Nessun elemento corrisponde alla ricerca.' : 'Cartella vuota: trascina qui i file o usa "Carica file".') + '</div>')) + '</div>'
+        + '<p class="ix-nota">Trascina i file dal PC sulla lista per caricarli; trascina un elemento su una cartella (o sul percorso in alto) per spostarlo. "Elimina" sposta nel cestino di Drive: si recupera per 30 giorni.</p>'
+        + impost;
+      disegnaCoda();
+    }
+    collegaEventi();
+  }
+  function collegaEventi(){
+    var b;
+    if ((b = $('ix-collega'))) b.onclick = collega;
+    if ((b = $('ix-salva'))) b.onclick = function(){
+      var r = $('ix-in-root').value.trim(), c = $('ix-in-cid').value.trim();
+      if (r && !idDaLink(r)) { avviso('Il link della cartella non è valido: copialo dalla barra degli indirizzi di Drive.', 'error'); return; }
+      if (c && !/\.apps\.googleusercontent\.com$/.test(c)) { avviso('L\'ID client deve finire con .apps.googleusercontent.com', 'error'); return; }
+      var cambiata = idDaLink(r) !== st.root;
+      lsSet(K.root, r); lsSet(K.cid, c); st.impost = false; avviso('Impostazioni salvate', 'success');
+      if (st.token && cambiata) { st.root = null; collega(); } else disegna();
+    };
+    if ((b = $('ix-esci'))) b.onclick = esci;
+    if ((b = $('ix-up'))) b.onclick = function(){ $('ix-file').click(); };
+    if ((b = $('ix-file'))) b.onchange = function(){ caricaFile(this.files); this.value = ''; };
+    if ((b = $('ix-new'))) b.onclick = nuovaCartella;
+    if ((b = $('ix-ref'))) b.onclick = aggiorna;
+    if ((b = $('ix-cerca'))) b.oninput = function(){ st.filtro = this.value; var pos = this.selectionStart; disegna(); var n = $('ix-cerca'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch(e){} } };
+    if ((b = $('ix-ord'))) b.onchange = function(){ st.ord = this.value; disegna(); };
+    document.querySelectorAll('#ix-box .ix-path .ix-bc').forEach(function(x){ x.onclick = function(){ var p = st.percorso[+x.dataset.i]; st.filtro = ''; apri(p.id, p.nome); }; });
+    var v = ordinate();
+    document.querySelectorAll('#ix-lista .ix-riga').forEach(function(r){
+      var f = v[+r.dataset.i];
+      r.querySelectorAll('[data-act]').forEach(function(x){ x.onclick = function(e){ e.stopPropagation(); var a = x.dataset.act;
+        if (a === 'apri') { if (f.mimeType === CARTELLA) { st.filtro = ''; apri(f.id, f.name); } else window.open(f.webViewLink, '_blank', 'noopener'); }
+        else if (a === 'scarica') scarica(f); else if (a === 'rinomina') rinomina(f); else if (a === 'sposta') sceltaCartella(f); else if (a === 'elimina') elimina(f); }; });
+      r.addEventListener('dragstart', function(e){ e.dataTransfer.setData('text/mq-ix', f.id); e.dataTransfer.effectAllowed = 'move'; r.classList.add('trascina'); });
+      r.addEventListener('dragend', function(){ r.classList.remove('trascina'); });
+    });
+    // destinazioni: cartelle della lista e percorso in alto
+    document.querySelectorAll('#ix-box [data-drop]').forEach(function(d){
+      d.addEventListener('dragover', function(e){ if ([].indexOf.call(e.dataTransfer.types, 'text/mq-ix') >= 0) { e.preventDefault(); d.classList.add('sopra'); } });
+      d.addEventListener('dragleave', function(){ d.classList.remove('sopra'); });
+      d.addEventListener('drop', function(e){
+        var id = e.dataTransfer.getData('text/mq-ix'); d.classList.remove('sopra'); if (!id) return;
+        e.preventDefault(); e.stopPropagation();
+        var f = st.voci.find(function(x){ return x.id === id; }); if (!f) return;
+        var nome = (d.querySelector('.ix-n') || d).textContent.replace(/^🏠\s*/, '');
+        sposta(f, d.dataset.drop, nome);
+      });
+    });
+    // file dal PC trascinati sulla lista
+    var L = $('ix-lista');
+    if (L) {
+      L.addEventListener('dragover', function(e){ if ([].indexOf.call(e.dataTransfer.types, 'Files') >= 0) { e.preventDefault(); L.classList.add('drop'); } });
+      L.addEventListener('dragleave', function(e){ if (e.target === L) L.classList.remove('drop'); });
+      L.addEventListener('drop', function(e){ if (e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); L.classList.remove('drop'); caricaFile(e.dataTransfer.files); } });
+    }
+  }
+  function avvia(){
+    if (!$('ix-box')) return;
+    // all'apertura della sezione: se c'è un accesso valido in questa sessione, riapre la cartella senza chiedere nulla
+    if (tokenSalvato() && rootId() && clientId()) {
+      st.occupato = true; disegna();
+      info(rootId()).then(function(f){ st.root = f.id; st.rootNome = f.name; st.percorso = [{ id: f.id, nome: f.name }]; return apri(f.id, f.name); })
+        .catch(function(){ st.token = null; st.occupato = false; disegna(); });
+    } else disegna();
+  }
+  window.MQInterscambio = { apri: avvia, _st: st };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia); else avvia();
 })();
 </script>
 </body>
