@@ -38950,7 +38950,7 @@ setTool("erase");
     var griglia = function(m){ var a = new Date(m.getFullYear(), m.getMonth(), 1); a.setDate(a.getDate() - ((a.getDay() + 6) % 7)); var b = new Date(a); b.setDate(b.getDate() + 41); b.setHours(23, 59, 59, 999); return [a, b]; };
     var carica = function(da, a, conDoc){
       if (!conDoc && C.da && da >= C.da && a <= C.a) return Promise.resolve();
-      return srv('riepilogo', { id: st.cur, da: da.toISOString(), a: a.toISOString(), soloEventi: conDoc ? 0 : 1 }).then(function(r){
+      return srv('riepilogo', { id: st.cur, da: da.toISOString(), fino: a.toISOString(), soloEventi: conDoc ? 0 : 1 }).then(function(r){
         if (conDoc) C.r = r; aggiungi(r.eventi);
         C.da = C.da && C.da < da ? C.da : da; C.a = C.a && C.a > a ? C.a : a;
       });
@@ -39082,7 +39082,7 @@ setTool("erase");
     var v = null; try { v = localStorage.getItem(visitaKey()); } catch(e){}
     if (!st.srv || !v) return;
     var u = utenteSito() || {};
-    srv('riepilogo', { id: st.root, da: v, a: new Date(Date.now() + 60000).toISOString(), soloEventi: 1 }).then(function(r){
+    srv('riepilogo', { id: st.root, da: v, fino: new Date(Date.now() + 60000).toISOString(), soloEventi: 1 }).then(function(r){
       st.novita = (r.eventi || []).filter(function(e){ return e.utente !== u.nome; }).length;
       var b = $('ix-cal'); if (b) b.innerHTML = '📅 Calendario' + (st.novita ? ' <span class="ix-badge">' + st.novita + '</span>' : '');
     }).catch(function(){});
