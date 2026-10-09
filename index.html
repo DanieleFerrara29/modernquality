@@ -38840,7 +38840,7 @@ setTool("erase");
     box.querySelector('#ix-cru-sub').textContent = '«' + (r.cartella && r.cartella.name || '') + '» e sottocartelle · ' + n.tot + ' document' + (n.tot === 1 ? 'o' : 'i') + ' nel flusso';
     var tile = function(sx, lab, val, nota){ return '<div class="ix-tile' + (sx ? ' st-' + sx : '') + '"><div class="ix-tile-v">' + val + '</div><div class="ix-tile-l">' + lab + '</div>' + (nota ? '<div class="ix-tile-n">' + nota + '</div>' : '') + '</div>'; };
     var h = '';
-    if (!r.storico) h += '<div class="ix-err ix-avv">La cronologia non è ancora attiva: stati e tempi sono calcolati dai file, ma caricamenti e cambi di stato non vengono registrati.' + (isAdmin() ? ' Crea la tabella "interscambio_eventi" su Supabase (vedi istruzioni).' : '') + '</div>';
+    if (!r.storico) h += '<div class="ix-err ix-avv">Non riesco a leggere la cronologia: stati e tempi sono calcolati dai file, ma lo storico di caricamenti e cambi di stato non è disponibile.' + (isAdmin() && r.storicoErr ? '<br><small>Motivo: ' + esc(r.storicoErr) + '</small>' : '') + '</div>';
     h += '<div class="ix-tiles">' + tile('', 'Documenti', n.tot, pct + '% completi')
       + tile('bozza', 'Bozza', n.bozza, 'attendono ICM e DL') + tile('icm', 'Firmato ICM', n.icm, 'attendono la DL') + tile('dl', 'Firmato DL', n.dl, 'attendono ICM') + tile('completo', 'Completo', n.completo, 'firmati da entrambi') + '</div>';
     h += '<div class="ix-prog" role="img" aria-label="Avanzamento: ' + pct + '% completi"><i class="st-completo" style="width:' + (n.tot ? n.completo / n.tot * 100 : 0) + '%"></i><i class="st-icm" style="width:' + (n.tot ? n.icm / n.tot * 100 : 0) + '%"></i><i class="st-dl" style="width:' + (n.tot ? n.dl / n.tot * 100 : 0) + '%"></i><i class="st-bozza" style="width:' + (n.tot ? n.bozza / n.tot * 100 : 0) + '%"></i></div>';
@@ -38977,7 +38977,7 @@ setTool("erase");
       doc.forEach(function(d){ ns[d.stato]++; if (d.stato !== 'completo') { var g = giorni((d.appProperties || {}).mq_st_il || d.createdTime); if (g >= 7) a7++; if (g >= 14) a14++; } });
       h += '<div class="ix-situaz"><b>Situazione ora</b> · ' + doc.length + ' documenti nel flusso: ' + chip('bozza', ns.bozza) + chip('icm', ns.icm) + chip('dl', ns.dl) + chip('completo', ns.completo)
         + (a7 ? ' <span class="ix-att7">⏳ ' + a7 + ' in attesa da oltre 7 giorni' + (a14 ? ', ' + a14 + ' da oltre 14' : '') + '</span>' : '') + '</div>';
-      if (C.r && !C.r.storico) h += '<div class="ix-err ix-avv">La cronologia non è ancora attiva: manca la tabella "interscambio_eventi" su Supabase. Il calendario resta vuoto finché non la crei.</div>';
+      if (C.r && !C.r.storico) h += '<div class="ix-err ix-avv">Non riesco a leggere la cronologia: il calendario resta vuoto finché il problema non è risolto.' + (adm && C.r.storicoErr ? '<br><small>Motivo: ' + esc(C.r.storicoErr) + '</small>' : '') + '</div>';
       return h;
     };
     var calHtml = function(){
