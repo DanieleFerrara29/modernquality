@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+<script id="mq-ripresa-presto">(function(){try{var s=JSON.parse(localStorage.getItem('mq_session')||'null');
+if(s&&s.username&&s.expires&&Date.now()<s.expires){var h=document.documentElement;h.classList.add('mq-ripresa');
+setTimeout(function(){try{var a=document.getElementById('app');if(!(a&&a.classList.contains('visible')))h.classList.remove('mq-ripresa');}catch(e){h.classList.remove('mq-ripresa');}},9000);}}catch(e){}})();</script>
+<style id="mq-ripresa-stile">
+html.mq-ripresa #login-screen .login-box{visibility:hidden !important;position:relative;}
+html.mq-ripresa #login-screen .login-box::after{visibility:visible;content:'Riapro la sessione…';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  padding:10px 18px;border-radius:999px;background:rgba(24,24,24,.62);white-space:nowrap;
+  font:600 14px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;color:#fff;z-index:5;pointer-events:none;}
+</style>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="mobile-web-app-capable" content="yes"/>
@@ -4369,6 +4378,87 @@ html #login-screen .login-box{margin:calc(32px + var(--sat)) auto calc(32px + va
   html #login-screen .login-box{margin:-26px 0 0;padding-bottom:calc(24px + var(--sab)) !important;}
 }
 
+/* ── 32.1 · Registro: scelta delle colonne visibili ── */
+.reg-colpanel{position:fixed;z-index:6000;width:300px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border2);
+  border-radius:14px;box-shadow:0 18px 44px rgba(0,0,0,.55);padding:10px;color:var(--text);font-family:var(--ui);}
+.reg-colpanel-h{display:flex;align-items:center;gap:10px;padding:2px 4px 8px;border-bottom:1px solid var(--border);}
+.reg-colpanel-h b{font-size:14px;} .reg-colpanel-h span{color:var(--muted);font-size:12.5px;margin-right:auto;}
+.reg-colpanel-x{background:transparent;border:1px solid var(--border2);color:var(--text);border-radius:8px;width:30px;height:30px;cursor:pointer;}
+.reg-colpanel-l{overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:6px 0;min-height:0;flex:1 1 auto;}
+.reg-colpanel-l label{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:13px;line-height:1.2;}
+.reg-colpanel-l label:hover{background:var(--bg);}
+.reg-colpanel-l input{width:17px;height:17px;accent-color:var(--accent);flex:0 0 auto;margin:0;}
+.reg-colpanel-f{display:flex;gap:8px;padding-top:8px;border-top:1px solid var(--border);}
+.reg-colpanel-f button{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:999px;padding:8px 10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+.reg-colpanel-f button:hover{border-color:var(--accent);color:var(--accent);}
+.reg-colpanel-n{font-size:11.5px;color:var(--muted);padding:8px 4px 0;line-height:1.35;}
+#tab-registro .reg-qbtn#reg-colsel.on{border-color:var(--accent);color:var(--accent);}
+
+/* ── 32.2 · Interscambio: permessi per utente e cartella ── */
+.ix-perm{width:min(640px,100%);max-width:100%;box-sizing:border-box;max-height:calc(100dvh - 32px - var(--sat) - var(--sab));}
+.ix-perm *{box-sizing:border-box;}
+.ix-perm,.ix-perm-body,.ix-perm-r,.ix-perm-n{min-width:0;}
+.ix-perm-r select,.ix-perm-tutti select{width:100%;}
+.ix-modale:has(.ix-perm){grid-template-columns:minmax(0,1fr);justify-items:center;}
+@media (max-width:560px){ .ix-perm{padding:14px;} .ix-perm-r select,.ix-perm-tutti select{flex:1 1 100%;max-width:none;min-width:0;} .ix-perm-leg{grid-template-columns:1fr;} }
+.ix-perm-h{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;}
+.ix-perm-leg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px 14px;margin:12px 0;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;font-size:12px;color:var(--muted);}
+.ix-perm-leg b{color:var(--text);}
+.ix-perm-body{display:flex;flex-direction:column;gap:8px;max-height:min(55vh,520px);overflow:auto;}
+.ix-perm-tutti,.ix-perm-r{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);}
+.ix-perm-tutti{background:var(--bg);font-weight:600;}
+.ix-perm-r.off{opacity:.6;}
+.ix-perm-n{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.ix-perm-r select,.ix-perm-tutti select{min-width:min(260px,100%);flex:1 1 220px;max-width:340px;height:40px;border-radius:10px;background:var(--field);color:var(--text);border:1px solid var(--border2);padding:0 10px;font-family:inherit;font-size:13.5px;}
+.ix-perm-e,.ix-perm-badge{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--border2);width:max-content;}
+.ix-perm-badge{display:inline-flex;align-items:center;font-size:12.5px;padding:6px 12px;}
+.lv0{color:#e5484d;border-color:#e5484d55;} .lv1{color:var(--muted);} .lv2{color:#8DB6EE;border-color:#8DB6EE55;} .lv3{color:#f5a524;border-color:#f5a52455;} .lv4{color:#46a758;border-color:#46a75855;}
+
+/* ── 32.3 · Interscambio: scheda file (anteprima, firme, note) e promemoria "da correggere" ── */
+.ix-sch-mod{padding:12px !important;}
+.ix-sch{width:min(1180px,100%);height:min(92dvh,900px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border2);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;min-width:0;}
+.ix-sch *{box-sizing:border-box;}
+.ix-sch-h{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.ix-sch-t{display:flex;gap:10px;align-items:center;min-width:0;flex:1 1 260px;}
+.ix-sch-t > div{display:flex;flex-direction:column;min-width:0;}
+.ix-sch-t b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ix-sch-az{display:flex;gap:8px;flex-wrap:wrap;}
+.ix-sch-b{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 360px;min-height:0;}
+.ix-sch-prev{overflow:auto;background:#0d0f12;padding:12px;min-height:0;}
+.ix-sch-pag{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.ix-sch-pag canvas{max-width:100%;height:auto;background:#fff;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.5);}
+.ix-sch-img{display:grid;place-items:center;min-height:100%;} .ix-sch-img img{max-width:100%;max-height:80dvh;object-fit:contain;border-radius:6px;}
+.ix-sch-txt{white-space:pre-wrap;font:12.5px/1.5 var(--dati);color:var(--text);margin:0;}
+.ix-sch-if{width:100%;height:100%;border:0;background:#fff;border-radius:6px;}
+.ix-sch-nd{display:grid;place-items:center;gap:10px;text-align:center;min-height:100%;color:var(--muted);padding:30px;}
+.ix-sch-side{display:flex;flex-direction:column;gap:12px;padding:12px;border-left:1px solid var(--border);min-height:0;overflow:auto;}
+.ix-sch-st{font-weight:700;font-size:13px;margin-bottom:6px;}
+.ix-sch-fr{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.ix-sch-note{display:flex;flex-direction:column;min-height:0;flex:1;}
+.ix-sch-lista{display:flex;flex-direction:column;gap:8px;overflow:auto;min-height:80px;flex:1;padding-right:2px;}
+.ix-nt{border:1px solid var(--border);border-radius:12px;padding:8px 10px;background:var(--bg);}
+.ix-nt.corr{border-color:#e5484d88;background:rgba(229,72,77,.07);} .ix-nt.ris{opacity:.7;border-color:#46a75866;background:rgba(70,167,88,.06);}
+.ix-nt-h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;}
+.ix-nt-r{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:999px;border:1px solid var(--border2);color:var(--muted);}
+.ix-nt-t{font-size:13.5px;line-height:1.45;margin:4px 0 2px;overflow-wrap:anywhere;}
+.ix-nt-f{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:6px;font-size:12px;}
+.ix-nt-ko{color:#e5484d;font-weight:700;} .ix-nt-ok{color:#46a758;font-weight:600;}
+.ix-sch-form{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.ix-sch-form textarea{width:100%;resize:vertical;min-height:70px;border-radius:10px;border:1px solid var(--border2);background:var(--field);color:var(--text);padding:8px 10px;font:14px var(--ui);}
+.ix-sch-corr{display:flex;gap:8px;align-items:flex-start;font-size:13px;font-weight:600;color:#e5484d;cursor:pointer;flex-wrap:wrap;}
+.ix-sch-corr span{font-weight:400;color:var(--muted);font-size:12px;width:100%;padding-left:24px;margin-top:-4px;}
+.ix-sch-corr input{width:16px;height:16px;accent-color:#e5484d;margin:2px 0 0;}
+.ix-nda{background:rgba(229,72,77,.12);border:1px solid #e5484d88;color:#ff6b6f;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.ix-nda-f{border-color:#e5484d88 !important;color:#ff6b6f !important;} .ix-nda-f.att{background:rgba(229,72,77,.18) !important;}
+.ix-st-keep{color:#46a758;}
+@media (max-width:820px){
+  .ix-sch{height:calc(100dvh - 24px - var(--sat) - var(--sab));}
+  .ix-sch-b{grid-template-columns:1fr;grid-template-rows:minmax(200px,45%) minmax(0,1fr);}
+  .ix-sch-side{border-left:0;border-top:1px solid var(--border);}
+  .ix-sch-b{grid-template-rows:minmax(180px,40%) minmax(0,1fr);}
+  .ix-sch-note{flex:none;} .ix-sch-lista{overflow:visible;flex:none;min-height:0;}
+}
+
 header > .header-left{align-items:center;}
 
 </style>
@@ -4555,6 +4645,7 @@ header > .header-left{align-items:center;}
     <div class="reg-quickbar">
       <button type="button" class="reg-qbtn danger" id="reg-f-clear" title="Rimuove tutti i filtri attivi sulle colonne">✕ Togli tutti i filtri</button>
       <span class="reg-qinfo" id="reg-f-count"></span>
+      <button type="button" class="reg-qbtn" id="reg-colsel" title="Scegli quali colonne vedere nella tabella">☰ Colonne</button>
       <button type="button" class="reg-qbtn" id="reg-colreset" title="Rimette le colonne nell'ordine originale">↺ Ripristina colonne</button>
       <span class="reg-qhint">↔ trascina le intestazioni per spostarle · clic per ordinare · tendine sotto le intestazioni per filtrare</span>
     </div>
@@ -26923,11 +27014,23 @@ const SB_URL='https://pxbfgthyoyuucvqayvdh.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4YmZndGh5b3l1dWN2cWF5dmRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMTY1OTIsImV4cCI6MjEwMTY5MjU5Mn0.q-qXlQDJt-pvPIq4hZBFROA5TvE2AqBL86ejy-XLD7Q';
 
 async function sbFetch(path,opts={}){
-  const r=await fetch(SB_URL+'/rest/v1/'+path,{
-    ...opts,
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,
-      'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})}
-  });
+  // 32.7: una LETTURA che non risponde entro 30 secondi viene lasciata perdere (si riprova al giro dopo),
+  // così la sincronizzazione non resta bloccata con la rete del cantiere che va e viene.
+  // Le SCRITTURE non hanno limite: interromperle lascerebbe il dubbio se sono arrivate o no.
+  const metodo=String(opts.method||'GET').toUpperCase();
+  let ctrl=null, timer=null;
+  if(metodo==='GET' && !opts.signal && typeof AbortController==='function'){ ctrl=new AbortController(); timer=setTimeout(()=>{ try{ ctrl.abort(); }catch(_){} },30000); }
+  let r;
+  try{
+    r=await fetch(SB_URL+'/rest/v1/'+path,{
+      ...opts, ...(ctrl?{signal:ctrl.signal}:{}),
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,
+        'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})}
+    });
+  }catch(e){
+    if(e && e.name==='AbortError') throw new Error('Supabase: nessuna risposta in 30 secondi');
+    throw e;
+  }finally{ if(timer) clearTimeout(timer); }
   if(!r.ok){const e=await r.text();throw new Error('Supabase: '+e);}
   const txt=await r.text();
   return txt?JSON.parse(txt):[];
@@ -27214,6 +27317,8 @@ function resetLoginForm(){
 document.getElementById('btn-logout').addEventListener('click',()=>{
   currentUser=null;
   try{localStorage.removeItem('mq_session');}catch(e){}
+  try{ sessionStorage.removeItem('mq_tab'); sessionStorage.removeItem('mq_ix_perc'); }catch(e){}
+  document.documentElement.classList.remove('mq-ripresa');
   document.getElementById('app').classList.remove('visible');
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('login-user').value='';
@@ -27221,48 +27326,82 @@ document.getElementById('btn-logout').addEventListener('click',()=>{
   document.getElementById('login-err').classList.remove('show');
   resetLoginForm();
 });
-document.getElementById('btn-login').addEventListener('click',doLogin);
-document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+let _loginInCorso=false;
+async function loginUnaVolta(){
+  if(_loginInCorso) return;                       // doppio clic o Invio ripetuto: un solo tentativo
+  _loginInCorso=true;
+  const b=document.getElementById('btn-login'); const testo=b?b.innerHTML:'';
+  if(b){ b.disabled=true; b.innerHTML='Accesso in corso…'; }
+  try{ await doLogin(); }
+  catch(e){ console.warn('accesso',e); const er=document.getElementById('login-err'); if(er){ er.textContent='Accesso non riuscito: riprova.'; er.classList.add('show'); } }
+  finally{ _loginInCorso=false; if(b){ b.disabled=false; b.innerHTML=testo; } }
+}
+document.getElementById('btn-login').addEventListener('click',loginUnaVolta);
+document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')loginUnaVolta();});
 document.getElementById('btn-otp-cancel').addEventListener('click',resetLoginForm);
 
 window.addEventListener('DOMContentLoaded',()=>{
-  // Sessione salvata: si riapre solo se l'utente ESISTE ANCORA ed è attivo.
-  // Senza questo controllo, un utente cancellato continuava a entrare dal proprio
-  // dispositivo fino alla scadenza della sessione, perché non si chiedeva più nulla
-  // al database. Ora la sessione viene sempre riverificata all'apertura.
-  (async ()=>{
+  // Sessione salvata: si riapre solo se l'utente ESISTE ANCORA ed è attivo (controllo sul database).
+  // 32.7: ricaricando la pagina si resta dentro, senza rivedere la schermata di accesso né il benvenuto,
+  // e si torna alla sezione in cui si era. Se la rete è lenta si entra dopo 4 secondi e il controllo
+  // finisce dietro: se l'utente non è più valido si esce subito.
+  const radice=document.documentElement;
+  const fineRipresa=()=>{ radice.classList.remove('mq-ripresa'); };
+  const esci=(msg)=>{
+    try{ localStorage.removeItem('mq_session'); localStorage.removeItem('mq_users_cache'); }catch(_){}
+    window.__mqRipresa=false; fineRipresa();
+    if(currentUser){ const b=document.getElementById('btn-logout'); if(b) b.click(); }
+    if(msg){ const e=document.getElementById('login-err'); if(e){ e.textContent=msg; e.classList.add('show'); } }
+  };
+  const tornaAllaSezione=()=>{
     try{
-      const raw=localStorage.getItem('mq_session');
-      if(raw){
-        const s=JSON.parse(raw);
-        if(s&&s.expires&&Date.now()<s.expires&&s.username){
-          let attuale=null, verificato=false;
-          try{
-            const users=await sbGetUsers({soloCloud:true});   // elenco vero, mai la copia locale
-            if(Array.isArray(users) && users.length){
-              verificato=true;
-              attuale=users.find(u=>String(u.username||'').toLowerCase()===String(s.username).toLowerCase());
-            }
-          }catch(e){ console.warn('verifica sessione:',e); }
-          if(verificato){
-            // l'utente non c'è più, è disattivato o la password è cambiata: si esce
-            if(!attuale || attuale.active===false || (attuale.password && s.password && attuale.password!==s.password)){
-              localStorage.removeItem('mq_session');
-              try{localStorage.removeItem('mq_users_cache');}catch(_){}
-              setTimeout(()=>tgGet('deleteWebhook',{drop_pending_updates:false}),500);
-              return;                                   // resta la schermata di accesso
-            }
-            // ruolo aggiornato all'ultimo valore sul database
-            s.role=attuale.role||s.role; s.active=attuale.active;
-          }
-          loginAs(s);
-          setTimeout(()=>tgGet('deleteWebhook',{drop_pending_updates:false}),500);
-          return;
-        } else {
-          localStorage.removeItem('mq_session');
-        }
+      const n=sessionStorage.getItem('mq_tab'); if(!n || !document.getElementById('tab-'+n)) return;
+      const b=[...document.querySelectorAll('.tab-nav .tab-btn')].find(x=>(x.getAttribute('onclick')||'').indexOf("'"+n+"'")>=0);
+      if(b && b.style.display!=='none' && !b.classList.contains('active')) b.click();
+    }catch(e){ console.warn('ripresa sezione',e); }
+  };
+  const entra=(s)=>{
+    if(currentUser) return;
+    window.__mqRipresa=true;
+    try{ document.getElementById('login-screen').classList.add('hidden'); }catch(_){}
+    try{ loginAs(s); tornaAllaSezione(); }
+    finally{ fineRipresa(); setTimeout(()=>{ window.__mqRipresa=false; },2500); }
+  };
+  const valido=(users,s)=>{
+    if(!users) return true;                               // database non raggiungibile: come prima, si entra
+    const a=users.find(u=>String(u.username||'').toLowerCase()===String(s.username).toLowerCase());
+    if(!a || a.active===false || (a.password && s.password && a.password!==s.password)) return false;
+    s.role=a.role||s.role; s.active=a.active; return true;
+  };
+  (async ()=>{
+    let s=null;
+    try{ s=JSON.parse(localStorage.getItem('mq_session')||'null'); }catch(_){ s=null; }
+    if(!(s && s.expires && Date.now()<s.expires && s.username)){
+      try{ localStorage.removeItem('mq_session'); }catch(_){}
+      fineRipresa();
+      setTimeout(()=>tgGet('deleteWebhook',{drop_pending_updates:false}),500);
+      return;
+    }
+    const verifica=(async()=>{
+      try{ const users=await sbGetUsers({soloCloud:true}); return (Array.isArray(users)&&users.length)?users:null; }
+      catch(e){ console.warn('verifica sessione:',e); return null; }
+    })();
+    const primo=await Promise.race([verifica, new Promise(r=>setTimeout(()=>r('lento'),4000))]);
+    try{
+      if(primo==='lento'){
+        const ruolo=s.role;
+        entra(s);
+        verifica.then(users=>{
+          if(!users) return;
+          if(!valido(users,s)){ esci('Sessione non più valida: accedi di nuovo.'); return; }
+          if(currentUser && s.role!==ruolo){ window.__mqRipresa=true; loginAs(s); setTimeout(()=>{ window.__mqRipresa=false; },2500); }
+        });
+      } else if(!valido(primo,s)){
+        esci();
+      } else {
+        entra(s);
       }
-    }catch(e){}
+    }catch(e){ console.warn('ripresa sessione',e); fineRipresa(); }
     setTimeout(()=>tgGet('deleteWebhook',{drop_pending_updates:false}),500);
   })();
 });
@@ -27441,7 +27580,7 @@ function loginAs(user){
     const session={username:user.username,role:user.role,active:user.active,
       password:user.password,ts:Date.now(),expires:Date.now()+7*24*60*60*1000};
     try{localStorage.setItem('mq_session',JSON.stringify(session));}catch(e){}
-    suonoAccesso();                                   // segnale acustico di ingresso
+    if(!window.__mqRipresa) suonoAccesso();           // segnale acustico di ingresso (non a ogni ricarica)
     const _ls=document.getElementById('login-screen');
     _ls.classList.add('uscita');                      // la schermata di accesso sfuma
     setTimeout(()=>{ _ls.classList.add('hidden'); _ls.classList.remove('uscita'); }, 620);
@@ -28974,6 +29113,7 @@ document.getElementById('btn-export-excel-admin').addEventListener('click', () =
 // TAB SWITCHER
 // ════════════════════════════════════════════════════
 function switchMainTab(name, btn) {
+  try{ sessionStorage.setItem('mq_tab', name); }catch(_){}
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   if(name==='firma-pdf' && window._firmaInit) window._firmaInit();
   if(name==='editor-pdf'&&window._epInit) window._epInit();
@@ -35323,11 +35463,12 @@ setTool("erase");
             ? '<br><span class="cub-ok">✓ settimanale di questa miscela già eseguito questa settimana'+weeklyWhere(mix,wbs)+'</span>'
             : (s.weeklyPending ? '<br><span class="cub-att">⚠ il prelievo settimanale di questa miscela è ancora DA FARE</span>' : '');
           ch.innerHTML = doppione
-            ? '⛔ Il <b>prelievo settimanale</b> di questa miscela è <b>già stato fatto</b> questa settimana'+weeklyWhere(mix,wbs)+'. Per il giornaliero servono <b>'+s.n+' cubetti</b>.'
-            : ('➡ È il <b>'+esc(s.tipo)+'</b>: servono <b>'+s.n+' cubetti</b>.'+nota);
+            ? '⛔ Il <b>prelievo settimanale</b> di questa miscela è <b>già stato fatto</b> questa settimana'+weeklyWhere(mix,wbs)+'. Per il giornaliero servono <span class="cub-n">'+s.n+'</span> <b>cubetti</b>.'
+            : ('➡ È il <b>'+esc(s.tipo)+'</b>: servono <span class="cub-n">'+s.n+'</span> <b>cubetti</b>.'+nota);
           ch.style.display='';
         }
-      } else { const ch=$('reg-cub-hint'); if(ch) ch.style.display='none'; }
+        segnaConsigliato(s.n);
+      } else { const ch=$('reg-cub-hint'); if(ch) ch.style.display='none'; segnaConsigliato(0); }
     }
     box.innerHTML=html;
     checkRanges();
@@ -35431,6 +35572,15 @@ setTool("erase");
     i.dataset.ddt=d.value||'';
     updateDprelHint();
   }
+  // 32.8 · il pulsante del numero consigliato resta segnato anche se se ne sceglie un altro
+  function segnaConsigliato(n){
+    const chips=$('reg-cubetti-chips'); if(!chips) return;
+    const v=String(n||''); const preset=['4','6','8'].includes(v);
+    chips.querySelectorAll('.reg-chip').forEach(b=>{
+      const d=b.getAttribute('data-v');
+      b.classList.toggle('consigliato', !!n && (d===v || (!preset && d==='__altro')));
+    });
+  }
   // cubetti: pulsanti 4/6/8 + Altro (numero manuale)
   function setCubetti(val){
     val=(val==null?'':String(val)).trim();
@@ -35461,7 +35611,7 @@ setTool("erase");
     const chips=$('reg-cubetti-chips'), man=$('reg-cubetti-manual');
     if(chips){ chips.style.opacity=on?'':'0.4'; chips.style.pointerEvents=on?'':'none'; }
     if(man){ man.disabled=!on; }
-    if(!on) setCubetti('');
+    if(!on){ setCubetti(''); segnaConsigliato(0); }
   }
   function curWbs(){ return comboVal('reg-wbs','reg-wbs-other'); }
   function currentNum(){ const v=parseInt(($('reg-num')?$('reg-num').value:''),10); return isNaN(v)?null:v; }
@@ -35502,6 +35652,9 @@ setTool("erase");
       note.innerHTML='👁 <b style="color:var(--text);">Sola consultazione</b> — puoi vedere registro, report e prospetti, ma non inserire o modificare dati.';
       const lb=$('reg-labbar'); if(lb && lb.parentNode) lb.parentNode.insertBefore(note, lb.nextSibling);
     } else if(!v && note){ note.remove(); }
+    // 32.8: dopo l'accesso la barra dei laboratori si ridisegna subito col ruolo giusto
+    // (prima un laboratorio, su un dispositivo nuovo, vedeva per qualche secondo anche gli altri laboratori)
+    try{ renderLabs(); }catch(_){}
     try{ renderTable(); renderForm(); }catch(_){}
   }
   window.RegApplyRole=applyViewerUI;
@@ -35908,7 +36061,7 @@ setTool("erase");
     const empty = (r.empty!=null) ? r.empty : (r.html!=null ? false : (r.v==null||r.v===''));
     const inner = (r.html!=null) ? r.html : esc(r.v);
     const cls = CHIAVE.has(key) ? ' class="k-primary"' : '';
-    return '<td data-label="'+esc(label)+'"'+cls+(empty?' data-empty="1"':'')+'>'+inner+'</td>';
+    return '<td data-label="'+esc(label)+'" data-k="'+key+'"'+cls+(empty?' data-empty="1"':'')+'>'+inner+'</td>';
   }
   let _dragKey=null;
   const colFilters={};
@@ -36127,6 +36280,60 @@ setTool("erase");
     });
     installResizers(tr);
     renderFilterRow();
+    applyColHide();
+  }
+  // ── Colonne visibili: scelta di chi usa il registro, salvata su questo dispositivo.
+  // Si nascondono con una regola di stile: righe, larghezze, filtri e ordine restano identici.
+  const COLHIDE_KEY='mq_reg_colhide_v1';
+  const colHidden=new Set();
+  try{ (JSON.parse(localStorage.getItem(COLHIDE_KEY)||'[]')||[]).forEach(k=>colHidden.add(String(k))); }catch(_){}
+  function saveColHide(){ try{ localStorage.setItem(COLHIDE_KEY, JSON.stringify(Array.from(colHidden))); }catch(_){} }
+  function applyColHide(){
+    let st=document.getElementById('reg-colhide-style');
+    if(!st){ st=document.createElement('style'); st.id='reg-colhide-style'; document.head.appendChild(st); }
+    const keys=Array.from(colHidden).filter(k=>COLS.some(c=>c.key===k));
+    st.textContent=keys.length ? (keys.map(k=>'#reg-thead-row th[data-key="'+k+'"],#reg-tbody td[data-k="'+k+'"]').join(',')+'{display:none !important;}') : '';
+    const b=$('reg-colsel'); if(b){ b.textContent='☰ Colonne'+(keys.length?' ('+(COLS.length-keys.length)+'/'+COLS.length+')':''); b.classList.toggle('on', !!keys.length); }
+  }
+  const COL_PRINCIPALI=['data','ddt','wbs','opera','parte','mix','mc','verbale','cubetti'];
+  function closeColPanel(){ const p=document.getElementById('reg-colpanel'); if(p) p.remove(); document.removeEventListener('mousedown',_colOut,true); document.removeEventListener('touchstart',_colOut,true); document.removeEventListener('keydown',_colEsc); }
+  function _colOut(ev){ const p=document.getElementById('reg-colpanel'); if(p && !p.contains(ev.target) && ev.target!==$('reg-colsel')) closeColPanel(); }
+  function _colEsc(ev){ if(ev.key==='Escape') closeColPanel(); }
+  function openColPanel(btn){
+    if(document.getElementById('reg-colpanel')){ closeColPanel(); return; }
+    const p=document.createElement('div'); p.id='reg-colpanel'; p.className='reg-colpanel'; p.setAttribute('role','dialog'); p.setAttribute('aria-label','Colonne visibili');
+    const draw=()=>{
+      const vis=COLS.filter(c=>!colHidden.has(c.key)).length;
+      p.innerHTML='<div class="reg-colpanel-h"><b>Colonne visibili</b><span>'+vis+' di '+COLS.length+'</span><button type="button" class="reg-colpanel-x" data-x aria-label="Chiudi">✕</button></div>'
+        +'<div class="reg-colpanel-l">'+COLS.map(c=>'<label><input type="checkbox" data-ck="'+c.key+'"'+(colHidden.has(c.key)?'':' checked')+'/> <span>'+esc(c.label)+'</span></label>').join('')+'</div>'
+        +'<div class="reg-colpanel-f"><button type="button" data-all>Mostra tutte</button><button type="button" data-base>Solo principali</button></div>'
+        +'<div class="reg-colpanel-n">La scelta vale su questo dispositivo. L\'Excel esportato contiene sempre tutte le colonne.</div>';
+      p.querySelector('[data-x]').onclick=closeColPanel;
+      p.querySelectorAll('input[data-ck]').forEach(ck=>ck.onchange=()=>{
+        const k=ck.dataset.ck;
+        if(!ck.checked){
+          if(COLS.filter(c=>!colHidden.has(c.key)).length<=1){ ck.checked=true; toast('Deve restare visibile almeno una colonna.'); return; }
+          colHidden.add(k);
+          if(colFilters[k] && colFilters[k].length){ delete colFilters[k]; renderThead(); renderBody(); toast('Tolto anche il filtro sulla colonna nascosta.'); }
+        } else colHidden.delete(k);
+        saveColHide(); applyColHide(); draw();
+      });
+      p.querySelector('[data-all]').onclick=()=>{ colHidden.clear(); saveColHide(); applyColHide(); draw(); };
+      p.querySelector('[data-base]').onclick=()=>{
+        colHidden.clear(); COLS.forEach(c=>{ if(COL_PRINCIPALI.indexOf(c.key)<0) colHidden.add(c.key); });
+        let tolti=false; Array.from(colHidden).forEach(k=>{ if(colFilters[k]&&colFilters[k].length){ delete colFilters[k]; tolti=true; } });
+        if(tolti){ renderThead(); renderBody(); }
+        saveColHide(); applyColHide(); draw();
+      };
+    };
+    draw(); document.body.appendChild(p);
+    const r=btn.getBoundingClientRect(), W=window.innerWidth, H=window.innerHeight;
+    if(W<640){ p.style.left='8px'; p.style.right='8px'; p.style.width='auto'; }
+    else { p.style.left=Math.max(8, Math.min(r.left, W-p.offsetWidth-8))+'px'; }
+    const sotto=H-r.bottom-14, sopra=r.top-14;
+    if(sotto>=260 || sotto>=sopra){ p.style.top=(r.bottom+6)+'px'; p.style.maxHeight=Math.max(200,sotto)+'px'; }
+    else { p.style.bottom=(H-r.top+6)+'px'; p.style.maxHeight=Math.max(200,sopra)+'px'; }
+    setTimeout(()=>{ document.addEventListener('mousedown',_colOut,true); document.addEventListener('touchstart',_colOut,true); document.addEventListener('keydown',_colEsc); },0);
   }
   function applyFilters(rows){
     const keys=Object.keys(colFilters).filter(k=>colFilters[k]&&colFilters[k].length);
@@ -37811,6 +38018,7 @@ setTool("erase");
       $('reg-sync-file').onchange=ev=>{ const f=ev.target.files[0]; if(f)syncFile(f); ev.target.value=''; };
     }
     if($('reg-colreset')) $('reg-colreset').onclick=(ev)=>{ ev.preventDefault(); resetColOrder(); toast('Ordine colonne ripristinato.'); };
+    if($('reg-colsel')) $('reg-colsel').onclick=(ev)=>{ ev.preventDefault(); openColPanel($('reg-colsel')); };
     // ✕ Togli tutti i filtri
     if($('reg-f-clear')) $('reg-f-clear').onclick=(ev)=>{
       ev.preventDefault();
@@ -37937,7 +38145,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 31.9';
+  window.APP_VERSION = 'Versione 32.9';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
@@ -38103,6 +38311,7 @@ setTool("erase");
   }
   function benvenuto(u,breve){
     ultimo=Date.now();
+    if(window.__mqRipresa) return;          // 32.7: pagina ricaricata, si resta dove si era
     var old=document.getElementById('mq-benvenuto'); if(old) old.remove();
     var o=document.createElement('div'); o.id='mq-benvenuto'; o.setAttribute('aria-hidden','true');
     if(breve) o.className='breve';
@@ -38379,8 +38588,8 @@ setTool("erase");
   function elenco(id){
     var tutti = [];
     if (st.srv) {
-      var fl = null;
-      var pg = function(tok){ return srv('elenco', { id: id, tok: tok || '' }).then(function(j){ if (!tok) fl = j.flusso || null; tutti = tutti.concat(j.files || []); if (j.nextPageToken) return pg(j.nextPageToken); tutti.flusso = fl; return tutti; }); };
+      var fl = null, pm = null;
+      var pg = function(tok){ return srv('elenco', { id: id, tok: tok || '' }).then(function(j){ if (!tok) { fl = j.flusso || null; pm = j.permesso || null; } tutti = tutti.concat(j.files || []); if (j.nextPageToken) return pg(j.nextPageToken); tutti.flusso = fl; tutti.permesso = pm; return tutti; }); };
       return pg('');
     }
     function pagina(tok){
@@ -38399,11 +38608,26 @@ setTool("erase");
     st.occupato = true; disegna();
     return elenco(id).then(function(v){
       if (id !== st.cur) { st.sel = {}; st.fStato = 'tutti'; }
-      st.voci = v; st.cur = id; st.flusso = v.flusso || null;
+      st.voci = v; st.cur = id; st.flusso = v.flusso || null; st.perm = v.permesso || null;
       var i = st.percorso.findIndex(function(p){ return p.id === id; });
       if (i >= 0) st.percorso = st.percorso.slice(0, i + 1); else st.percorso.push({ id: id, nome: nome || '…' });
       st.occupato = false; st.errore = ''; disegna();
+      try { sessionStorage.setItem('mq_ix_perc', JSON.stringify(st.percorso)); } catch(_){}
     }).catch(function(e){ st.occupato = false; st.errore = e.message; disegna(); });
+  }
+  // 32.7 · ricaricando la pagina si riapre la cartella in cui si era (se ancora visibile), altrimenti la principale
+  function riapri(rid, rnome){
+    var salv = null;
+    try { salv = JSON.parse(sessionStorage.getItem('mq_ix_perc') || 'null'); } catch(_){ salv = null; }
+    st.percorso = [{ id: rid, nome: rnome }];
+    if (!Array.isArray(salv) || salv.length < 2 || !salv[0] || salv[0].id !== rid ||
+        salv.some(function(p){ return !p || typeof p.id !== 'string' || !p.id; })) return apri(rid, rnome);
+    salv = salv.slice(0, 30).map(function(p){ return { id: p.id, nome: String(p.nome || '…') }; });
+    var ult = salv[salv.length - 1];
+    st.percorso = salv.slice(0, -1);
+    return apri(ult.id, ult.nome).then(function(){
+      if (st.cur !== ult.id) { st.errore = ''; st.percorso = [{ id: rid, nome: rnome }]; return apri(rid, rnome); }
+    });
   }
   function aggiorna(){ if (st.cur) return apri(st.cur); }
   function collega(){
@@ -38411,7 +38635,7 @@ setTool("erase");
       st.occupato = true; st.errore = ''; disegna();
       srv('stato').then(function(j){
         st.srv = true; st.notif = j.notifiche || { scelte: 'icm', io: '' }; st.root = j.root.id; st.rootNome = j.root.name; st.percorso = [{ id: j.root.id, nome: j.root.name }];
-        return apri(j.root.id, j.root.name).then(contaNovita);
+        return riapri(j.root.id, j.root.name).then(contaNovita);
       }).catch(function(e){
         st.occupato = false;
         if (e.assente && isAdmin()) {   // funzione non ancora pubblicata: l'admin usa Google (e se ha già un accesso valido, riapre da solo)
@@ -38434,6 +38658,132 @@ setTool("erase");
       st.root = root; st.rootNome = f.name; st.percorso = [{ id: root, nome: f.name }];
       return apri(root, f.name);
     }).catch(function(e){ st.occupato = false; st.errore = e.message; disegna(); });
+  }
+  /* ---------- permessi (per utente e cartella, decisi da ICM) ---------- */
+  // 0 nascosta · 1 consultazione · 2 caricamento · 3 modifica · 4 completo. Il controllo vero lo fa la funzione sul server.
+  var LIV = ['Nascosta', 'Solo consultazione', 'Caricamento', 'Modifica', 'Completo'];
+  var LIV_D = ['non vede la cartella', 'vede, scarica e scrive note', '+ carica file e nuove versioni, crea cartelle, firma', '+ rinomina e sposta', '+ cestino'];
+  function puo(n){ return !st.srv || isAdmin() || !st.perm || st.perm.liv >= n; }
+  function permessi(){
+    var box = document.createElement('div'); box.className = 'ix-modale'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+    var dove = (st.percorso[st.percorso.length - 1] || {}).nome || '';
+    box.innerHTML = '<div class="ix-mod-card ix-perm"><div class="ix-perm-h"><div><div class="ix-mod-t">🔒 Permessi · «' + esc(dove) + '»</div><div class="ix-nota">Valgono per questa cartella e per le sottocartelle (che puoi impostare diversamente). Tu, come ICM, puoi sempre tutto.</div></div><button class="ix-btn" data-x aria-label="Chiudi">✕</button></div>'
+      + '<div class="ix-perm-leg">' + LIV.map(function(l, i){ return '<span><b>' + l + '</b> ' + LIV_D[i] + '</span>'; }).join('') + '</div>'
+      + '<div class="ix-perm-body"><div class="ix-vuoto">Caricamento…</div></div></div>';
+    document.body.appendChild(box);
+    var chiudi = function(){ box.remove(); document.removeEventListener('keydown', esc1); };
+    var esc1 = function(e){ if (e.key === 'Escape') chiudi(); };
+    document.addEventListener('keydown', esc1);
+    box.querySelector('[data-x]').onclick = chiudi;
+    box.addEventListener('click', function(e){ if (e.target === box) chiudi(); });
+    var corpo = box.querySelector('.ix-perm-body');
+    var opz = function(r){
+      var er = r.ereditato || r.effettivo;
+      return '<option value=""' + (r.qui === '' ? ' selected' : '') + '>Come sopra · ' + esc(er.nome) + (er.daNome ? ' (da «' + esc(er.daNome) + '»)' : ' (predefinito)') + '</option>'
+        + LIV.map(function(l, i){ return '<option value="' + i + '"' + (r.qui === String(i) ? ' selected' : '') + '>' + l + '</option>'; }).join('');
+    };
+    var carica = function(){
+      return srv('permessi', { id: st.cur }).then(function(j){
+        var u = j.utenti || [];
+        if (!u.length) { corpo.innerHTML = '<div class="ix-vuoto">Nessun utente «Direzione Lavori» nel Pannello Admin. Crea prima gli utenti con il ruolo Direzione Lavori.</div>'; return; }
+        corpo.innerHTML = '<div class="ix-perm-tutti"><span>Tutti gli utenti DL</span><select id="ix-perm-tutti"><option value="-">— applica a tutti —</option><option value="">Come sopra</option>' + LIV.map(function(l, i){ return '<option value="' + i + '">' + l + '</option>'; }).join('') + '</select></div>'
+          + u.map(function(r){
+            var e = r.effettivo || {};
+            return '<div class="ix-perm-r' + (r.attivo ? '' : ' off') + '"><div class="ix-perm-n"><b>' + esc(r.nome) + '</b>' + (r.attivo ? '' : ' <span class="ix-nota">(disattivato)</span>')
+              + '<span class="ix-perm-e lv' + e.liv + '">Ora: ' + esc(e.nome) + '</span></div><select data-u="' + esc(r.nome) + '" aria-label="Permesso di ' + esc(r.nome) + '">' + opz(r) + '</select></div>';
+          }).join('');
+        corpo.querySelectorAll('select[data-u]').forEach(function(sel){ sel.onchange = function(){ salva([sel.dataset.u], sel.value); }; });
+        var t = corpo.querySelector('#ix-perm-tutti');
+        t.onchange = function(){ if (t.value === '-') return; salva(u.map(function(r){ return r.nome; }), t.value); };
+      }).catch(function(e){ corpo.innerHTML = '<div class="ix-err">' + esc(e.message) + '</div>'; });
+    };
+    var salva = function(nomi, v){
+      corpo.querySelectorAll('select').forEach(function(x){ x.disabled = true; });
+      srv('permesso', { id: st.cur, utenti: nomi, livello: v === '' ? null : +v }).then(function(){
+        avviso('Permessi salvati' + (nomi.length > 1 ? ' per ' + nomi.length + ' utenti' : ' per ' + nomi[0]), 'success'); return carica();
+      }).catch(function(e){ avviso(e.message, 'error'); return carica(); });
+    };
+    carica();
+  }
+  /* ---------- scheda del file: anteprima, firme e note ---------- */
+  function scheda(f){
+    var box = document.createElement('div'); box.className = 'ix-modale ix-sch-mod'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+    var adm = isAdmin(), url = null, chiuso = false;
+    box.innerHTML = '<div class="ix-sch"><div class="ix-sch-h"><div class="ix-sch-t"><span class="ix-ico">' + icona(f) + '</span><div><b>' + esc(f.name) + '</b><span class="ix-nota">' + esc([f.size ? dimensione(f.size) : '', quando(f.modifiedTime), autore(f)].filter(Boolean).join(' · ')) + '</span></div></div>'
+      + '<div class="ix-sch-az"><button class="ix-btn" data-a="dl">⬇ Scarica</button>' + (adm && f.webViewLink ? '<a class="ix-btn" target="_blank" rel="noopener" href="' + esc(f.webViewLink) + '">Drive ↗</a>' : '') + '<button class="ix-btn" data-a="x" aria-label="Chiudi">✕</button></div></div>'
+      + '<div class="ix-sch-b"><div class="ix-sch-prev"><div class="ix-vuoto">Carico l\'anteprima…</div></div><aside class="ix-sch-side"><div class="ix-sch-firme"></div><div class="ix-sch-note"><div class="ix-sch-st">💬 Note</div><div class="ix-sch-lista"><div class="ix-vuoto">Carico le note…</div></div>'
+      + '<form class="ix-sch-form"><textarea rows="3" maxlength="2000" placeholder="Scrivi una nota… (es. manca la firma a pag. 2)"></textarea><label class="ix-sch-corr"><input type="checkbox"> ⚠ Da correggere <span>resta come promemoria sul file finché non è risolta</span></label><button class="ix-btn pri" type="submit">Invia nota</button></form></div></aside></div></div>';
+    document.body.appendChild(box);
+    var chiudi = function(){ chiuso = true; box.remove(); document.removeEventListener('keydown', escK); if (url) URL.revokeObjectURL(url); };
+    var escK = function(e){ if (e.key === 'Escape' && !/TEXTAREA/.test((document.activeElement || {}).tagName || '')) chiudi(); };
+    document.addEventListener('keydown', escK);
+    box.querySelector('[data-a="x"]').onclick = chiudi;
+    box.querySelector('[data-a="dl"]').onclick = function(){ scaricaSrv(f, false); };
+    box.addEventListener('click', function(e){ if (e.target === box) chiudi(); });
+    var aggiornaRiga = function(ap){ var v = st.voci.find(function(x){ return x.id === f.id; }); if (v && ap) { v.appProperties = ap; f.appProperties = ap; } disegna(); };
+    // firme (se il flusso è attivo)
+    var firme = function(){
+      var el = box.querySelector('.ix-sch-firme'); if (!flOn()) { el.innerHTML = ''; return; }
+      var s0 = statoF(f);
+      el.innerHTML = '<div class="ix-sch-st">🔏 Stato</div><div class="ix-sch-fr">' + chip(s0) + firmaBtn(f, 'icm') + firmaBtn(f, 'dl') + '</div>' + (ATTESA[s0] ? '<div class="ix-nota">In attesa di: ' + ATTESA[s0] + '</div>' : '<div class="ix-nota">✓ Firmato da entrambi</div>');
+      el.querySelectorAll('[data-firma]').forEach(function(x){ x.onclick = function(){ var k = x.dataset.firma; x.disabled = true;
+        srv('imposta', (function(){ var d = { ids: [f.id] }; d[k] = (f.appProperties || {})['mq_' + k] !== '1'; return d; })()).then(function(r){
+          var e = (r.errori || [])[0]; if (e) throw new Error(e.errore); var fa = (r.fatti || [])[0]; if (fa) aggiornaRiga(fa.appProperties); firme(); avviso('Stato aggiornato: ' + STATI[statoF(f)], 'success');
+        }).catch(function(e){ avviso(e.message, 'error'); firme(); }); }; });
+    };
+    firme();
+    // note
+    var lista = box.querySelector('.ix-sch-lista');
+    var disegnaNote = function(note){
+      if (!note.length) { lista.innerHTML = '<div class="ix-vuoto">Nessuna nota. Scrivine una qui sotto: chi apre il file la vede subito.</div>'; return; }
+      lista.innerHTML = note.map(function(n){
+        var ap = n.correggere && !n.risolta;
+        return '<div class="ix-nt' + (n.correggere ? ' corr' : '') + (n.risolta ? ' ris' : '') + '"><div class="ix-nt-h"><b>' + esc(n.utente || '') + '</b><span class="ix-nt-r">' + (n.ruolo === 'direzione' ? 'DL' : n.ruolo === 'drive' ? 'Drive' : 'ICM') + '</span><span class="ix-nota">' + esc(quando(n.quando)) + '</span></div>'
+          + '<div class="ix-nt-t">' + esc(n.testo || '').replace(/\n/g, '<br>') + '</div>'
+          + (n.correggere ? '<div class="ix-nt-f">' + (n.risolta ? '<span class="ix-nt-ok">✓ Risolta' + (n.risolta_da ? ' da ' + esc(n.risolta_da) : '') + (n.risolta_il ? ' · ' + esc(quando(n.risolta_il)) : '') + '</span><button class="ix-link" data-ris="' + esc(n.id) + '" data-v="0">Riapri</button>' : '<span class="ix-nt-ko">⚠ Da correggere</span><button class="ix-btn" data-ris="' + esc(n.id) + '" data-v="1">✓ Segna risolta</button>') + '</div>' : '')
+          + '</div>';
+      }).join('');
+      lista.querySelectorAll('[data-ris]').forEach(function(b){ b.onclick = function(){ b.disabled = true;
+        srv('nota_esito', { id: f.id, nota: b.dataset.ris, risolta: b.dataset.v === '1' }).then(function(r){ aggiornaRiga(r.appProperties); return carica(); }).catch(function(e){ avviso(e.message, 'error'); b.disabled = false; }); }; });
+      lista.scrollTop = lista.scrollHeight;
+    };
+    var carica = function(){ return srv('note', { id: f.id }).then(function(r){ if (!chiuso) disegnaNote(r.note || []); }).catch(function(e){ lista.innerHTML = '<div class="ix-err">' + esc(e.message) + '</div>'; }); };
+    carica();
+    var form = box.querySelector('.ix-sch-form'), ta = form.querySelector('textarea'), ck = form.querySelector('input');
+    form.onsubmit = function(e){ e.preventDefault(); var t = ta.value.trim(); if (!t) { ta.focus(); return; }
+      var bt = form.querySelector('button'); bt.disabled = true;
+      srv('nota', { id: f.id, testo: t, correggere: ck.checked }).then(function(r){ ta.value = ''; ck.checked = false; aggiornaRiga(r.appProperties); avviso('Nota inviata', 'success'); return carica(); })
+        .catch(function(e2){ avviso(e2.message, 'error'); }).then(function(){ bt.disabled = false; }); };
+    // anteprima
+    var prev = box.querySelector('.ix-sch-prev'), tipo = f.mimeType || '';
+    var nonDisp = function(msg){ prev.innerHTML = '<div class="ix-sch-nd"><div class="ix-big">' + icona(f) + '</div><p>' + esc(msg) + '</p><button class="ix-btn pri" data-a="dl2">⬇ Scarica il file</button></div>'; prev.querySelector('[data-a="dl2"]').onclick = function(){ scaricaSrv(f, false); }; };
+    var vedibile = /^application\/pdf$|^image\/(png|jpe?g|gif|webp|bmp|svg\+xml)$|^text\//.test(tipo) || /^application\/vnd\.google-apps\.(document|spreadsheet|presentation)$/.test(tipo) || /\.(pdf|png|jpe?g|gif|webp|txt|csv)$/i.test(f.name);
+    if (!vedibile) { nonDisp('Anteprima non disponibile per questo tipo di file.'); return; }
+    if (+f.size > 40 * 1024 * 1024) { nonDisp('File molto grande (' + dimensione(f.size) + '): scaricalo per aprirlo.'); return; }
+    srv('scarica', { id: f.id }, true).then(function(r){ return r.blob(); }).then(function(b){
+      if (chiuso) return;
+      var t = b.type || tipo;
+      if (/pdf/.test(t) || /\.pdf$/i.test(f.name) || /google-apps\.(document|presentation)/.test(tipo)) {
+        if (typeof pdfjsLib === 'undefined') { url = URL.createObjectURL(b); prev.innerHTML = '<iframe class="ix-sch-if" title="Anteprima" src="' + url + '"></iframe>'; return; }
+        return b.arrayBuffer().then(function(buf){ return pdfjsLib.getDocument({ data: buf }).promise; }).then(function(pdf){
+          if (chiuso) return;
+          prev.innerHTML = '<div class="ix-sch-pag"></div>'; var cont = prev.querySelector('.ix-sch-pag'), max = Math.min(pdf.numPages, 25);
+          var una = function(i){ if (i > max || chiuso) { if (pdf.numPages > max && !chiuso) cont.insertAdjacentHTML('beforeend', '<div class="ix-nota">Mostrate le prime ' + max + ' pagine di ' + pdf.numPages + ': scarica il file per vederlo tutto.</div>'); return; }
+            return pdf.getPage(i).then(function(pg){
+              var w = Math.max(280, (prev.clientWidth || 600) - 24), v0 = pg.getViewport({ scale: 1 }), sc = w / v0.width, dpr = Math.min(window.devicePixelRatio || 1, 2), vp = pg.getViewport({ scale: sc * dpr });
+              var cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height; cv.style.width = Math.round(vp.width / dpr) + 'px'; cv.setAttribute('aria-label', 'Pagina ' + i);
+              cont.appendChild(cv);
+              return pg.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+            }).then(function(){ return una(i + 1); });
+          };
+          return una(1);
+        });
+      }
+      if (/^image\//.test(t) || /\.(png|jpe?g|gif|webp)$/i.test(f.name)) { url = URL.createObjectURL(b); prev.innerHTML = '<div class="ix-sch-img"><img alt="' + esc(f.name) + '" src="' + url + '"></div>'; return; }
+      if (/^text\//.test(t) || /\.(txt|csv)$/i.test(f.name)) return b.text().then(function(tx){ prev.innerHTML = '<pre class="ix-sch-txt">' + esc(tx.slice(0, 200000)) + '</pre>'; });
+      if (/spreadsheet/.test(tipo)) { nonDisp('I fogli di calcolo non hanno anteprima: scaricalo per aprirlo in Excel.'); return; }
+      nonDisp('Anteprima non disponibile per questo tipo di file.');
+    }).catch(function(e){ if (!chiuso) nonDisp('Anteprima non riuscita: ' + e.message); });
   }
   function nuovaCartella(){
     var n = prompt('Nome della nuova cartella:'); if (!n || !n.trim()) return;
@@ -38490,6 +38840,7 @@ setTool("erase");
   function caricaVoci(voci){
     voci = (voci || []).filter(function(v){ return v && v.file && !SISTEMA.test(v.path); });
     if (!voci.length || !st.cur) return;
+    if (!puo(2)) { avviso('In questa cartella puoi solo consultare: non puoi caricare file. Chiedi a ICM.', 'error'); return; }
     var root = st.cur, dirs = {};
     voci.forEach(function(v){ var d = cartellaDi(v.path); while (d) { dirs[d] = 1; d = cartellaDi(d); } });
     var elencoDirs = Object.keys(dirs).sort(function(a, b){ return a.split('/').length - b.split('/').length || a.localeCompare(b); });
@@ -38589,15 +38940,32 @@ setTool("erase");
     try {
       if (!st.srv || !st.notif || typeof sendTelegram !== 'function') return;
       var u = utenteSito() || {}, chi = u.ruolo === 'direzione' ? 'dl' : 'icm', sc = String(st.notif.scelte || '').split(',');
-      if (tipo === 'carica' && sc.indexOf(chi) < 0) return;
+      if (tipo === 'carica' && chi !== 'dl' && sc.indexOf(chi) < 0) return;   // i caricamenti della Direzione Lavori arrivano sempre
       if (tipo === 'stato' && sc.indexOf('stato') < 0) return;
       if (st.notif.io && u.nome === st.notif.io) return;   // le proprie azioni non si notificano
       sendTelegram(testo).catch(function(){});
     } catch(e){}
   }
   function chiLabel(){ var u = utenteSito() || {}; return (u.nome || '') + ' (' + (u.ruolo === 'direzione' ? 'DL' : 'ICM') + ')'; }
+  // copia su Drive la cronologia rimasta su Supabase; poi la tabella si può eliminare per liberare spazio
+  function cronologiaSupabase(){
+    var out = $('ix-cron-esito'), bt = $('ix-cron-info'); if (!out) return;
+    var scrivi = function(h){ var o = $('ix-cron-esito'); if (o) o.innerHTML = h; };
+    bt.disabled = true; scrivi('Controllo…');
+    srv('cronologia_info').then(function(r){
+      bt.disabled = false;
+      if (!r.supabase) { scrivi('✓ Su Supabase non c\'è cronologia da copiare: occupa zero spazio.' + (r.cartella ? '' : ' La cartella su Drive verrà creata al primo caricamento.')); return; }
+      if (!r.daCopiare) { scrivi('✓ Tutti i ' + r.supabase + ' eventi sono già copiati su Drive. Per liberare spazio su Supabase puoi eliminare la vecchia tabella: SQL Editor → <code>drop table if exists public.interscambio_eventi;</code> → Run (facoltativo).'); return; }
+      scrivi('Su Supabase ci sono <b>' + r.daCopiare + '</b> eventi non ancora copiati su Drive. <button class="ix-btn" id="ix-cron-copia">Copia su Drive</button>');
+      $('ix-cron-copia').onclick = function(){
+        this.disabled = true; var fatti = 0;
+        var giro = function(){ return srv('cronologia_migra', { max: 120 }).then(function(m){ fatti += m.copiati; scrivi('Copio… ' + fatti + ' eventi copiati' + (m.restano ? ', ne restano ' + m.restano : '')); if (m.restano && m.copiati) return giro(); }); };
+        giro().then(cronologiaSupabase).catch(function(e){ scrivi('<span class="ix-err">' + esc(e.message) + '</span>'); });
+      };
+    }).catch(function(e){ bt.disabled = false; scrivi('<span class="ix-err">' + esc(e.message) + '</span>'); });
+  }
   function salvaNotifiche(){
-    var v = ['icm', 'dl', 'stato'].filter(function(k){ var c = $('ix-n-' + k); return c && c.checked; }).join(',');
+    var v = ['icm', 'dl', 'stato'].filter(function(k){ var c = $('ix-n-' + k); return k === 'dl' || (c && c.checked); }).join(',');
     srv('notifiche', { valore: v, io: $('ix-n-io') && $('ix-n-io').checked ? 1 : 0 }).then(function(r){ st.notif = r.notifiche; avviso('Notifiche salvate', 'success'); })
       .catch(function(e){ avviso(e.message, 'error'); });
   }
@@ -38702,7 +39070,7 @@ setTool("erase");
   function giorni(iso){ if (!iso) return 0; var t = new Date(iso).getTime(); return isNaN(t) ? 0 : Math.max(0, Math.floor((Date.now() - t) / 86400000)); }
   function chip(sx, n){ return '<span class="ix-chip st-' + sx + '">' + STATI[sx] + (n != null ? ' <b>' + n + '</b>' : '') + '</span>'; }
   function firmaBtn(f, k){
-    var a = f.appProperties || {}, on = a['mq_' + k] === '1', pu = k === 'dl' || isAdmin();
+    var a = f.appProperties || {}, on = a['mq_' + k] === '1', pu = isAdmin() || (k === 'dl' && puo(2));
     var tit = (k === 'icm' ? 'Firma ICM' : 'Firma DL') + (a['mq_' + k + '_il'] ? (on ? ': ' : ' tolta: ') + (a['mq_' + k + '_da'] || '') + ' ' + quando(a['mq_' + k + '_il']) : ': non firmato') + (pu ? ' — clic per ' + (on ? 'togliere' : 'firmare') : ' — la cambia solo ' + (k === 'icm' ? 'ICM' : 'la DL'));
     return '<button class="ix-firma' + (on ? ' on' : '') + (k === 'dl' ? ' dl' : '') + '" data-firma="' + k + '" title="' + esc(tit) + '" aria-pressed="' + on + '"' + (pu ? '' : ' disabled') + '>' + (k === 'icm' ? 'ICM' : 'DL') + (on ? ' ✓' : '') + '</button>';
   }
@@ -38742,29 +39110,45 @@ setTool("erase");
       + '<div class="ix-fchips" role="group" aria-label="Filtra per stato">' + chips + '</div>'
       + (ns ? '<div class="ix-selbar"><b>' + ns + ' selezionat' + (ns === 1 ? 'o' : 'i') + '</b>'
         + (adm ? '<button class="ix-btn" data-mass="icm1">✓ Firma ICM</button><button class="ix-btn" data-mass="icm0">✗ Togli ICM</button>' : '')
-        + '<button class="ix-btn" data-mass="dl1">✓ Firma DL</button><button class="ix-btn" data-mass="dl0">✗ Togli DL</button><button class="ix-link" id="ix-desel">Deseleziona</button></div>' : '')
+        + (puo(2) ? '<button class="ix-btn" data-mass="dl1">✓ Firma DL</button><button class="ix-btn" data-mass="dl0">✗ Togli DL</button>' : '') + '<button class="ix-link" id="ix-desel">Deseleziona</button></div>' : '')
       + '</div>';
   }
   // finestra di caricamento: stato obbligatorio per ogni file (anche n file insieme)
   function sceltaStato(items){
     var files = items.map(function(x){ return x.file; });
     return new Promise(function(fine){
-      var adm = isAdmin(), opz = adm ? ['bozza', 'icm', 'dl', 'completo'] : ['bozza', 'dl'];
-      var sel = function(cls, val){ return '<select class="' + cls + '">' + (cls === 'ix-st-tutti' ? '<option value="">— scegli —</option>' : '<option value="">— scegli —</option>') + opz.map(function(o){ return '<option value="' + o + '"' + (val === o ? ' selected' : '') + '>' + STATI[o] + '</option>'; }).join('') + '</select>'; };
+      var adm = isAdmin();
+      // file che sostituiscono una versione esistente: le firme già presenti si conservano (chi carica cambia solo la propria)
+      var prima = items.map(function(x){ var ap = x.sost && x.es ? (x.es.appProperties || {}) : null; return ap ? { icm: ap.mq_icm === '1', dl: ap.mq_dl === '1', icmDa: ap.mq_icm_da, dlDa: ap.mq_dl_da, icmIl: ap.mq_icm_il, dlIl: ap.mq_dl_il } : null; });
+      var opzDi = function(i){ var p = prima[i]; if (adm) return ['bozza', 'icm', 'dl', 'completo']; return p && p.icm ? ['icm', 'completo'] : ['bozza', 'dl']; };
+      var etich = function(o, i){ var p = prima[i];
+        if (!adm && p && p.icm) return o === 'completo' ? '✓ Completo (aggiungo la mia firma DL)' : 'Firmato ICM (senza la mia firma)';
+        if (!adm) return o === 'dl' ? '✓ Firmato DL (firmo io)' : 'Bozza (non firmo)';
+        return STATI[o]; };
+      var predef = function(i){ var p = prima[i]; if (!p) return '';
+        if (adm) return p.dl ? 'completo' : 'icm';          // ICM ricarica (di solito firmato): la firma DL già presente resta
+        return p.icm ? 'completo' : 'dl'; };                 // la DL ricarica firmato: la firma ICM già presente resta
+      var sel = function(i){ var v = predef(i); return '<select class="ix-st-sel"><option value="">— scegli —</option>' + opzDi(i).map(function(o){ return '<option value="' + o + '"' + (v === o ? ' selected' : '') + '>' + etich(o, i) + '</option>'; }).join('') + '</select>'; };
+      var nota = function(i){ var p = prima[i]; if (!p) return '';
+        var t = []; if (p.icm) t.push('firma ICM' + (p.icmDa ? ' di ' + p.icmDa : '') + (p.icmIl ? ' del ' + dataCorta(p.icmIl) : '')); if (p.dl) t.push('firma DL' + (p.dlDa ? ' di ' + p.dlDa : '') + (p.dlIl ? ' del ' + dataCorta(p.dlIl) : ''));
+        return ' · <b>nuova versione</b>' + (t.length ? ' · <span class="ix-st-keep">conserva ' + esc(t.join(' e ')) + '</span>' : ''); };
+      var tuttiOpz = adm ? ['bozza', 'icm', 'dl', 'completo'].map(function(o){ return '<option value="' + o + '">' + STATI[o] + '</option>'; }).join('') : '<option value="no">Non firmo</option><option value="si">Firmo come DL</option>';
       var box = document.createElement('div'); box.className = 'ix-modale'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
       box.innerHTML = '<div class="ix-mod-card ix-mod-large"><div class="ix-mod-t">Carica ' + files.length + ' file — scegli lo stato</div>'
-        + '<p class="ix-nota">Il flusso firme è attivo in questa cartella: ogni file deve avere uno stato.' + (adm ? '' : ' La firma ICM la mette ICM.') + '</p>'
-        + '<label class="ix-st-all">Stato per tutti ' + sel('ix-st-tutti', '') + '</label>'
+        + '<p class="ix-nota">Il flusso firme è attivo in questa cartella: ogni file deve avere uno stato.' + (adm ? '' : ' La firma ICM la mette ICM.') + (prima.some(Boolean) ? ' Sulle nuove versioni le firme già presenti restano: scegli solo la tua.' : '') + '</p>'
+        + '<label class="ix-st-all">Stato per tutti <select class="ix-st-tutti"><option value="">— scegli —</option>' + tuttiOpz + '</select></label>'
         + '<div class="ix-mod-list ix-st-list">' + files.map(function(f, i){
-            var es = items[i].sost ? items[i].es : null, lab = items[i].label || f.name;
-            return '<div class="ix-st-riga" data-i="' + i + '"><span class="ix-st-n" title="' + esc(lab) + '">' + icona({ name: f.name, mimeType: f.type }) + ' ' + esc(lab) + '<small>' + dimensione(f.size) + (es ? ' · <b>sovrascrive</b> la versione esistente (' + STATI[statoF(es)] + ')' : '') + '</small></span>'
-              + '<span></span>' + sel('ix-st-sel', '') + '</div>';
+            var lab = items[i].label || f.name;
+            return '<div class="ix-st-riga" data-i="' + i + '"><span class="ix-st-n" title="' + esc(lab) + '">' + icona({ name: f.name, mimeType: f.type }) + ' ' + esc(lab) + '<small>' + dimensione(f.size) + nota(i) + '</small></span>'
+              + '<span></span>' + sel(i) + '</div>';
           }).join('') + '</div>'
         + '<div class="ix-err" id="ix-st-err" hidden></div>'
         + '<div class="ix-mod-act"><button class="ix-btn" data-a="no">Annulla</button><button class="ix-btn pri" data-a="si">Carica ' + files.length + ' file</button></div></div>';
       document.body.appendChild(box);
       var tutti = box.querySelector('.ix-st-tutti');
-      tutti.onchange = function(){ box.querySelectorAll('.ix-st-sel').forEach(function(s){ s.value = tutti.value; s.classList.remove('manca'); }); };
+      tutti.onchange = function(){ box.querySelectorAll('.ix-st-riga').forEach(function(r){ var i = +r.dataset.i, s = r.querySelector('.ix-st-sel'), v = tutti.value, p = prima[i];
+        if (!adm && v) v = v === 'si' ? (p && p.icm ? 'completo' : 'dl') : (p && p.icm ? 'icm' : 'bozza');
+        s.value = v; s.classList.remove('manca'); }); };
       box.querySelectorAll('.ix-st-sel').forEach(function(s){ s.onchange = function(){ s.classList.remove('manca'); }; });
       var chiudi = function(r){ box.remove(); fine(r); };
       box.querySelector('[data-a="no"]').onclick = function(){ chiudi(null); };
@@ -38784,8 +39168,9 @@ setTool("erase");
     });
   }
 
+
   /* ---------- cruscotto dei flussi ---------- */
-  var AZ = { carica: 'Caricato', versione: 'Nuova versione', stato: 'Cambio stato', cartella: 'Nuova cartella', rinomina: 'Rinominato', sposta: 'Spostato', cestino: 'Nel cestino', flusso_on: 'Flusso attivato', flusso_off: 'Cartella esclusa', flusso_eredita: 'Flusso: impostazione tolta' };
+  var AZ = { nota: 'Nota', nota_risolta: 'Nota risolta', carica: 'Caricato', versione: 'Nuova versione', stato: 'Cambio stato', cartella: 'Nuova cartella', rinomina: 'Rinominato', sposta: 'Spostato', cestino: 'Nel cestino', flusso_on: 'Flusso attivato', flusso_off: 'Cartella esclusa', flusso_eredita: 'Flusso: impostazione tolta' };
   function firmeEv(e){   // quali firme sono state messe/tolte in un cambio di stato
     var a = FLAG[e.a] || {}, d = FLAG[e.da] || { icm: false, dl: false }, r = [];
     if (a.icm && !d.icm) r.push('icm+'); if (!a.icm && d.icm) r.push('icm-');
@@ -38890,6 +39275,7 @@ setTool("erase");
     if ((e.azione === 'carica' || e.azione === 'versione') && e.a) return 'come ' + (STATI[e.a] || e.a);
     if (e.azione === 'rinomina') return 'da «' + (e.da || '') + '»';
     if (e.azione === 'sposta') return 'in «' + (e.a || '') + '»';
+    if (e.azione === 'nota') return e.a === 'correggere' ? '⚠ da correggere' : '';
     return '';
   }
   function cronologia(ev, q){
@@ -38993,7 +39379,7 @@ setTool("erase");
       doc.forEach(function(d){ ns[d.stato]++; if (d.stato !== 'completo') { var g = giorni((d.appProperties || {}).mq_st_il || d.createdTime); if (g >= 7) a7++; if (g >= 14) a14++; } });
       h += '<div class="ix-situaz"><b>Situazione ora</b> · ' + doc.length + ' documenti nel flusso: ' + chip('bozza', ns.bozza) + chip('icm', ns.icm) + chip('dl', ns.dl) + chip('completo', ns.completo)
         + (a7 ? ' <span class="ix-att7">⏳ ' + a7 + ' in attesa da oltre 7 giorni' + (a14 ? ', ' + a14 + ' da oltre 14' : '') + '</span>' : '') + '</div>';
-      if (C.r && !C.r.storico) h += '<div class="ix-err ix-avv">Non riesco a leggere la cronologia: il calendario resta vuoto finché il problema non è risolto.' + (adm && C.r.storicoErr ? '<br><small>Motivo: ' + esc(C.r.storicoErr) + '</small>' : '') + '</div>';
+      if (C.r && !C.r.storico) h += '<div class="ix-err ix-avv">Non riesco a leggere la cronologia su Google Drive: il calendario resta vuoto finché il problema non è risolto.' + (adm && C.r.storicoErr ? '<br><small>Motivo: ' + esc(C.r.storicoErr) + '</small>' : '') + '</div>';
       return h;
     };
     var calHtml = function(){
@@ -39140,6 +39526,7 @@ setTool("erase");
     var v = st.voci.slice(), f = st.filtro.trim().toLowerCase();
     if (f) v = v.filter(function(x){ return x.name.toLowerCase().indexOf(f) >= 0; });
     if (flOn() && st.fStato !== 'tutti') v = v.filter(function(x){ return x.mimeType !== CARTELLA && statoF(x) === st.fStato; });
+    if (st.soloNda) v = v.filter(function(x){ return +((x.appProperties || {}).mq_nda || 0) > 0; });
     var cart = function(x){ return x.mimeType === CARTELLA ? 0 : 1; };
     v.sort(function(a, b){
       if (cart(a) !== cart(b)) return cart(a) - cart(b);
@@ -39157,10 +39544,12 @@ setTool("erase");
       + (st.srv ? (function(){ var sc = String((st.notif || {}).scelte || '').split(','), ck = function(k){ return sc.indexOf(k) >= 0 ? ' checked' : ''; };
           return '<div class="ix-notif"><b>🔔 Notifiche Telegram</b><span class="ix-nota">Arrivano sul tuo Telegram, lo stesso degli accessi al sito.</span>'
             + '<label><input type="checkbox" id="ix-n-icm"' + ck('icm') + '> File caricati da ICM</label>'
-            + '<label><input type="checkbox" id="ix-n-dl"' + ck('dl') + '> File caricati dalla Direzione Lavori</label>'
+            + '<label><input type="checkbox" id="ix-n-dl" checked disabled> File caricati dalla Direzione Lavori <span class="ix-nota">(sempre attivo)</span></label>'
             + '<label><input type="checkbox" id="ix-n-stato"' + ck('stato') + '> Firme messe o tolte</label>'
             + '<label><input type="checkbox" id="ix-n-io"' + ((st.notif || {}).io ? ' checked' : '') + '> Non avvisarmi di quello che faccio io</label>'
-            + '<div class="ix-row"><button class="ix-btn" id="ix-n-salva">Salva notifiche</button></div></div>'; })() : '')
+            + '<div class="ix-row"><button class="ix-btn" id="ix-n-salva">Salva notifiche</button></div></div>'
+            + '<div class="ix-notif"><b>🗂 Cronologia su Google Drive</b><span class="ix-nota">Caricamenti, firme e cambi di stato si registrano in una cartella tecnica del tuo Drive («Modern Quality · cronologia Interscambio (non toccare)»), non su Supabase. Il committente non la vede.</span>'
+            + '<div class="ix-row"><button class="ix-btn" id="ix-cron-info">Controlla la vecchia cronologia su Supabase</button></div><div id="ix-cron-esito" class="ix-nota"></div></div>'; })() : '')
       + (DEF.server ? '<p class="ix-nota">' + (st.srv ? '✓ Modalità sito attiva: Admin e Direzione Lavori entrano con l\'utente del sito, senza account Google.' : 'Modalità sito (Direzione Lavori senza account Google) non ancora attiva: si entra con Google.') + '</p>' : '')
       + '<div class="ix-row"><button class="ix-btn pri" id="ix-salva">Salva</button>' + (connesso && !st.srv ? '<button class="ix-btn" id="ix-esci">Scollega Google</button>' : '') + '</div>'
       + '<details class="ix-guida"><summary>Come ottenere l\'ID client (una volta sola, circa 15 minuti)</summary><ol>'
@@ -39181,24 +39570,28 @@ setTool("erase");
       var v = ordinate(), dove = st.percorso[st.percorso.length - 1] || {};
       box.innerHTML = '<div class="ix-bar">'
         + '<nav class="ix-path" aria-label="Percorso">' + st.percorso.map(function(p, i){ return '<button class="ix-bc" data-i="' + i + '" data-drop="' + esc(p.id) + '">' + (i === 0 ? '🏠 ' : '') + esc(p.nome) + '</button>'; }).join('<span class="ix-sep">›</span>') + '</nav>'
-        + '<div class="ix-azioni"><button class="ix-btn pri" id="ix-up">⬆ Carica file</button>' + (CARTELLE_OK ? '<button class="ix-btn" id="ix-updir">📁 Carica cartella</button>' : '') + '<button class="ix-btn" id="ix-new">＋ Nuova cartella</button><button class="ix-btn" id="ix-ref" title="Aggiorna">⟳</button>' + (st.srv ? '<button class="ix-btn" id="ix-cal" title="Calendario e recap">📅 Calendario' + (st.novita ? ' <span class="ix-badge">' + st.novita + '</span>' : '') + '</button>' : '') + (adm && st.srv ? '<button class="ix-btn" id="ix-spazio" title="Spazio su Google Drive">💾 Spazio</button>' : '') + '' + (adm ? '<a class="ix-btn" id="ix-drive" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/' + esc(st.cur) + '">Apri in Drive ↗</a>' : '') + '</div>'
+        + '<div class="ix-azioni">' + (puo(2) ? '<button class="ix-btn pri" id="ix-up">⬆ Carica file</button>' : '') + (CARTELLE_OK && puo(2) ? '<button class="ix-btn" id="ix-updir">📁 Carica cartella</button>' : '') + (puo(2) ? '<button class="ix-btn" id="ix-new">＋ Nuova cartella</button>' : '')
+          + (st.srv && adm ? '<button class="ix-btn" id="ix-perm" title="Chi può fare cosa in questa cartella">🔒 Permessi</button>' : '')
+          + (st.srv && !adm && st.perm ? '<span class="ix-perm-badge lv' + st.perm.liv + '" title="Il tuo permesso in questa cartella">🔒 ' + esc(st.perm.nome) + '</span>' : '') + '<button class="ix-btn" id="ix-ref" title="Aggiorna">⟳</button>' + (st.srv ? '<button class="ix-btn" id="ix-cal" title="Calendario e recap">📅 Calendario' + (st.novita ? ' <span class="ix-badge">' + st.novita + '</span>' : '') + '</button>' : '') + (adm && st.srv ? '<button class="ix-btn" id="ix-spazio" title="Spazio su Google Drive">💾 Spazio</button>' : '') + '' + (adm ? '<a class="ix-btn" id="ix-drive" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/' + esc(st.cur) + '">Apri in Drive ↗</a>' : '') + '</div>'
         + '<input type="file" id="ix-file" multiple hidden>' + (CARTELLE_OK ? '<input type="file" id="ix-dir" webkitdirectory multiple hidden>' : '') + '</div>'
-        + '<div class="ix-tools"><input id="ix-cerca" type="search" placeholder="Cerca in questa cartella…" value="' + esc(st.filtro) + '"><label class="ix-ordl">Ordina <select id="ix-ord"><option value="nome"' + (st.ord === 'nome' ? ' selected' : '') + '>per nome</option><option value="data"' + (st.ord === 'data' ? ' selected' : '') + '>più recenti</option></select></label></div>'
+        + '<div class="ix-tools">' + (function(){ var n = st.voci.filter(function(x){ return +((x.appProperties || {}).mq_nda || 0) > 0; }).length; if (!n && st.soloNda) st.soloNda = false; return n ? '<button class="ix-btn ix-nda-f' + (st.soloNda ? ' att' : '') + '" id="ix-nda-f" aria-pressed="' + !!st.soloNda + '" title="Mostra solo i file con note da correggere">⚠ Da correggere (' + n + ')</button>' : ''; })() + '<input id="ix-cerca" type="search" placeholder="Cerca in questa cartella…" value="' + esc(st.filtro) + '"><label class="ix-ordl">Ordina <select id="ix-ord"><option value="nome"' + (st.ord === 'nome' ? ' selected' : '') + '>per nome</option><option value="data"' + (st.ord === 'data' ? ' selected' : '') + '>più recenti</option></select></label></div>'
         + (st.errore ? '<div class="ix-err">' + esc(st.errore) + '</div>' : '')
         + '<div id="ix-coda"></div>'
         + barraFlusso(v)
         + '<div class="ix-lista' + (flOn() ? ' fl' : '') + '" id="ix-lista">' + (flOn() && !st.occupato && v.some(function(x){ return x.mimeType !== CARTELLA; }) ? '<label class="ix-intest"><input type="checkbox" id="ix-selall"' + (v.filter(function(x){ return x.mimeType !== CARTELLA; }).every(function(x){ return st.sel[x.id]; }) ? ' checked' : '') + '> Seleziona tutti i file visibili</label>' : '') + (st.occupato ? '<div class="ix-vuoto">Caricamento…</div>' : (v.length ? v.map(function(f, i){
             var c = f.mimeType === CARTELLA, cap = f.capabilities || {};
             var fo = flOn(), ap = f.appProperties || {};
-            return '<div class="ix-riga' + (c ? ' cart' : '') + (fo && st.sel[f.id] ? ' sel' : '') + '" data-i="' + i + '" draggable="' + (cap.canMoveItemWithinDrive === false ? 'false' : 'true') + '"' + (c ? ' data-drop="' + esc(f.id) + '"' : '') + '>'
+            return '<div class="ix-riga' + (c ? ' cart' : '') + (fo && st.sel[f.id] ? ' sel' : '') + '" data-i="' + i + '" draggable="' + (cap.canMoveItemWithinDrive === false || !puo(3) ? 'false' : 'true') + '"' + (c ? ' data-drop="' + esc(f.id) + '"' : '') + '>'
               + (fo ? (c ? '<span class="ix-chk"></span>' : '<label class="ix-chk"><input type="checkbox" data-sel="' + esc(f.id) + '"' + (st.sel[f.id] ? ' checked' : '') + ' aria-label="Seleziona ' + esc(f.name) + '"></label>') : '')
-              + '<button class="ix-nome" data-act="apri" title="' + (c ? 'Apri la cartella' : 'Apri il file in Drive') + '"><span class="ix-ico">' + icona(f) + '</span><span class="ix-n">' + esc(f.name) + '</span></button>'
+              + '<button class="ix-nome" data-act="apri" title="' + (c ? 'Apri la cartella' : st.srv ? 'Anteprima e note' : 'Apri il file in Drive') + '"><span class="ix-ico">' + icona(f) + '</span><span class="ix-n">' + esc(f.name) + '</span></button>'
               + (fo ? (c ? '<span class="ix-stato"></span>' : '<span class="ix-stato">' + chip(statoF(f)) + firmaBtn(f, 'icm') + firmaBtn(f, 'dl') + '</span>') : '')
               + '<span class="ix-meta" title="Ultima modifica">' + esc(quando(f.modifiedTime)) + (autore(f) ? ' · ' + esc(autore(f)) : '') + (c ? '' : (f.size ? ' · ' + dimensione(f.size) : '')) + (fo && !c && ap.mq_st_il ? ' · stato dal ' + dataCorta(ap.mq_st_il) : '') + '</span>'
-              + '<span class="ix-act">' + (c ? '' : '<button class="ix-ib" data-act="scarica" title="Scarica" aria-label="Scarica">⬇</button>')
-              + (cap.canRename === false ? '' : '<button class="ix-ib" data-act="rinomina" title="Rinomina" aria-label="Rinomina">✎</button>')
-              + (cap.canMoveItemWithinDrive === false ? '' : '<button class="ix-ib" data-act="sposta" title="Sposta in…" aria-label="Sposta">⇄</button>')
-              + (cap.canTrash === false ? '' : '<button class="ix-ib del" data-act="elimina" title="Sposta nel cestino" aria-label="Elimina">🗑</button>') + '</span></div>';
+              + '<span class="ix-act">' + (!c && +(ap.mq_nda || 0) > 0 ? '<button class="ix-nda" data-act="scheda" title="Note da correggere aperte: apri per vederle">⚠ ' + (+ap.mq_nda) + '</button>' : '')
+              + (c || !st.srv ? '' : '<button class="ix-ib" data-act="scheda" title="Anteprima e note" aria-label="Anteprima e note">👁</button>')
+              + (c ? '' : '<button class="ix-ib" data-act="scarica" title="Scarica" aria-label="Scarica">⬇</button>')
+              + (cap.canRename === false || !puo(3) ? '' : '<button class="ix-ib" data-act="rinomina" title="Rinomina" aria-label="Rinomina">✎</button>')
+              + (cap.canMoveItemWithinDrive === false || !puo(3) ? '' : '<button class="ix-ib" data-act="sposta" title="Sposta in…" aria-label="Sposta">⇄</button>')
+              + (cap.canTrash === false || !puo(4) ? '' : '<button class="ix-ib del" data-act="elimina" title="Sposta nel cestino" aria-label="Elimina">🗑</button>') + '</span></div>';
           }).join('') : '<div class="ix-vuoto">' + (st.filtro ? 'Nessun elemento corrisponde alla ricerca.' : 'Cartella vuota: trascina qui i file o usa "Carica file".') + '</div>')) + '</div>'
         + '<p class="ix-nota">Trascina file o intere cartelle dal PC sulla lista per caricarli; trascina un elemento su una cartella (o sul percorso in alto) per spostarlo. "Elimina" sposta nel cestino di Drive: si recupera per 30 giorni.</p>'
         + impost;
@@ -39223,6 +39616,8 @@ setTool("erase");
     if ((b = $('ix-dir'))) b.onchange = function(){ caricaFile(this.files); this.value = ''; };
     if ((b = $('ix-file'))) b.onchange = function(){ caricaFile(this.files); this.value = ''; };
     if ((b = $('ix-new'))) b.onclick = nuovaCartella;
+    if ((b = $('ix-perm'))) b.onclick = permessi;
+    if ((b = $('ix-nda-f'))) b.onclick = function(){ st.soloNda = !st.soloNda; disegna(); };
     if ((b = $('ix-ref'))) b.onclick = aggiorna;
     if ((b = $('ix-cerca'))) b.oninput = function(){ st.filtro = this.value; var pos = this.selectionStart; disegna(); var n = $('ix-cerca'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch(e){} } };
     if ((b = $('ix-ord'))) b.onchange = function(){ st.ord = this.value; disegna(); };
@@ -39230,6 +39625,7 @@ setTool("erase");
     if ((b = $('ix-spazio'))) b.onclick = mostraSpazio;
     if ((b = $('ix-cal'))) b.onclick = calendario;
     if ((b = $('ix-n-salva'))) b.onclick = salvaNotifiche;
+    if ((b = $('ix-cron-info'))) b.onclick = cronologiaSupabase;
     if ((b = $('ix-fl-on'))) b.onclick = function(){ impostaFlusso('1'); };
     if ((b = $('ix-fl-off'))) b.onclick = function(){ impostaFlusso('0'); };
     if ((b = $('ix-fl-togli'))) b.onclick = function(){ impostaFlusso(''); };
@@ -39247,7 +39643,8 @@ setTool("erase");
       var cb = r.querySelector('[data-sel]'); if (cb) cb.onchange = function(){ st.sel[f.id] = cb.checked; disegna(); };
       r.querySelectorAll('[data-firma]').forEach(function(x){ x.onclick = function(e){ e.stopPropagation(); if (st.occupatoStato) return; var k = x.dataset.firma; cambiaStato([f.id], k, (f.appProperties || {})['mq_' + k] !== '1'); }; });
       r.querySelectorAll('[data-act]').forEach(function(x){ x.onclick = function(e){ e.stopPropagation(); var a = x.dataset.act;
-        if (a === 'apri') { if (f.mimeType === CARTELLA) { st.filtro = ''; apri(f.id, f.name); } else if (st.srv && !isAdmin()) scaricaSrv(f, true); else window.open(f.webViewLink, '_blank', 'noopener'); }
+        if (a === 'apri') { if (f.mimeType === CARTELLA) { st.filtro = ''; apri(f.id, f.name); } else if (st.srv) scheda(f); else window.open(f.webViewLink, '_blank', 'noopener'); }
+        else if (a === 'scheda') scheda(f);
         else if (a === 'scarica') scarica(f); else if (a === 'rinomina') rinomina(f); else if (a === 'sposta') sceltaCartella(f); else if (a === 'elimina') elimina(f); }; });
       r.addEventListener('dragstart', function(e){ e.dataTransfer.setData('text/mq-ix', f.id); e.dataTransfer.effectAllowed = 'move'; r.classList.add('trascina'); });
       r.addEventListener('dragend', function(){ r.classList.remove('trascina'); });
@@ -39291,7 +39688,7 @@ setTool("erase");
     if (DEF.server && !st.srvAssente && !st.srv && !st.occupato && utenteSito()) { collega(); return; }
     if (!st.root) disegna();
   }
-  document.addEventListener('click', function(e){ if (e.target && e.target.closest && e.target.closest('#btn-logout')) { st.utente = ''; azzera(); try { sessionStorage.removeItem(K.tok); } catch(_){} st.token = null; disegna(); } }, true);
+  document.addEventListener('click', function(e){ if (e.target && e.target.closest && e.target.closest('#btn-logout')) { st.utente = ''; azzera(); try { sessionStorage.removeItem(K.tok); sessionStorage.removeItem('mq_ix_perc'); } catch(_){} st.token = null; disegna(); } }, true);
   function avvia(){
     if (!$('ix-box')) return;
     if (DEF.server) { var u0 = utenteSito(); st.utente = u0 ? u0.nome + '|' + u0.ruolo : ''; var t0 = $('tab-interscambio'); return (t0 && t0.classList.contains('active')) ? mostra() : disegna(); }
@@ -39306,5 +39703,90 @@ setTool("erase");
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia); else avvia();
 })();
 </script>
+<script id="mq-nuova-versione">
+/* 32.7 · Quando pubblichi un index nuovo su GitHub, chi ha il sito già aperto (laboratori, telefoni)
+   vede un avviso «È disponibile la Versione …  [Aggiorna]». Non ricarica mai da solo. */
+(function(){
+  if(!/^https?:$/.test(location.protocol)) return;
+  var T=window.__mqVerTempi||{primo:20000,minimo:15*60*1000,giro:5*60*1000};
+  var base=null, ultimo=0, mostrato=false, box=null;
+  function indirizzo(){ return location.origin+location.pathname; }
+  function impronta(){
+    return fetch(indirizzo(),{method:'HEAD',cache:'no-store'}).then(function(r){
+      if(!r.ok) return null; return r.headers.get('etag')||r.headers.get('last-modified')||null;
+    }).catch(function(){ return null; });
+  }
+  function versioneOnline(){
+    return fetch(indirizzo()+'?v='+Date.now(),{cache:'no-store'}).then(function(r){ return r.ok?r.text():''; })
+      .then(function(t){ var m=t.match(/window\.APP_VERSION = '([^']{1,40})'/); return m?m[1]:''; }).catch(function(){ return ''; });
+  }
+  function mostra(v){
+    mostrato=true;
+    if(!box){
+      box=document.createElement('div'); box.id='mq-nuova-ver'; box.setAttribute('role','status');
+      box.innerHTML='<span class="t"></span><button type="button" class="si">Aggiorna</button><button type="button" class="no" aria-label="Più tardi">Più tardi</button>';
+      box.querySelector('.si').onclick=function(){ location.reload(); };
+      box.querySelector('.no').onclick=function(){ box.classList.remove('on'); mostrato=false; ultimo=Date.now(); };
+      document.body.appendChild(box);
+    }
+    box.querySelector('.t').textContent='È disponibile la '+v+'. Salva quello che stai facendo e premi Aggiorna.';
+    void box.offsetWidth; box.classList.add('on');
+  }
+  function controlla(forza){
+    if(mostrato || (!forza && Date.now()-ultimo<T.minimo)) return;
+    ultimo=Date.now();
+    impronta().then(function(tag){
+      if(!tag) return;
+      if(base===null){ base=tag; return; }
+      if(tag===base) return;
+      return versioneOnline().then(function(v){
+        if(!v) return;
+        if(v===window.APP_VERSION){ base=tag; return; }
+        mostra(v);
+      });
+    });
+  }
+  setTimeout(function(){ controlla(true); }, T.primo);
+  setInterval(function(){ controlla(false); }, T.giro);
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') controlla(false); });
+  window.__mqControllaVersione=controlla;
+})();
+</script>
+<style id="mq-nuova-ver-stile">
+#mq-nuova-ver{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);z-index:100000;
+  display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;justify-content:flex-end;width:max-content;max-width:min(620px,calc(100% - 24px));box-sizing:border-box;
+  padding:10px 12px 10px 16px;border-radius:14px;background:#1F2A37;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.35);
+  font:500 14px/1.35 system-ui,-apple-system,'Segoe UI',sans-serif;transition:transform .35s ease;}
+#mq-nuova-ver.on{transform:translate(-50%,0);}
+#mq-nuova-ver .t{flex:1 1 220px;min-width:0;}
+#mq-nuova-ver button{border:0;border-radius:10px;padding:8px 14px;font:600 14px system-ui,-apple-system,sans-serif;cursor:pointer;}
+#mq-nuova-ver .si{background:#C2410C;color:#fff;}
+#mq-nuova-ver .no{background:transparent;color:#cbd5e1;}
+@media (prefers-reduced-motion:reduce){ #mq-nuova-ver{transition:none;} }
+</style>
+<style id="mq-cubetti-stile">
+/* 32.8 · cubetti: il numero scelto e quello consigliato si vedono bene, su PC e telefono */
+html #tab-registro #reg-cubetti-chips{max-width:520px;margin-top:14px;overflow:visible;}
+html #tab-registro #reg-cubetti-chips .reg-chip{position:relative;min-height:54px;font-size:20px;font-weight:700;color:var(--text2);overflow:visible;}
+html #tab-registro #reg-cubetti-chips .reg-chip[data-v="__altro"]{font-size:16px;}
+html #tab-registro #reg-cubetti-chips .reg-chip.on{background:#C2410C !important;color:#FFFFFF !important;
+  box-shadow:0 3px 12px rgba(194,65,12,.45) !important;transform:scale(1.04);}
+html #tab-registro #reg-cubetti-chips .reg-chip.consigliato:not(.on){box-shadow:inset 0 0 0 2px #E8661E !important;color:var(--text) !important;}
+html #tab-registro #reg-cubetti-chips .reg-chip.consigliato::after{content:'consigliato';position:absolute;left:50%;top:-11px;transform:translateX(-50%);
+  padding:1px 7px;border-radius:999px;background:#FDBA74;color:#431407;font:700 10.5px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;
+  letter-spacing:.02em;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+html #tab-registro #reg-cubetti-chips .reg-chip.on.consigliato::after{background:#FFFFFF;color:#9A3412;}
+html #tab-registro .reg-cubhint{font-size:15px;line-height:1.5;}
+html #tab-registro .reg-cubhint .cub-n{display:inline-block;min-width:1.6em;margin:0 2px;padding:0 8px;border-radius:8px;background:#C2410C;color:#FFFFFF;
+  font-size:22px;font-weight:800;line-height:1.35;text-align:center;vertical-align:-2px;}
+html #tab-registro .reg-cubhint.diverso .cub-n{background:#B91C1C;}
+html #tab-registro .reg-cubhint .cub-ok,html #tab-registro .reg-cubhint .cub-att{font-size:13.5px;}
+@media (max-width:640px){
+  html #tab-registro #reg-cubetti-chips{max-width:none;}
+  html #tab-registro #reg-cubetti-chips .reg-chip{min-height:56px;font-size:22px;}
+  html #tab-registro .reg-cubhint{font-size:15.5px;}
+}
+@media (prefers-reduced-motion:reduce){ html #tab-registro #reg-cubetti-chips .reg-chip.on{transform:none;} }
+</style>
 </body>
 </html>
