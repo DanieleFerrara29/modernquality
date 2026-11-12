@@ -18620,7 +18620,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 34.8';
+  window.APP_VERSION = 'Versione 34.9';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
@@ -21685,6 +21685,7 @@ ZW50ID0gJ0VsYWJvcmEgdHV0dG8nOwogIH0pOwp9KSgpOwo8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+
     if (!Array.isArray(salv) || salv.length < 2 || !salv[0] || salv[0].id !== rid ||
         salv.some(function(p){ return !p || typeof p.id !== 'string' || !p.id; })) return apri(rid, rnome);
     salv = salv.slice(0, 30).map(function(p){ return { id: p.id, nome: String(p.nome || '…') }; });
+    if (rnome) salv[0].nome = rnome;   // 34.9: la cartella principale ha sempre il nome di adesso
     var ult = salv[salv.length - 1];
     st.percorso = salv.slice(0, -1);
     return apri(ult.id, ult.nome).then(function(){
@@ -25744,6 +25745,14 @@ function mq3Modelli(THREE, cfg) {
   };
 
   // ── Interscambio: la cartella kraft. Si apre: via gli elastici, si apre la copertina, il verbale firmato esce
+  function etichettaIx() {   // 34.9 · cosa c'è scritto sotto «INTERSCAMBIO», secondo chi è entrato
+    try {
+      var r = String((typeof currentUser !== 'undefined' && currentUser && currentUser.role) || '').toLowerCase().trim();
+      if (r === 'laboratorio' || r === 'lab') return 'ICM  ⇄  LABORATORIO';
+      if (r === 'direzione') return 'ICM  ⇄  DL';
+      return 'ICM  ⇄  DL  ·  LABORATORI';
+    } catch (e) { return 'ICM  ⇄  DL'; }
+  }
   M['interscambio'] = function () {
     var g = new THREE.Group(), W = 1.72, H = 2.2, T = .035, r = .06;
     var kt = tex(kraftTela(81)), kt2 = tex(kraftTela(82, true));
@@ -25768,7 +25777,8 @@ function mq3Modelli(THREE, cfg) {
     var cerniera = new THREE.Group(); cerniera.position.set(-W / 2, -.02, .03);
     var davanti = new THREE.Mesh(uvFronte(new THREE.ExtrudeGeometry(cop, { depth: T, bevelEnabled: true, bevelThickness: .006, bevelSize: .006, bevelSegments: 2, curveSegments: 10 })), [kraft, kraftIn]);
     davanti.position.x = W / 2; cerniera.add(davanti);
-    var ad = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .52), std({ map: tex(adesivo('INTERSCAMBIO', (function(){ try { var r = String((typeof currentUser !== 'undefined' && currentUser && currentUser.role) || '').toLowerCase().trim(); return r === 'laboratorio' || r === 'lab' ? 'ICM  ⇄  LAB' : 'ICM  ⇄  DL'; } catch(e){ return 'ICM  ⇄  DL'; } })(), '#FFFFFF', '#14532F')), roughness: .55, envMapIntensity: .5, polygonOffset: true, polygonOffsetFactor: -2 }));
+    var etTesto = etichettaIx(), adTex = tex(adesivo('INTERSCAMBIO', etTesto, '#FFFFFF', '#14532F'));   // 34.9
+    var ad = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .52), std({ map: adTex, roughness: .55, envMapIntensity: .5, polygonOffset: true, polygonOffsetFactor: -2 }));
     ad.position.set(W / 2 + .05, .32, T + .008); ad.rotation.z = .02; cerniera.add(ad);
     var elastici = [];
     [[W - .2, h2 / 2 - .2, -.785, 1], [W - .2, -h2 / 2 + .2, .785, -1]].forEach(function (a) {   // elastici agli angoli
@@ -25780,6 +25790,12 @@ function mq3Modelli(THREE, cfg) {
     });
     g.add(cerniera);
     ombre(g); ad.castShadow = false;
+    // 34.9 · è entrato un altro ruolo: l'etichetta si ridisegna (vero = è cambiata)
+    g.userData.etichetta = function () {
+      var t = etichettaIx(); if (t === etTesto) return false;
+      etTesto = t; adTex.image = adesivo('INTERSCAMBIO', t, '#FFFFFF', '#14532F'); adTex.needsUpdate = true; return true;
+    };
+    g.userData.etichettaTesto = function () { return etTesto; };
     var sporco = false;
     g.userData.anima = function (t, f) {
       if (sporco) {
@@ -26356,6 +26372,7 @@ function mq3Modelli(THREE, cfg) {
     var U = esterno.userData;
     U.alt = dim.y * s; U.larg = dim.x * s; U.s = s;
     U.anima = g.userData.anima || null; U.azione = g.userData.azione || null; U.eroe = g.userData.eroe || null;
+    U.etichetta = g.userData.etichetta || null; U.etichettaTesto = g.userData.etichettaTesto || null;   // 34.9
     U.tempi = g.userData.tempi || { q1: .9, pp0: .5, durata: 1150 };
     U.sfuma = function (a) { opacita(g, a); };
     U.svanisci = function (a) {   // alla fine dell'apertura tutto l'oggetto si dissolve sopra la pagina (moltiplica le opacità di questo fotogramma)
@@ -26551,6 +26568,7 @@ function mq3Modelli(THREE, cfg) {
     var testa = p.querySelector('.mqh-testa');
     if (testa && !testa.querySelector('.mq-vista')) { testa.insertAdjacentHTML('beforeend', interruttore(st.vista)); agganciaInterruttore(testa); }
     if ((ks || []).join('|') !== st.ks.join('|')) impostaVoci(ks || []);
+    try { var gIx = st.cache['interscambio']; if (gIx && gIx.userData.etichetta && gIx.userData.etichetta()) sveglia(); } catch(e){}   // 34.9: l'etichetta della cartella segue chi è entrato
     aggiorna();
   }
   function impostaVoci(ks){
@@ -27643,7 +27661,8 @@ function mq3Modelli(THREE, cfg) {
       volo: V ? { k: V.k, dir: V.dir, p: V.p, modo: V.modo, cb: V.cbFatto } : null, portale: T && T.portale ? T.portale.slice() : null,
       onda: T ? [T.U.uFl.value.x, T.U.uFl.value.y, T.U.uFl.value.z, T.U.uFl.value.w] : null, dpr: T ? T.q.dpr : null, nat: T ? T.q.nat : null, liv: T ? T.q.liv : null, gradini: T ? T.q.gradini : null, gpu: T ? T.q.gpu : null, pronta: st.pronta || null, ombre: T ? T.chiave.castShadow && T.R.shadowMap.enabled : null, qa: st.qa ? { fermo: st.qa.fermo, ultima: st.qa.ultima } : null, aa: T ? T.q.aa : null, lento: T ? T.q.lento : null,
       mem: T ? { geo: T.R.info.memory.geometries, tex: T.R.info.memory.textures, prog: (T.R.info.programs || []).length, draw: T.R.info.render.calls } : null }; },
-    _qualita: function(){ return st.tre ? st.tre.q.dpr : null; }   // (33.5: la risoluzione è sempre la massima, non si cambia)
+    _qualita: function(){ return st.tre ? st.tre.q.dpr : null; },   // (33.5: la risoluzione è sempre la massima, non si cambia)
+    _etichettaIx: function(){ var g = st.cache['interscambio']; return g && g.userData.etichettaTesto ? g.userData.etichettaTesto() : null; }   // 34.9 (per le prove)
   };
 })();
 </script>
