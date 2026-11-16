@@ -18621,7 +18621,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 37.3';
+  window.APP_VERSION = 'Versione 37.4';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
@@ -28603,6 +28603,18 @@ button.ol-tki{cursor:pointer;} button.ol-tki:hover{border-color:rgba(var(--ol-rg
 .ol-dot.st-np{background:transparent;border:1.5px dashed #8293a8;}
 /* 37.3 · il tombino scritto nella tabella del muro: il tubo che passa */
 .ol-pm-d .tbp{fill:#0b1018;stroke:#8fc0f0;stroke-width:1.4;pointer-events:none;}
+/* 37.4 · muri: le tratte come quote sopra il muro, il numero sul concio, il tombino scatolare */
+.ol-pm-d .trb,.ol-pm-d .trb.b{fill:transparent;stroke:none;cursor:pointer;} .ol-pm-d .trb:hover{fill:rgba(143,179,209,.08);} .ol-pm-d .trb.on{fill:rgba(56,178,166,.14);stroke:none;}
+.ol-pm-d .trq{stroke:#9db7cf;stroke-width:1.3;pointer-events:none;} .ol-pm-d .trk{stroke:#9db7cf;stroke-width:1.8;stroke-linecap:round;pointer-events:none;} .ol-pm-d .trj{stroke:#6f86a0;stroke-width:1;pointer-events:none;}
+.ol-pm-d .trc{stroke:#8ea3bb;stroke-opacity:.6;stroke-width:1;stroke-dasharray:4 3;pointer-events:none;}
+.ol-pm-d .trq.on,.ol-pm-d .trk.on,.ol-pm-d .trj.on,.ol-pm-d .trc.on{stroke:#38b2a6;stroke-opacity:1;} .ol-pm-d .trq.on{stroke-width:2;}
+.ol-pm-d .trq.off,.ol-pm-d .trk.off,.ol-pm-d .trj.off,.ol-pm-d .trc.off{opacity:.35;}
+.ol-pm-d .trt{font:700 10.5px var(--ui);fill:#d5e4f3;letter-spacing:.04em;paint-order:stroke;stroke:#0b1018;stroke-width:3px;stroke-linejoin:round;pointer-events:none;} .ol-pm-d .trt.on{fill:#bff0ea;}
+.ol-pm-d .pcn{font-family:var(--ui);font-weight:800;fill:#f4f8fc;paint-order:stroke;stroke:#0b1018;stroke-width:3px;stroke-linejoin:round;pointer-events:none;}
+.ol-pm-d .pcl{font-family:var(--dati);font-weight:600;fill:#e3ecf5;paint-order:stroke;stroke:#0b1018;stroke-width:2.5px;stroke-linejoin:round;pointer-events:none;}
+.ol-pm-d .tbx{fill:#6b7a8f;stroke:#0b1018;stroke-width:.8;pointer-events:none;} .ol-pm-d .tbo{fill:#0b1018;stroke:#8fc0f0;stroke-width:1.2;pointer-events:none;}
+.ol-leg i.pm-tb{background:#0b1018;border:3px solid #6b7a8f;box-sizing:border-box;}
+.ol-leg i.pm-q{background:linear-gradient(#9db7cf,#9db7cf) center/100% 2px no-repeat;border-left:2px solid #9db7cf;border-right:2px solid #9db7cf;box-sizing:border-box;}
 </style>
 <script id="mq-opere-3d">
 /* 34.8 · OPERE LINEARI — plastico 3D (Three.js r128, la stessa libreria della Home, caricata solo quando serve).
@@ -28648,15 +28660,15 @@ window.MQOpere3D = (function(){
     return { t: t, r: w / h };
   }
   // gli 8 angoli di un pezzo: 0-3 la faccia a inizio progressiva, 4-7 quella a fine (sotto −z, sotto +z, sopra +z, sopra −z)
-  function faccia(p, E){   // la sezione di un pezzo: quote, centro e mezze larghezze (sotto e sopra)
-    if (p.f === 'trap') return { y0: p.y0 * E, y1: (p.y0 + Math.max(.005, p.h)) * E, zc: p.zc, B2: Math.max(.02, p.B) / 2, b2: Math.max(0, p.b) / 2 };
-    var m = Math.max(.01, (p.z1 - p.z0) / 2); return { y0: p.y0 * E, y1: Math.max(p.y0 + .005, p.y1) * E, zc: (p.z0 + p.z1) / 2, B2: m, b2: m };
+  function faccia(p, E){   // la sezione di un pezzo: quote, centro e mezze larghezze (sotto e sopra) · 37.4: zt = il centro in testa (muri a scarpa)
+    if (p.f === 'trap') return { y0: p.y0 * E, y1: (p.y0 + Math.max(.005, p.h)) * E, zc: p.zc, zt: p.zt != null ? p.zt : p.zc, B2: Math.max(.02, p.B) / 2, b2: Math.max(0, p.b) / 2 };
+    var m = Math.max(.01, (p.z1 - p.z0) / 2), z = (p.z0 + p.z1) / 2; return { y0: p.y0 * E, y1: Math.max(p.y0 + .005, p.y1) * E, zc: z, zt: z, B2: m, b2: m };
   }
   function angoli(p, x0, E){
     var a = p.x0 - x0, b = p.x1 - x0, s = faccia(p, E), e = s;
     if (p.e) { var q = {}, k; for (k in p) q[k] = p[k]; for (k in p.e) q[k] = p.e[k]; e = faccia(q, E); }   // 36.2: all'altro capo un'altra sezione (la banca della pista che cambia)
     if (b - a < .01) b = a + .01;
-    return [[a, s.y0, s.zc - s.B2], [a, s.y0, s.zc + s.B2], [a, s.y1, s.zc + s.b2], [a, s.y1, s.zc - s.b2], [b, e.y0, e.zc - e.B2], [b, e.y0, e.zc + e.B2], [b, e.y1, e.zc + e.b2], [b, e.y1, e.zc - e.b2]];
+    return [[a, s.y0, s.zc - s.B2], [a, s.y0, s.zc + s.B2], [a, s.y1, s.zt + s.b2], [a, s.y1, s.zt - s.b2], [b, e.y0, e.zc - e.B2], [b, e.y0, e.zc + e.B2], [b, e.y1, e.zt + e.b2], [b, e.y1, e.zt - e.b2]];
   }
   var TRI_BOX = []; FACCE.forEach(function(q){ TRI_BOX.push([q[0], q[1], q[2]], [q[0], q[2], q[3]]); });
   // 37.3 · un prisma tondo o ellittico (pali, fusti, pulvini, il tubo di un tombino): asse verticale (ax 'y') o trasversale
@@ -28719,6 +28731,37 @@ window.MQOpere3D = (function(){
     var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     return g;
   }
+  // 37.4 · le scritte dipinte sulle facce (il numero del concio sul muro): tutte in un solo disegno (una tela con le scritte in fila)
+  // e un solo oggetto; ogni scritta guarda verso +z o −z (n), alta h metri, al massimo larga w
+  function scritte(THREE, l, x0, E){
+    var uniche = [], ix = {};
+    l.forEach(function(q){ var t = String(q.t); if (ix[t] == null && uniche.length < 256) { ix[t] = uniche.length; uniche.push(t); } });
+    if (!uniche.length) return null;
+    var CW = 128, CH = 64, nc = Math.min(16, uniche.length), nr = Math.ceil(uniche.length / nc), pot = function(v){ var k = 1; while (k < v) k *= 2; return k; };
+    var WT = pot(nc * CW), HT = pot(nr * CH), c = document.createElement('canvas'); c.width = WT; c.height = HT;
+    var x = c.getContext('2d'), font = function(px){ return '800 ' + px + 'px "Inter Tight","IBM Plex Sans",Arial,sans-serif'; };
+    x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
+    uniche.forEach(function(t, i){
+      var px = 50; x.font = font(px); var w = x.measureText(t).width; if (w > CW - 14) { px = Math.max(12, Math.floor(px * (CW - 14) / w)); x.font = font(px); }
+      var cx = (i % nc) * CW + CW / 2, cy = Math.floor(i / nc) * CH + CH / 2 + 2;
+      x.lineWidth = Math.max(4, px * .16); x.strokeStyle = 'rgba(6,10,16,.88)'; x.strokeText(t, cx, cy); x.fillStyle = '#f4f8fc'; x.fillText(t, cx, cy);
+    });
+    var pos = [], uv = [], ind = [];
+    l.forEach(function(q){
+      var i = ix[String(q.t)]; if (i == null) return;
+      var h = Math.max(.05, q.h), w = h * CW / CH; if (q.w && w > q.w) { h *= q.w / w; w = q.w; }
+      var u0 = (i % nc) * CW / WT, u1 = u0 + CW / WT, v1 = 1 - Math.floor(i / nc) * CH / HT, v0 = v1 - CH / HT;
+      var X = q.x - x0, Y = q.y * E, Z = q.z, d = q.n < 0 ? -1 : 1, b = pos.length / 3;
+      pos.push(X - d * w / 2, Y - h / 2, Z, X + d * w / 2, Y - h / 2, Z, X + d * w / 2, Y + h / 2, Z, X - d * w / 2, Y + h / 2, Z);
+      uv.push(u0, v0, u1, v0, u1, v1, u0, v1);
+      ind.push(b, b + 1, b + 2, b, b + 2, b + 3);
+    });
+    var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(ind);
+    var tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
+    var m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
+    m.renderOrder = 5; m.userData.scritte = uniche.length;
+    return m;
+  }
   function vista(box, cb){
     var THREE = window.THREE; cb = cb || {};
     var R;
@@ -28734,7 +28777,7 @@ window.MQOpere3D = (function(){
     scena.add(new THREE.HemisphereLight(0xffffff, 0x4a4238, 1.05));
     var sole = new THREE.DirectionalLight(0xffffff, .9); sole.position.set(-.5, 1.5, 1.1); scena.add(sole);
     var mondo = new THREE.Group(), selG = new THREE.Group(); scena.add(mondo); scena.add(selG);
-    var TH0 = -.5, PH0 = 1.02;
+    var TH0 = -.5, PH0 = 1.02, LATO = 0;   // 37.4: un muro a sinistra si guarda dalla sua faccia (da −z)
     var C = { tgt: new THREE.Vector3(), r: 60, th: TH0, ph: PH0, E: 1 }, anim = null, raf = 0, attivo = true, selK = '', info = { x0: 0, sc: null };
     var pezzi = [], opachi = [], fantasmi = [], mOpachi = null, mFantasmi = null, etich = [];
     var MAT = {
@@ -28745,14 +28788,16 @@ window.MQOpere3D = (function(){
       spigF: new THREE.LineBasicMaterial({ color: lin('#9fb0c4'), transparent: true, opacity: .32 }),
       spigS: new THREE.LineBasicMaterial({ color: lin('#ffd9a8'), depthTest: false, transparent: true, opacity: .95 }),
       terra: new THREE.MeshBasicMaterial({ color: lin('#0d131b') }), terraV: new THREE.MeshBasicMaterial({ color: lin('#0d131b'), transparent: true, opacity: .55, depthWrite: false }), strada: new THREE.MeshBasicMaterial({ color: lin('#1a212c') }), stradaV: new THREE.MeshBasicMaterial({ color: lin('#1a212c'), transparent: true, opacity: .5, depthWrite: false }),
-      tacche: new THREE.LineBasicMaterial({ color: lin('#33404f') }), asse: new THREE.LineBasicMaterial({ color: lin('#6b7c93') })
+      tacche: new THREE.LineBasicMaterial({ color: lin('#33404f') }), asse: new THREE.LineBasicMaterial({ color: lin('#6b7c93') }),
+      quote: new THREE.LineBasicMaterial({ color: lin('#5fd3c6'), transparent: true, opacity: .95 })   // 37.4: le quote delle tratte dei muri
     };
     var ray = new THREE.Raycaster(), v2 = new THREE.Vector2(), T1 = new THREE.Vector3(), T2 = new THREE.Vector3(), T3 = new THREE.Vector3(), T4 = new THREE.Vector3();
     function svuota(g){
-      for (var i = g.children.length - 1; i >= 0; i--) { var o = g.children[i]; g.remove(o); if (o.geometry) o.geometry.dispose(); if (o.isSprite && o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }
+      for (var i = g.children.length - 1; i >= 0; i--) { var o = g.children[i]; g.remove(o); if (o.geometry) o.geometry.dispose(); if ((o.isSprite || o.userData.scritte) && o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }
     }
     function imposta(sc){
       svuota(mondo); etich = []; pezzi = []; opachi = []; fantasmi = []; mOpachi = mFantasmi = null;
+      TH0 = sc.th0 != null ? sc.th0 : -.5; LATO = Math.abs(TH0) > Math.PI / 2 ? Math.PI : 0;
       var E = C.E, haPk = sc.pmin != null, x0 = haPk ? Math.floor(sc.pmin / 10) * 10 : 0, L = haPk ? Math.max(20, sc.pmax - sc.pmin) : 100, xa = haPk ? sc.pmin - x0 : 0;
       info = { x0: x0, sc: sc, L: L };
       var zmax = 6;
@@ -28774,17 +28819,22 @@ window.MQOpere3D = (function(){
         var km = Math.floor(p / 1000 + 1e-9), mm = Math.round(p - km * 1000); if (mm >= 1000) { km++; mm -= 1000; }
         var et = etichettaTex(THREE, km + '+' + ('000' + mm).slice(-3), '#a9b9cc');
         var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: et.t, transparent: true, depthWrite: false, depthTest: false })); sp.renderOrder = 4;
-        sp.position.set(x, 0, zt); sp.userData = { r: et.r, k: .024, cx: 0, cy: -.9 }; mondo.add(sp); etich.push(sp);
+        sp.position.set(x, 0, LATO ? -zt : zt); sp.userData = { r: et.r, k: .024, cx: 0, cy: -.9 }; mondo.add(sp); etich.push(sp);   // 37.4: il righello dalla parte di chi guarda
       }
       if (g.length) { var lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(g, 3)); var tl = new THREE.LineSegments(lg, MAT.tacche); tl.renderOrder = -1; mondo.add(tl); }
       var ag = new THREE.BufferGeometry(); ag.setAttribute('position', new THREE.Float32BufferAttribute([xa - mrg, 0, 0, xa + L + mrg, 0, 0], 3)); var al = new THREE.LineSegments(ag, MAT.asse); al.renderOrder = -1; mondo.add(al);
       // i pezzi: fatti (pieni), da fare (trasparenti), spigoli
       if (opachi.length) { mOpachi = new THREE.Mesh(solido(THREE, opachi), MAT.pieno); mOpachi.userData.l = opachi; mondo.add(mOpachi); mondo.add(new THREE.LineSegments(spigoli(THREE, opachi), MAT.spig)); }
       if (fantasmi.length) { mFantasmi = new THREE.Mesh(solido(THREE, fantasmi), MAT.fantasma); mFantasmi.userData.l = fantasmi; mFantasmi.renderOrder = 2; mondo.add(mFantasmi); var lf = new THREE.LineSegments(spigoli(THREE, fantasmi), MAT.spigF); lf.renderOrder = 2; mondo.add(lf); }
+      if (sc.linee && sc.linee.length) {   // 37.4: le quote (linee sottili: linea di quota, richiami, tagli)
+        var pq = []; sc.linee.forEach(function(q){ for (var i = 0; i + 5 < q.length; i += 6) pq.push(q[i] - x0, q[i + 1] * E, q[i + 2], q[i + 3] - x0, q[i + 4] * E, q[i + 5]); });
+        if (pq.length) { var gq = new THREE.BufferGeometry(); gq.setAttribute('position', new THREE.Float32BufferAttribute(pq, 3)); var lq = new THREE.LineSegments(gq, MAT.quote); lq.renderOrder = 5; mondo.add(lq); }
+      }
+      if (sc.scritte && sc.scritte.length) { var ms = scritte(THREE, sc.scritte, x0, E); if (ms) mondo.add(ms); }   // 37.4: i numeri sui conci
       (sc.etichette || []).forEach(function(e){
         var et = etichettaTex(THREE, e.t, e.c || '#04201d', e.bg || 'rgba(120,226,213,.94)');   // 36.1: tratte, tombini e conci con i loro colori
         var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: et.t, transparent: true, depthTest: false, depthWrite: false })); s.renderOrder = 6;
-        s.position.set(e.x - x0, e.y * E, e.z); s.userData = { r: et.r, k: e.k || .03, cx: .5, cy: .9, o: e.o || '' }; mondo.add(s); etich.push(s);
+        s.position.set(e.x - x0, e.y * E, e.z); s.userData = { r: et.r, k: e.k || .03, cx: .5, cy: .9, o: e.o || '', cen: !!e.cen }; mondo.add(s); etich.push(s);
       });
       evidenzia(selK);
       richiedi();
@@ -28846,7 +28896,7 @@ window.MQOpere3D = (function(){
       for (var i = 0; i < etich.length; i++) {
         var s = etich[i], u = s.userData, d = Math.max(.5, T1.copy(s.position).sub(cam.position).dot(T2)), h = d * tv * u.k;
         s.scale.set(h * u.r, h, 1);
-        if (u.cy < 0) s.center.set(.5, 1.25); else s.center.set(0, -.25);   // progressive sotto il righello, nomi sopra l'opera
+        if (u.cy < 0) s.center.set(.5, 1.25); else if (u.cen) s.center.set(.5, -.12); else s.center.set(0, -.25);   // progressive sotto il righello, nomi sopra l'opera · 37.4: le quote col nome al centro
       }
     }
     function disegna(t){
@@ -28926,14 +28976,15 @@ window.MQOpere3D = (function(){
     return {
       imposta: imposta, evidenzia: evidenzia, inquadra: inquadra,
       esagera: function(E){ E = Math.max(1, Math.min(20, +E || 1)); if (E === C.E) return; var k = E / C.E; C.E = E; C.tgt.y *= k; if (info.sc) imposta(info.sc); },
-      punto: function(nome, k){ if (nome === 'alto') return inquadra(k || null, 0, .06); if (nome === 'lato') return inquadra(k || null, 0, 1.46); return inquadra(k || null, TH0, PH0); },
+      punto: function(nome, k){ if (nome === 'alto') return inquadra(k || null, 0, .06); if (nome === 'lato') return inquadra(k || null, LATO, 1.46); return inquadra(k || null, TH0, PH0); },
       attiva: function(on){ attivo = !!on; if (attivo) richiedi(); },
       distruggi: function(){
         attivo = false; if (raf) cancelAnimationFrame(raf); if (ro) ro.disconnect(); else window.removeEventListener('resize', misura); document.removeEventListener('visibilitychange', vis);
         svuota(mondo); svuota(selG); Object.keys(MAT).forEach(function(k){ MAT[k].dispose(); }); R.dispose(); try { R.forceContextLoss(); } catch(e){} if (el.parentNode) el.parentNode.removeChild(el);
       },
       // per le prove: stato, pezzo sotto un punto, punto dello schermo dov'è un pezzo, un fotogramma subito
-      _stato: function(){ return { pezzi: pezzi.length, pieni: opachi.length, daFare: fantasmi.length, sel: selK, r: C.r, th: C.th, ph: C.ph, E: C.E, tgt: [C.tgt.x, C.tgt.y, C.tgt.z], draw: R.info.render.calls, geo: R.info.memory.geometries, tex: R.info.memory.textures, anim: !!anim, attivo: attivo, etichette: etich.length }; },
+      _stato: function(){ var ns = 0, nq = 0; mondo.children.forEach(function(o){ if (o.userData.scritte) ns += o.geometry.index.count / 6; if (o.material === MAT.quote) nq += o.geometry.attributes.position.count / 2; });
+        return { pezzi: pezzi.length, pieni: opachi.length, daFare: fantasmi.length, sel: selK, r: C.r, th: C.th, ph: C.ph, E: C.E, tgt: [C.tgt.x, C.tgt.y, C.tgt.z], draw: R.info.render.calls, geo: R.info.memory.geometries, tex: R.info.memory.textures, anim: !!anim, attivo: attivo, etichette: etich.length, scritte: ns, quote: nq, th0: TH0 }; },
       _colpito: colpito,
       _schermo: function(k){
         var l = trova(k); if (!l.length) return null;
@@ -29067,8 +29118,7 @@ window.MQOpere3D = (function(){
       { k:'eGetto', t:'Getto', ty:'d', g:'Elevazione', w:94, f:'getto', x:['elev getto','elevazione getto','data getto elevazione'] },
       { k:'eDdt', t:'DDT', ty:'tx', g:'Elevazione', w:124, f:'ddt', x:['elev ddt','elevazione ddt','ddt elevazione'] },
       C_NOTE,
-      { k:'pm', t:'Paramento', ty:'pm', w:110, x:['paramento','tipo paramento','paramento tipo','tipo di paramento','tipologia paramento'] },
-      { k:'el', t:'Elemento', ty:'tx', w:150, dl:'ol-elm-l', x:['elemento','cosa c e','tipo elemento','elemento tra le pk'] }],   // 37.3: cosa c'è tra quelle pk (concio, tombino idraulico Ø1500…)   // 37.1: prefabbricato o in opera · in fondo, così le colonne del foglio dei muri restano al loro posto quando si incolla
+      { k:'pm', t:'Paramento', ty:'pm', w:126, x:['paramento','tipo paramento','paramento tipo','tipo di paramento','tipologia paramento'] }],   // 37.1: prefabbricato o in opera · in fondo, così le colonne del foglio dei muri restano al loro posto quando si incollano · 37.4: anche «Tombino» (con la luce: Tombino 2x2); la colonna «Elemento» della 37.3 non c'è più (le sue righe tombino restano tombini)
     barriera: [C_TRATTO, C_PKI, C_PKF,
       { k:'campata', t:'Campata', ty:'tx', w:68, x:['campata','n campata','modulo','concio'] },
       { k:'L', t:'Interasse [m]', ty:'n', dec:2, w:84, x:['interasse','l campata','lunghezza campata','l concio','l','lunghezza'] },
@@ -29355,7 +29405,7 @@ window.MQOpere3D = (function(){
     }
     if (op.tipo === 'viadotto') return (r.tratto != null && r.tratto !== '' ? r.tratto + ' · ' : '') + nomeEl(elDi(r)) + (r.concio && norm(r.concio) !== elDi(r) ? ' ' + r.concio : '');   // 37.0: P3 · Palo P01
     var n = op.tipo === 'barriera' ? r.campata : r.concio;
-    return T.Riga + ' ' + (n != null && n !== '' ? n : '?') + (r.tratto != null && r.tratto !== '' ? ' · tratto ' + r.tratto : '');
+    return (op.tipo === 'muro' && eTombino(r) ? 'Tombino' : T.Riga) + ' ' + (n != null && n !== '' ? n : '?')   // 37.4: una riga tombino del muro si chiama Tombino IN28 + (r.tratto != null && r.tratto !== '' ? ' · tratto ' + r.tratto : '');
   }
 
   /* ---------- modifiche: sul dispositivo subito, al server a pacchetti ---------- */
@@ -30040,7 +30090,7 @@ window.MQOpere3D = (function(){
     if (c.ty === 'd') { var d = dataParse(s); return d == null ? { err: 'Data non valida: gg/mm/aaaa' } : { v: d || null }; }
     if (c.ty === 'ts') { var t = tsDa(s); return t == null ? { err: 'Tipo di strato non riconosciuto: scegli dalla lista (es. Corpo del rilevato, Piano di posa)' } : { v: t }; }
     if (c.ty === 'sez') return { v: sezCodice(s).slice(0, 16) };
-    if (c.ty === 'pm') { var q = pmDa(s); return q == null ? { err: 'Paramento: scrivi «Prefabbricato» o «In opera»' } : { v: q || null }; }   // 37.1
+    if (c.ty === 'pm') { var q = pmDa(s); return q == null ? { err: 'Paramento: scrivi «Prefabbricato», «In opera» o «Tombino» (anche con la luce: Tombino 2x2)' } : { v: q === PM_TOMB ? testoTombino(s) : q || null }; }   // 37.1 · 37.4: il tombino con la sua luce
     return { v: String(s).slice(0, 300) };
   }
   function nomeCol(c){ return (c.g ? c.g + ' · ' : '') + c.t.replace(/\s*\[[^\]]*\]/, ''); }
@@ -30237,7 +30287,8 @@ window.MQOpere3D = (function(){
       return dialogo({ titolo: etichettaRiga(op, r), html: h, bottoni: btv });
     }
     h += '<div class="ol-pz-dati">' + d('pk inizio', pkFmt(x.a)) + d('pk fine', pkFmt(x.b)) + d('Lunghezza', x.L != null ? fN(x.L, 2) + ' m' : '');
-    if (op.tipo === 'muro') h += (r.el ? d('Elemento', r.el) : '') + d('h muro', r.h != null ? fN(num(r.h), 2) + ' m' : '') + (r.pm ? d('Paramento', r.pm) : '') + d('Fondazione', (r.spF != null ? fN(num(r.spF), 2) : '—') + ' × ' + (r.lF != null ? fN(num(r.lF), 2) : '—') + ' m') + d('Armatura', r.arm || '') + d('Tavola', r.tav || '') + d('Tratto', r.tratto || '');
+    if (op.tipo === 'muro') { var tbR = eTombino(r), mT = tbR ? misuraTombino(r) : null;   // 37.4: un tombino con la sua luce
+      h += (tbR ? d('Tombino', mT ? 'scatolare, luce ' + testoMisura(mT) + ' m' : 'scatolare (la luce: es. Tombino 2x2)') : '') + d('h muro', r.h != null ? fN(num(r.h), 2) + ' m' : '') + (r.pm && !tbR ? d('Paramento', r.pm) : '') + d('Fondazione', (r.spF != null ? fN(num(r.spF), 2) : '—') + ' × ' + (r.lF != null ? fN(num(r.lF), 2) : '—') + ' m') + d('Armatura', r.arm || '') + d('Tavola', r.tav || '') + d('Tratto', r.tratto || ''); }
     else if (op.tipo === 'barriera') h += d('Altezza', r.h != null ? fN(num(r.h), 2) + ' m' : '') + d('Pannelli', (r.nPann != null ? r.nPann + ' × ' : '') + (r.pann || '')) + d('Montante', r.mont || '') + d('Fondazione', r.fond || '') + d('Tavola', r.tav || '');
     else h += d('Materiale', r.mat || '') + d('Spessore', x.sp != null ? fN(x.sp, 2) + ' m' : '') + d('Base → sommità', (x.B != null ? fN(x.B, 2) : '—') + ' → ' + (x.bb != null ? fN(x.bb, 2) : '—') + ' m') + d('Quota base', fN(x.q, 2) + ' m') + d('Superficie', x.A != null ? fN(x.A, 0) + ' m²' : '') + d('Volume', x.V != null ? fN(x.V, 0) + ' m³' : '');
     h += '</div>';
@@ -30271,7 +30322,7 @@ window.MQOpere3D = (function(){
     if (c.ty === 'mat') return '<label class="l2">' + esc(c.t) + '<input class="ol-in" name="' + nm + '" value="' + esc(val) + '" list="ol-mat-l" autocomplete="off"></label>';
     if (c.ty === 'ts') return '<label class="l2">' + esc(c.t) + '<select class="ol-in" name="' + nm + '"><option value=""></option>' + stratiCfg().map(function(t){ return '<option value="' + esc(t.n) + '"' + (String(t.id) === String(val) ? ' selected' : '') + '>' + esc(t.n) + '</option>'; }).join('') + '</select></label>';
     if (c.ty === 'sez') return '<label>' + esc(c.t) + '<input class="ol-in" name="' + nm + '" value="' + esc(val) + '" list="ol-sez-l" autocomplete="off" spellcheck="false"></label>';
-    if (c.ty === 'pm') return '<label>' + esc(c.t) + '<select class="ol-in" name="' + nm + '"><option value=""></option>' + [PM_PREF, PM_OPERA].map(function(t){ return '<option value="' + esc(t) + '"' + (pmDa(val) === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select></label>';   // 37.1
+    if (c.ty === 'pm') return '<label>' + esc(c.t) + '<input class="ol-in" name="' + nm + '" value="' + esc(val) + '" list="ol-pm-l" autocomplete="off" placeholder="Prefabbricato / In opera / Tombino"></label>';   // 37.1 · 37.4: si scrive (anche Tombino 2x2)
     if (c.dl) return '<label class="l2">' + esc(c.t) + '<input class="ol-in" name="' + nm + '" value="' + esc(val) + '" list="' + c.dl + '" autocomplete="off"></label>';   // 37.3
     var ph = c.ty === 'pk' ? '18+213,90' : '';
     return '<label' + (c.k === 'tav' || c.k === 'note' ? ' class="l2"' : '') + '>' + esc(c.t) + '<input class="ol-in ' + (c.ty === 'pk' ? 'pk' : c.ty === 'n' ? 'n' : '') + '" name="' + nm + '" value="' + esc(fmtCella(c, val)) + '"' + (ph ? ' placeholder="' + ph + '"' : '') + (c.ty === 'n' ? ' inputmode="decimal"' : '') + ' autocomplete="off" spellcheck="false"></label>';
@@ -30281,8 +30332,7 @@ window.MQOpere3D = (function(){
     cfg().materiali.concat(matCfg()).forEach(function(m){ var k = norm(m.n); if (k && !visti[k]) { visti[k] = 1; l.push(m.n); } });
     return '<datalist id="ol-mat-l">' + l.map(function(n){ return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>'
       + '<datalist id="ol-ts-l">' + stratiCfg().map(function(t){ return '<option value="' + esc(t.n) + '">'; }).join('') + '</datalist>'
-      + '<datalist id="ol-pm-l"><option value="' + PM_PREF + '"><option value="' + PM_OPERA + '"></datalist>'   // 37.1: il paramento dei muri
-      + '<datalist id="ol-elm-l"><option value="Concio"><option value="Tombino idraulico"><option value="Tombino idraulico Ø1500"></datalist>'   // 37.3: cosa c'è tra le pk
+      + '<datalist id="ol-pm-l"><option value="' + PM_PREF + '"><option value="' + PM_OPERA + '"><option value="' + PM_TOMB + '"></datalist>'   // 37.1: il paramento dei muri · 37.4: anche il tombino
       + (haSezioni() ? '<datalist id="ol-sez-l">' + indSez().l.map(function(x){ return '<option value="' + esc(x.c) + '">' + esc(pkFmt(x.pk) + ' · ' + x.w) + '</option>'; }).join('') + '</datalist>' : '');
   }
   function modificaRiga(opId, rid){
@@ -30392,6 +30442,7 @@ window.MQOpere3D = (function(){
     if (c.ty === 'calc') return calcVal(c, x);
     var v = fmtCella(c, r[c.k]);
     if (v === '' && c.auto && x) { if (c.k === 'B' && x.Bauto && x.B != null) return fN(x.B, 2); if (c.k === 'sc' && x.scAuto) return fN(x.sc, 2); }
+    if (v === '' && c.k === 'pm' && r.el && /tombin/.test(norm(r.el))) return String(r.el);   // 37.4: un tombino scritto con la 37.3 (colonna Elemento)
     return v;
   }
   function corpoG(){
@@ -30407,7 +30458,7 @@ window.MQOpere3D = (function(){
         if (c.ty === 'n' || c.ty === 'pk' || (c.ty === 'calc' && c.k !== '_pr' && c.k !== '_cert')) cl.push('num');
         if (c.k === '_pB' || c.k === '_pC' || c.k === '_pM') { var lt = x && x.lt, L = c.k.slice(2); if (lt && lt.ric && lt.ric[L] && lt.fat[L] < lt.ric[L]) cl.push(r.dStesa ? 'manca' : ''); else if (lt && lt.ric && lt.ric[L]) cl.push('pieno'); }
         if (c.k === '_cert' && x && x.lt && x.lt.certM) cl.push('manca');
-        if (c.auto && (r[c.k] == null || r[c.k] === '') && v) cl.push('auto');
+        if ((c.auto || c.k === 'pm') && (r[c.k] == null || r[c.k] === '') && v) cl.push('auto');
         if (c.k === '_b' && x && x.inv) cl.push('inv');
         var npf = op.tipo === 'muro' && (c.k === 'eCost' || c.k === 'eGetto' || c.k === 'eDdt') && pmDa(r.pm) === PM_PREF;   // 37.2: paramento prefabbricato, l'elevazione non serve
         if (npf) cl.push('ol-npf');
@@ -30524,7 +30575,7 @@ window.MQOpere3D = (function(){
     inp2.value = testo != null ? testo : !r ? '' : (c.ty === 'd' ? dataFmt(r[c.k]) : fmtCella(c, r[c.k]));
     inp2.style.left = td.offsetLeft + 'px'; inp2.style.top = td.offsetTop + 'px';
     inp2.style.width = Math.max(td.offsetWidth, c.ty === 'tx' || c.ty === 'mat' || c.ty === 'ts' || c.ty === 'pm' ? 180 : 110) + 'px'; inp2.style.height = td.offsetHeight + 'px';
-    inp2.placeholder = c.ty === 'pk' ? '18+213,90' : c.ty === 'd' ? 'gg/mm/aaaa' : c.ty === 'sez' ? 'es. 233' : c.ty === 'pm' ? 'Prefabbricato / In opera' : '';
+    inp2.placeholder = c.ty === 'pk' ? '18+213,90' : c.ty === 'd' ? 'gg/mm/aaaa' : c.ty === 'sez' ? 'es. 233' : c.ty === 'pm' ? 'Prefabbricato / In opera / Tombino' : '';
     inp2.hidden = false;
     G.ed = { r: G.fr, c: G.fc, rid: r ? r.id : null, nuovo: testo != null };
     inp2.focus({ preventScroll: true });
@@ -30676,7 +30727,7 @@ window.MQOpere3D = (function(){
       var lv = num(ult.liv); n.liv = lv != null ? lv + 1 : 1; ['mat', 'pkI', 'pkF', 'sp', 'sc'].forEach(function(k){ if (ult[k] != null && ult[k] !== '') n[k] = ult[k]; });
       return n;
     }
-    ['tratto', 'h', 'spF', 'lF', 'arm', 'tav', 'pann', 'nPann', 'mont', 'fond'].concat(op.tipo === 'viadotto' ? ['el'] : op.tipo === 'muro' ? ['pm'] : []).forEach(function(k){ if (ult[k] != null && ult[k] !== '') n[k] = ult[k]; });   // 37.0: anche l'elemento del viadotto · 37.3: nei muri il paramento (il tombino no)
+    ['tratto', 'h', 'spF', 'lF', 'arm', 'tav', 'pann', 'nPann', 'mont', 'fond'].concat(op.tipo === 'viadotto' ? ['el'] : op.tipo === 'muro' && !eTombino(ult) ? ['pm'] : []).forEach(function(k){ if (ult[k] != null && ult[k] !== '') n[k] = ult[k]; });   // 37.0: anche l'elemento del viadotto · 37.3: nei muri il paramento (il tombino no)
     var L = num(ult.L), pf = num(ult.pkF);
     if (pf == null && num(ult.pkI) != null && L != null) pf = num(ult.pkI) + L;
     if (pf != null) n.pkI = tondo(pf, 3);
@@ -34796,30 +34847,49 @@ window.MQOpere3D = (function(){
      prefabbricato con le nervature, quello in opera tratteggiato. I TOMBINI del muro (righe tr:1, ti 'o': nome, da pk,
      a pk) sono un rettangolone. Tocchi una tratta: si accende, il disegno va lì e sopra ci sono i suoi numeri; tocchi un
      concio: la sua scheda con le date. Su Drive cambia solo questo: la colonna «pm» dei conci e le righe dei tombini.
+     37.4 · le tratte sono QUOTE sopra il muro (linea di quota, tagli ai capi, un segno a ogni giunto, le linee di richiamo fino
+     ai suoi conci), il numero del concio è SUL concio; il tombino è scatolare (luce quadrata) e si scrive nel Paramento.
      ═══════════════════════════════════════════════════════════════ */
-  var PM_PREF = 'Prefabbricato', PM_OPERA = 'In opera';
-  // il paramento: «In opera» (gettato in opera) o «Prefabbricato» (anche il tipo del pannello della tavola: 49, T49)
+  var PM_PREF = 'Prefabbricato', PM_OPERA = 'In opera', PM_TOMB = 'Tombino';
+  // il paramento: «In opera» (gettato in opera), «Prefabbricato» (anche il tipo del pannello della tavola: 49, T49) e, dalla 37.4,
+  // «Tombino»: tra quelle pk c'è un tombino (anche con la luce: Tombino 2x2, Tombino 2,00x1,50)
   function pmDa(v){
     if (v == null || v === '') return '';
     if (typeof v === 'number') return isFinite(v) ? PM_PREF : null;
     var s = norm(v); if (!s) return '';
+    if (/tombin|scatolar/.test(s)) return PM_TOMB;   // 37.4: prima di «gettato in opera» (un tombino gettato in opera è un tombino)
     if (/opera|gett|situ|cast/.test(s)) return PM_OPERA;
     if (/^pref|^p$|^t ?\d+$|^\d+$|^tipo ?\d+$|^pannell/.test(s)) return PM_PREF;
     return null;
   }
-  // 37.3 · un tombino si scrive nella tabella del muro: la colonna «Elemento» dice cosa c'è tra quelle pk (es. «Tombino idraulico Ø1500»)
-  function eTombino(r){ return !!r && /tombin/.test(norm(r.el)); }
-  function diamTombino(r){   // il diametro scritto nell'elemento (Ø1500, DN 800, Ø 1,5): in metri
-    var m = /(?:ø|Ø|dn|diam[a-z]*\.?)\s*=?\s*(\d+(?:[.,]\d+)?)/i.exec(String(r && r.el || '')); if (!m) return null;
-    var v = parseFloat(m[1].replace(',', '.')); return v > 0 ? (v > 20 ? v / 1000 : v) : null;
+  // 37.4 · la luce del tombino scritta nel testo: «2x2», «2,00 × 1,50», «Ø1500», «DN 800», «150» (cm), «1500» (mm) → { w, h } in metri
+  function misuraDa(t){
+    var s = String(t == null ? '' : t).replace(/\bdn\s*/gi, ' ').replace(/\b[a-z]+\d[a-z0-9]*/gi, ' ');   // via i nomi come IN28
+    var m = /(\d+(?:[.,]\d+)?)\s*(?:[x×*]\s*(\d+(?:[.,]\d+)?))?/i.exec(s); if (!m) return null;
+    var u = function(x){ var v = parseFloat(String(x).replace(',', '.')); return !(v > 0) ? null : v > 20 ? (v >= 400 ? v / 1000 : v / 100) : v; };
+    var w = u(m[1]), h = m[2] != null ? u(m[2]) : w;
+    return w >= .2 && w <= 10 && h >= .2 && h <= 10 ? { w: w, h: h } : null;
+  }
+  function testoMisura(m){ return m ? fN(m.w, 2) + '×' + fN(m.h, 2) : ''; }
+  function testoTombino(v){ var m = misuraDa(v); return PM_TOMB + (m ? ' ' + testoMisura(m) : ''); }   // come si salva nel Paramento
+  // un tombino nella tabella del muro: il Paramento «Tombino» (37.4); quelli scritti con la 37.3 hanno l'«Elemento» (Tombino idraulico
+  // Ø1500) e restano tombini finché il Paramento non dice altro
+  function eTombino(r){ if (!r) return false; var p = pmDa(r.pm); return p === PM_TOMB || (!p && /tombin/.test(norm(r.el))); }
+  function misuraTombino(r){ return r ? misuraDa(r.pm) || (/tombin/.test(norm(r.el)) ? misuraDa(r.el) : null) : null; }
+  // il tombino scatolare dentro il suo muro di testa (largo L, alto ht): la luce sW × sH, le pareti tW e le solette tS, in metri
+  function geoTombino(r, L, ht){
+    var m = misuraTombino(r), sW = m ? m.w : Math.max(.6, Math.min(3, L - .8, ht - .9)), sH = m ? m.h : sW;
+    var t = Math.max(.2, Math.min(.4, Math.max(sW, sH) * .12));
+    sW = Math.max(.3, Math.min(sW, L - 2 * t)); sH = Math.max(.3, ht > 2 * t + .3 ? Math.min(sH, ht - 2 * t) : sH);
+    return { sW: sW, sH: sH, tW: t, tS: t, m: m };
   }
   // i tombini del muro: le righe «tombino» della tabella e (dalla 37.1) quelli scritti a parte
   function tombiniMuro(op){
     var k = calcola(op), l = [];
     k.righe.forEach(function(r){ if (!eTombino(r)) return; var x = k.x[r.id]; if (!x || x.a == null || x.b == null) return;
-      var nm = String(r.concio == null ? '' : r.concio).trim(); l.push({ id: r.id, nm: nm || 'Tombino', a: Math.min(x.a, x.b), b: Math.max(x.a, x.b), d: diamTombino(r), r: r, st: x.st }); });
+      var nm = String(r.concio == null ? '' : r.concio).trim(); l.push({ id: r.id, nm: nm || 'Tombino', a: Math.min(x.a, x.b), b: Math.max(x.a, x.b), m: misuraTombino(r), r: r, st: x.st }); });
     trattiDi(op).filter(function(t){ return t.ti === 'o'; }).forEach(function(t){ var a = num(t.pkI), b = num(t.pkF); if (a == null || b == null) return;
-      l.push({ id: t.id, nm: String(t.nm == null ? '' : t.nm).trim() || 'Tombino', a: Math.min(a, b), b: Math.max(a, b), d: null, vec: true }); });
+      l.push({ id: t.id, nm: String(t.nm == null ? '' : t.nm).trim() || 'Tombino', a: Math.min(a, b), b: Math.max(a, b), m: null, vec: true }); });
     return l.sort(function(p, q){ return p.a - q.a; });
   }
   function nomeTrattaM(nm){ nm = String(nm == null ? '' : nm).trim(); return !nm ? 'Senza tratta' : /^\d+[a-z]?$/i.test(nm) ? 'Tratta ' + nm : nm; }
@@ -34847,7 +34917,7 @@ window.MQOpere3D = (function(){
   var PMV = {};   // per opera: zoom, posizione e tratta scelta
   function vistaProspetto(b, op, soloDati){
     if (!soloDati || !b.querySelector('.ol-pm')) {
-      b.innerHTML = '<div class="ol-pm"><section class="ol-card ol-card-in"><div class="ol-ch"><h3>Prospetto<small>come il profilo della tavola · tocca una tratta per evidenziarla, un concio per le sue date · Ctrl+rotella o due dita per avvicinare</small></h3>'
+      b.innerHTML = '<div class="ol-pm"><section class="ol-card ol-card-in"><div class="ol-ch"><h3>Prospetto<small>come il profilo della tavola: le tratte sono le quote sopra il muro, il numero è sul concio · tocca una quota per evidenziare la tratta, un concio per le sue date · Ctrl+rotella o due dita per avvicinare</small></h3>'
         + '<div class="ol-tb"><button type="button" class="ol-b picc" data-z="-" aria-label="Allontana">−</button><button type="button" class="ol-b picc" data-z="+" aria-label="Avvicina">+</button><button type="button" class="ol-b picc" data-z="0">Adatta</button></div></div>'
         + '<div class="ol-pm-tr" role="group" aria-label="Le tratte del muro"></div><div class="ol-pm-n" aria-live="polite"></div>'
         + '<div class="ol-dis ol-pm-d"></div>' + legendaPm() + '</section>'
@@ -34898,7 +34968,7 @@ window.MQOpere3D = (function(){
     var nPf = cnt(function(x){ return x.pm === PM_PREF; }), nOp = cnt(function(x){ return x.pm === PM_OPERA; }), nNo = n - nPf - nOp, nE = n - nPf;
     var fG = cnt(function(x){ return x.r.fGetto; }), fC = cnt(function(x){ return !x.r.fGetto && x.r.fCost; }), fin = cnt(function(x){ return x.st === 'fatto'; });
     var eG = cnt(function(x){ return x.pm !== PM_PREF && x.r.eGetto; }), eC = cnt(function(x){ return x.pm !== PM_PREF && !x.r.eGetto && x.r.eCost; });   // 37.2: l'elevazione solo dei conci non prefabbricati
-    var tb = tombiniMuro(op).filter(function(t){ return t.b > a - .01 && t.a < z + .01; });
+    var tb = tombiniMuro(op).filter(function(t){ return t.b > a + .01 && t.a < z - .01; });   // 37.4: quelli dentro (non quelli che toccano solo il capo)
     var par = [nPf ? nPf + ' prefabbricat' + (nPf === 1 ? 'o' : 'i') : '', nOp ? nOp + ' in opera' : '', nNo && (nPf || nOp) ? nNo + ' da scrivere' : ''].filter(Boolean).join(' · ') || 'da scrivere nella Tabella';
     var mezzo = conci[Math.floor(n / 2)];
     var h = '<div class="ol-pm-k"><b class="t">' + (dv.tr != null ? esc(nomeTrattaM(sel[0].nm)) : 'Tutto il muro') + '</b>'
@@ -34913,7 +34983,7 @@ window.MQOpere3D = (function(){
   }
   function legendaPm(){
     return '<div class="ol-leg" style="margin-top:10px"><span><b>Fondazione ed elevazione:</b></span><span><i class="st-fatto"></i>Gettata</span><span><i class="st-corso"></i>Armatura verificata</span><span><i class="st-dafare"></i>Da fare</span></div>'
-      + '<div class="ol-leg"><span><b>Paramento:</b></span><span><i class="pm-pf"></i>Prefabbricato (finito con la fondazione)</span><span><i class="pm-op"></i>In opera</span><span><i class="pm-tb"></i>Tombino</span></div>';
+      + '<div class="ol-leg"><span><b>Paramento:</b></span><span><i class="pm-pf"></i>Prefabbricato (finito con la fondazione)</span><span><i class="pm-op"></i>In opera</span><span><i class="pm-tb"></i>Tombino (la luce quadrata)</span><span><i class="pm-q"></i>Tratta: la quota sopra i suoi conci</span></div>';
   }
 
   // il disegno: pk in orizzontale (si avvicina e si sposta come il profilo dei rilevati), le altezze in verticale
@@ -34932,7 +35002,8 @@ window.MQOpere3D = (function(){
     C.forEach(function(c, i){ c.spF = Math.max(.2, num(c.r.spF) || .6); c.h = Math.max(.3, hDi(i)); });
     var zMax = C.reduce(function(m, c){ return Math.max(m, c.spF + c.h); }, 1);
     var W = Math.max(260, el.clientWidth || 700), narrow = W < 560, LW = narrow ? 28 : 40;
-    var Y_TR = 20, H_TR = 22, Y_CO = Y_TR + H_TR + 2, H_CO = 32, Y_E = Y_CO + H_CO + 8, HD = narrow ? 150 : 200, H = Y_E + HD + 8;
+    // 37.4: in alto le QUOTE delle tratte (con le linee di richiamo fino ai loro conci), sotto il muro col numero sul concio
+    var Y_Q = 40, Y_E = Y_Q + 12, HD = narrow ? 170 : 220, H = Y_E + HD + 8;
     var ky = (HD - 14) / (zMax * 1.08 + .6), yDi = function(z){ return Y_E + HD - 10 - (z + .6) * ky; };
     var dv = PMV[op.id] || (PMV[op.id] = {}), fit = (W - LW - 6) / (pmax - pmin);
     if (dv.s == null || !opz.mantieni || dv.W !== W) { if (dv.s == null || dv.W !== W) { dv.s = fit; dv.x0 = pmin; } }
@@ -34941,7 +35012,7 @@ window.MQOpere3D = (function(){
     var cid = 'ol-pc' + Math.random().toString(36).slice(2, 7), hid = 'ol-ph' + Math.random().toString(36).slice(2, 7);
     var assi = '', stepZ = zMax > 8 ? 2 : 1;
     for (var z = 0; z <= zMax * 1.08 + 1e-6; z += stepZ) { var Y = yDi(z); assi += '<line x1="' + LW + '" y1="' + Y.toFixed(1) + '" x2="' + W + '" y2="' + Y.toFixed(1) + '" stroke="#141b25"/><text class="lb" x="' + (LW - 4) + '" y="' + (Y + 4).toFixed(1) + '" text-anchor="end">' + z + '</text>'; }
-    el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Il prospetto del muro: tratte e conci lungo la pk">'
+    el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Il prospetto del muro: le quote delle tratte e i conci lungo la pk">'
       + '<defs><clipPath id="' + cid + '"><rect x="' + LW + '" y="0" width="' + (W - LW) + '" height="' + H + '"/></clipPath>'
       + '<pattern id="' + hid + '" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#0b1018" stroke-width="1.8" stroke-opacity=".5"/></pattern></defs>'
       + '<g>' + assi + '</g><g class="cont" clip-path="url(#' + cid + ')"></g><text class="lb" x="4" y="' + (Y_E + 8) + '">m</text></svg>';
@@ -34954,44 +35025,57 @@ window.MQOpere3D = (function(){
       var x1 = dv.x0 + vis, h = [], sel = dv.tr != null ? dv.tr : null, ps = passo(), yB = yDi(0);
       for (var p = Math.ceil(dv.x0 / ps) * ps; p <= x1; p += ps) { var Xp = X(p); h.push('<line x1="' + Xp.toFixed(1) + '" y1="15" x2="' + Xp.toFixed(1) + '" y2="' + (yB + 6).toFixed(1) + '" stroke="#18202b"/><text class="tk" x="' + (Xp + 3).toFixed(1) + '" y="12">' + pkFmt(p, 0) + '</text>'); }
       h.push('<line class="pdp" x1="' + LW + '" y1="' + yB.toFixed(1) + '" x2="' + W + '" y2="' + yB.toFixed(1) + '"/>');   // il piano di posa
-      // le tratte: una fascia col nome e la lunghezza; i loro confini scendono fino al muro
-      T.tratte.forEach(function(t){ var Xa = X(t.a), Xb = X(t.b); if (Xb < LW - 2 || Xa > W + 2) return;
-        var on = sel === t.k, off = sel != null && !on;
-        h.push('<rect class="trb' + (t.i % 2 ? ' b' : '') + (on ? ' on' : '') + '" data-tr="' + esc(t.k) + '" x="' + Xa.toFixed(1) + '" y="' + Y_TR + '" width="' + Math.max(1, Xb - Xa).toFixed(1) + '" height="' + H_TR + '"' + (off ? ' opacity=".4"' : '') + '><title>' + esc(nomeTrattaM(t.nm) + ' · ' + t.n + (t.n === 1 ? ' concio' : ' conci') + ' · ' + fN(t.L, 2) + ' m · ' + pkFmt(t.a) + ' → ' + pkFmt(t.b)) + '</title></rect>');
-        [Xa, Xb].forEach(function(xx){ h.push('<line class="trc" x1="' + xx.toFixed(1) + '" y1="' + Y_TR + '" x2="' + xx.toFixed(1) + '" y2="' + (yB + 4).toFixed(1) + '"/>'); });
-        var cx = Math.max(LW + 4, Xa + 5), lw = Math.min(Xb, W) - cx - 4, nm = nomeTrattaM(t.nm).toUpperCase();
-        var lt = [nm + ' · ' + fN(t.L, 2) + ' m', nm, t.nm].filter(function(s){ return s && s.length * 6.6 <= lw; })[0];
-        if (lt) h.push('<text class="trt' + (off ? ' off' : '') + '" x="' + cx.toFixed(1) + '" y="' + (Y_TR + 15) + '">' + esc(lt) + '</text>');
-      });
-      // i conci: nome e lunghezza nel rigo, poi fondazione ed elevazione colorate per stato
+      // i conci: fondazione ed elevazione colorate per stato, il paramento, e il NUMERO DEL CONCIO SUL CONCIO con la sua lunghezza (37.4)
       C.forEach(function(c){ var Xa = X(c.a), Xb = X(c.b); if (Xb < LW - 2 || Xa > W + 2) return;
         var w = Xb - Xa, off = sel != null && T.tratte[c.t].k !== sel, tip = '<title>' + esc(titoloConcio(c)) + '</title>', g = '<g' + (off ? ' opacity=".2"' : '') + '>';
-        var yF0 = yDi(c.spF), yE0 = yDi(c.spF + c.h), xs = Xa.toFixed(1), ws = Math.max(.6, w).toFixed(1);
+        var yF0 = yDi(c.spF), yE0 = yDi(c.spF + c.h), xs = Xa.toFixed(1), ws = Math.max(.6, w).toFixed(1), hE = yF0 - yE0, cxs = ((Xa + Xb) / 2).toFixed(1);
         g += '<rect class="pz" data-r="' + esc(c.r.id) + '" x="' + xs + '" y="' + yF0.toFixed(1) + '" width="' + ws + '" height="' + Math.max(1, yB - yF0).toFixed(1) + '" fill="' + COL_ST[c.stF] + '" stroke="#0b1018" stroke-width=".8">' + tip + '</rect>';
-        g += '<rect class="pz" data-r="' + esc(c.r.id) + '" x="' + xs + '" y="' + yE0.toFixed(1) + '" width="' + ws + '" height="' + Math.max(1, yF0 - yE0).toFixed(1) + '" fill="' + COL_ST[c.stE] + '" stroke="#0b1018" stroke-width=".8">' + tip + '</rect>';
-        if (c.pm === PM_OPERA && w >= 3) g += '<rect x="' + xs + '" y="' + yE0.toFixed(1) + '" width="' + ws + '" height="' + Math.max(1, yF0 - yE0).toFixed(1) + '" fill="url(#' + hid + ')" pointer-events="none"/>';
-        else if (c.pm === PM_PREF && w >= 9) [.3, .7].forEach(function(f){ var xx = (Xa + w * f).toFixed(1); g += '<line x1="' + xx + '" y1="' + (yE0 + 2).toFixed(1) + '" x2="' + xx + '" y2="' + (yF0 - 1).toFixed(1) + '" stroke="#0b1018" stroke-opacity=".45" stroke-width="1.3" pointer-events="none"/>'; });
-        if (c.pm === PM_OPERA && w >= 46 && yF0 - yE0 >= 24) g += '<text class="pmo" x="' + ((Xa + Xb) / 2).toFixed(1) + '" y="' + ((yE0 + yF0) / 2 + 4).toFixed(1) + '" text-anchor="middle">' + (w >= 70 ? 'IN OPERA' : 'OPERA') + '</text>';
-        var nm = nomeConcioM(c.r).toUpperCase(), nc = nomeConcioM(c.r, true), Lc = num(c.r.L) != null ? num(c.r.L) : c.b - c.a, t2 = fN(Lc, 2);
-        var t1 = [nm, nc].filter(function(s){ return s && s.length * 6.3 <= w - 3; })[0];
-        if (t1) g += '<text class="pcn" x="' + ((Xa + Xb) / 2).toFixed(1) + '" y="' + (Y_CO + 12) + '" text-anchor="middle">' + esc(t1) + '</text>';
-        if (t1 && t2.length * 5.8 <= w - 3) g += '<text class="pcl" x="' + ((Xa + Xb) / 2).toFixed(1) + '" y="' + (Y_CO + 26) + '" text-anchor="middle">' + t2 + '</text>';
-        if (w >= 3) g += '<line class="pcb" x1="' + xs + '" y1="' + Y_CO + '" x2="' + xs + '" y2="' + (Y_CO + H_CO) + '"/>';
+        g += '<rect class="pz" data-r="' + esc(c.r.id) + '" x="' + xs + '" y="' + yE0.toFixed(1) + '" width="' + ws + '" height="' + Math.max(1, hE).toFixed(1) + '" fill="' + COL_ST[c.stE] + '" stroke="#0b1018" stroke-width=".8">' + tip + '</rect>';
+        if (c.pm === PM_OPERA && w >= 3) g += '<rect x="' + xs + '" y="' + yE0.toFixed(1) + '" width="' + ws + '" height="' + Math.max(1, hE).toFixed(1) + '" fill="url(#' + hid + ')" pointer-events="none"/>';
+        else if (c.pm === PM_PREF && w >= 9) [.25, .75].forEach(function(f){ var xx = (Xa + w * f).toFixed(1); g += '<line x1="' + xx + '" y1="' + (yE0 + 2).toFixed(1) + '" x2="' + xx + '" y2="' + (yF0 - 1).toFixed(1) + '" stroke="#0b1018" stroke-opacity=".45" stroke-width="1.3" pointer-events="none"/>'; });   // le due nervature del pannello (a 0,60 dai bordi)
+        if (c.pm === PM_OPERA && w >= 46 && hE >= 70) g += '<text class="pmo" x="' + cxs + '" y="' + (yF0 - 6).toFixed(1) + '" text-anchor="middle">' + (w >= 70 ? 'IN OPERA' : 'OPERA') + '</text>';
+        var nc = nomeConcioM(c.r, true), Lc = num(c.r.L) != null ? num(c.r.L) : c.b - c.a, t2 = fN(Lc, 2), fs = Math.min(17, w * .5, hE * .4);
+        if (nc && fs >= 7 && nc.length * fs * .64 <= w - 2) {
+          var yc = yE0 + hE * .42 + fs * .36, fs2 = Math.min(11.5, fs * .7);
+          g += '<text class="pcn" x="' + cxs + '" y="' + yc.toFixed(1) + '" text-anchor="middle" style="font-size:' + fs.toFixed(1) + 'px">' + esc(nc) + '</text>';
+          if (fs2 >= 7 && t2.length * fs2 * .6 <= w - 3 && hE >= fs + fs2 + 12) g += '<text class="pcl" x="' + cxs + '" y="' + (yc + fs2 + 4).toFixed(1) + '" text-anchor="middle" style="font-size:' + fs2.toFixed(1) + 'px">' + t2 + '</text>';
+        }
         h.push(g + '</g>');
       });
-      // la tratta scelta: una cornice intorno ai suoi conci
+      // le TRATTE come le quote della tavola: la linea di quota sopra il muro con i tagli ai capi e un segno a ogni giunto dei suoi
+      // conci, le linee di richiamo che scendono fino al primo e all'ultimo concio, il nome e la lunghezza; tocchi la quota: la tratta
+      T.tratte.forEach(function(t){ var Xa = X(t.a), Xb = X(t.b); if (Xb < LW - 2 || Xa > W + 2) return;
+        var on = sel === t.k, off = sel != null && !on, cl = on ? ' on' : off ? ' off' : '', c0 = t.c[0], c1 = t.c[t.c.length - 1];
+        h.push('<rect class="trb' + (on ? ' on' : '') + '" data-tr="' + esc(t.k) + '" x="' + Xa.toFixed(1) + '" y="' + (Y_Q - 20) + '" width="' + Math.max(1, Xb - Xa).toFixed(1) + '" height="27" rx="3"><title>' + esc(nomeTrattaM(t.nm) + ' · ' + t.n + (t.n === 1 ? ' concio' : ' conci') + ' · ' + fN(t.L, 2) + ' m · ' + pkFmt(t.a) + ' → ' + pkFmt(t.b)) + '</title></rect>');
+        h.push('<line class="trc' + cl + '" x1="' + Xa.toFixed(1) + '" y1="' + (Y_Q - 8) + '" x2="' + Xa.toFixed(1) + '" y2="' + (yDi(c0.spF + c0.h) - 3).toFixed(1) + '"/>');
+        h.push('<line class="trc' + cl + '" x1="' + Xb.toFixed(1) + '" y1="' + (Y_Q - 8) + '" x2="' + Xb.toFixed(1) + '" y2="' + (yDi(c1.spF + c1.h) - 3).toFixed(1) + '"/>');
+        h.push('<line class="trq' + cl + '" x1="' + Xa.toFixed(1) + '" y1="' + Y_Q + '" x2="' + Xb.toFixed(1) + '" y2="' + Y_Q + '"/>');
+        var ultX = Xa;
+        t.c.forEach(function(c, j){ if (!j) return; var xj = X(c.a); if (xj - ultX < 5 || Xb - xj < 5) return; ultX = xj; h.push('<line class="trj' + cl + '" x1="' + xj.toFixed(1) + '" y1="' + (Y_Q - 3) + '" x2="' + xj.toFixed(1) + '" y2="' + (Y_Q + 3) + '"/>'); });
+        [Xa, Xb].forEach(function(xx){ h.push('<line class="trk' + cl + '" x1="' + (xx - 4).toFixed(1) + '" y1="' + (Y_Q + 4) + '" x2="' + (xx + 4).toFixed(1) + '" y2="' + (Y_Q - 4) + '"/>'); });
+        var va = Math.max(Xa, LW), vb = Math.min(Xb, W), lw = vb - va - 6, nm = nomeTrattaM(t.nm).toUpperCase();
+        var lt = [nm + ' · ' + fN(t.L, 2) + ' m', nm, t.nm].filter(function(s){ return s && s.length * 6.6 <= lw; })[0];
+        if (lt) h.push('<text class="trt' + cl + '" x="' + ((va + vb) / 2).toFixed(1) + '" y="' + (Y_Q - 7) + '" text-anchor="middle">' + esc(lt) + '</text>');
+      });
+      // la tratta scelta: una cornice intorno alla sua quota e ai suoi conci
       if (sel != null) T.tratte.forEach(function(t){ if (t.k !== sel) return; var Xa = X(t.a), Xb = X(t.b); if (Xb < LW - 2 || Xa > W + 2) return;
-        h.push('<rect class="trs" x="' + (Xa - 2).toFixed(1) + '" y="' + (Y_TR - 2) + '" width="' + (Xb - Xa + 4).toFixed(1) + '" height="' + (yB - Y_TR + 6).toFixed(1) + '" rx="3"/>'); });
-      // i tombini: un rettangolone dalla fascia delle tratte fin sotto la fondazione; quelli della tabella anche col muro di
-      // testa (colorato per stato) e il tubo che passa, come nella foto (37.3)
-      TB.forEach(function(t){ var Xa = X(t.a), Xb = X(t.b); if (Xb < LW - 2 || Xa > W + 2) return; var w = Math.max(5, Xb - Xa), yt = Y_TR - 4, yb = yDi(-.5);
+        h.push('<rect class="trs" x="' + (Xa - 3).toFixed(1) + '" y="' + (Y_Q - 22) + '" width="' + (Xb - Xa + 6).toFixed(1) + '" height="' + (yB - Y_Q + 28).toFixed(1) + '" rx="4"/>'); });
+      // i tombini della tabella (37.4): il muro di testa colorato per stato e il tombino scatolare visto di fronte, le pareti e la
+      // luce quadrata; quelli scritti a parte con la 37.1 restano il rettangolone tratteggiato finché non li porti nella tabella
+      TB.forEach(function(t){ var Xa = X(t.a), Xb = X(t.b); if (Xb < LW - 2 || Xa > W + 2) return; var w = Math.max(5, Xb - Xa), cx = (Xa + Xb) / 2;
+        var tit = '<title>' + esc(t.nm + ' · tombino' + (t.m ? ' ' + testoMisura(t.m) + ' m' : '') + ' · ' + pkFmt(t.a) + ' → ' + pkFmt(t.b) + ' · ' + fN(t.b - t.a, 2) + ' m') + '</title>';
         if (t.r) {
-          var ht = num(t.r.h) != null ? num(t.r.h) + (num(t.r.spF) || .6) : zMax * .9, dd = t.d || Math.min(1.2, Math.max(.6, ht * .35)), zc = .45 + dd / 2;
-          h.push('<rect class="pz tbt" data-r="' + esc(t.r.id) + '" x="' + Xa.toFixed(1) + '" y="' + yDi(ht).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + (yB - yDi(ht)).toFixed(1) + '" fill="' + COL_ST[t.st] + '" fill-opacity=".55" stroke="#0b1018" stroke-width=".8"/>');
-          h.push('<ellipse class="tbp" cx="' + ((Xa + Xb) / 2).toFixed(1) + '" cy="' + yDi(zc).toFixed(1) + '" rx="' + Math.max(2, Math.min(w / 2 - 1, dd / 2 * dv.s)).toFixed(1) + '" ry="' + Math.max(2, dd / 2 * ky).toFixed(1) + '"/>');
+          var ht = num(t.r.h) != null ? num(t.r.h) + (num(t.r.spF) || .6) : zMax * .9, G = geoTombino(t.r, t.b - t.a, ht), yT = yDi(ht);
+          var oW = Math.max(3, Math.min(w - 2, (G.sW + 2 * G.tW) * dv.s)), iW = Math.max(2, Math.min(oW - 2, G.sW * dv.s)), yo = yDi(G.sH + 2 * G.tS), yi0 = yDi(G.tS), yi1 = yDi(G.tS + G.sH);
+          h.push('<rect class="pz tbt" data-r="' + esc(t.r.id) + '" x="' + Xa.toFixed(1) + '" y="' + yT.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + (yB - yT).toFixed(1) + '" fill="' + COL_ST[t.st] + '" stroke="#0b1018" stroke-width=".8">' + tit + '</rect>');
+          h.push('<rect class="tbx" x="' + (cx - oW / 2).toFixed(1) + '" y="' + yo.toFixed(1) + '" width="' + oW.toFixed(1) + '" height="' + Math.max(2, yB - yo).toFixed(1) + '"/>');
+          h.push('<rect class="tbo" x="' + (cx - iW / 2).toFixed(1) + '" y="' + yi1.toFixed(1) + '" width="' + iW.toFixed(1) + '" height="' + Math.max(2, yi0 - yi1).toFixed(1) + '"/>');
+          h.push('<text class="trh tbn" x="' + cx.toFixed(1) + '" y="' + (yT - 5).toFixed(1) + '" text-anchor="middle">' + esc(t.nm + (t.m && w > 74 ? ' · ' + testoMisura(t.m) : '')) + '</text>');
+        } else {
+          var yt = Y_Q - 8, yb = yDi(-.5);
+          h.push('<rect class="tbm" data-tb="' + esc(t.id) + '" x="' + Xa.toFixed(1) + '" y="' + yt + '" width="' + w.toFixed(1) + '" height="' + (yb - yt).toFixed(1) + '">' + tit + '</rect>');
+          h.push('<text class="trh tbn" x="' + cx.toFixed(1) + '" y="' + (Y_E + 12) + '" text-anchor="middle">' + esc(t.nm) + '</text>');
         }
-        h.push('<rect class="tbm" data-tb="' + esc(t.id) + '" x="' + Xa.toFixed(1) + '" y="' + yt + '" width="' + w.toFixed(1) + '" height="' + (yb - yt).toFixed(1) + '"' + (t.r ? ' fill-opacity=".08"' : '') + '><title>' + esc(t.nm + ' · tombino' + (t.d ? ' Ø' + fN(t.d, 2) + ' m' : '') + ' · ' + pkFmt(t.a) + ' → ' + pkFmt(t.b) + ' · ' + fN(t.b - t.a, 2) + ' m') + '</title></rect>');
-        h.push('<text class="trh tbn" x="' + (Xa + w / 2).toFixed(1) + '" y="' + (Y_E + 12) + '" text-anchor="middle">' + esc(t.nm + (t.d && w > 70 ? ' · Ø' + fN(t.d, 2) : '')) + '</text>');
       });
       cont.innerHTML = h.join('');
     }
@@ -35052,16 +35136,16 @@ window.MQOpere3D = (function(){
       + '<p class="nota" style="margin-top:8px">Questo tombino è scritto a parte (37.1): «Porta nella tabella» lo mette nella Tabella del muro, come gli altri.</p>', bottoni: bt });
   }
 
-  /* ---------- 37.3 · i tombini del muro si scrivono nella Tabella: una riga da pk a pk con «Elemento» = Tombino idraulico ---------- */
+  /* ---------- 37.3 · i tombini del muro si scrivono nella Tabella: una riga da pk a pk; dalla 37.4 col Paramento «Tombino» ---------- */
   function cardTombini(b, op){
     var box = b.querySelector('.ol-pm-tb'); if (!box) return;
     var icm = puoIcm(), l = tombiniMuro(op), vecchi = l.filter(function(t){ return t.vec; }).length;
-    var h = '<div class="ol-ch"><h3>Tombini<small>si scrivono nella Tabella: una riga da pk a pk con «Elemento» = Tombino idraulico (anche col diametro, es. Ø1500)</small></h3><div class="ol-az">'
+    var h = '<div class="ol-ch"><h3>Tombini<small>si scrivono nella Tabella: una riga da pk a pk col Paramento «Tombino» (anche con la luce, es. Tombino 2x2); il nome nella colonna Concio</small></h3><div class="ol-az">'
       + (icm ? '<button type="button" class="ol-b picc" data-tm="ril" title="i tombini scritti nella geometria dei rilevati, dentro le pk del muro: diventano righe della Tabella">Dai rilevati</button>' : '')
       + (icm && vecchi ? '<button type="button" class="ol-b pri picc" data-tm="porta" title="i tombini scritti a parte con la 37.1 vanno nella Tabella del muro">Porta nella tabella (' + vecchi + ')</button>' : '') + '</div></div>';
     h += !l.length ? '<p class="nota">Nessun tombino.</p>'
-      : '<div class="ol-scorri"><table class="ol-pt ol-xls ol-tbm-v"><thead><tr><th>#</th><th>Nome</th><th>Da pk</th><th>A pk</th><th>Larghezza [m]</th><th>Ø [m]</th><th>Stato</th></tr></thead><tbody>'
-        + l.map(function(t, i){ return '<tr class="cl" data-tm="vedi" data-pk="' + tondo((t.a + t.b) / 2, 3) + '" data-w="' + tondo(t.b - t.a, 3) + '"><td class="num">' + (i + 1) + '</td><td><b>' + esc(t.nm) + '</b></td><td class="num">' + pkFmt(t.a) + '</td><td class="num">' + pkFmt(t.b) + '</td><td class="num">' + fN(t.b - t.a, 2) + '</td><td class="num">' + (t.d ? fN(t.d, 2) : '—') + '</td>'
+      : '<div class="ol-scorri"><table class="ol-pt ol-xls ol-tbm-v"><thead><tr><th>#</th><th>Nome</th><th>Da pk</th><th>A pk</th><th>Larghezza [m]</th><th>Luce [m]</th><th>Stato</th></tr></thead><tbody>'
+        + l.map(function(t, i){ return '<tr class="cl" data-tm="vedi" data-pk="' + tondo((t.a + t.b) / 2, 3) + '" data-w="' + tondo(t.b - t.a, 3) + '"><td class="num">' + (i + 1) + '</td><td><b>' + esc(t.nm) + '</b></td><td class="num">' + pkFmt(t.a) + '</td><td class="num">' + pkFmt(t.b) + '</td><td class="num">' + fN(t.b - t.a, 2) + '</td><td class="num">' + (t.m ? testoMisura(t.m) : '—') + '</td>'
             + '<td>' + (t.r ? '<span class="ol-chip st-' + t.st + '">' + esc(NOMI_ST.muro[t.st] || t.st) + '</span>' : '<span class="nota">scritto a parte</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
     box.innerHTML = h;
   }
@@ -35073,12 +35157,12 @@ window.MQOpere3D = (function(){
     if (a === 'porta') return portaNellaTabella(b, op);
   }
   // una riga tombino nella tabella: al suo posto tra i conci (per pk)
-  function rigaTombino(op, nm, a, z, d){
+  function rigaTombino(op, nm, a, z, m){
     var k = calcola(op), prima = null, dopo = null;
     k.righe.forEach(function(r){ var x = k.x[r.id], o = num(r.o); if (!x || x.a == null || o == null) return; var pa = Math.min(x.a, x.b);
       if (pa <= a && (!prima || pa > prima.pk)) prima = { pk: pa, o: o }; if (pa > a && (!dopo || pa < dopo.pk)) dopo = { pk: pa, o: o }; });
     var o = prima && dopo ? (prima.o + dopo.o) / 2 : prima ? prima.o + .5 : dopo ? dopo.o - .5 : 1;
-    return { id: nuovoId('r'), concio: nm || null, pkI: tondo(a, 3), pkF: tondo(z, 3), L: tondo(z - a, 3), el: 'Tombino idraulico' + (d ? ' Ø' + Math.round(d * 1000) : ''), o: tondo(o, 4) };
+    return { id: nuovoId('r'), concio: nm || null, pkI: tondo(a, 3), pkF: tondo(z, 3), L: tondo(z - a, 3), pm: PM_TOMB + (m ? ' ' + testoMisura(m) : ''), o: tondo(o, 4) };   // 37.4: il tombino è nel Paramento
   }
   function tombiniDaiRilevati(b, op){
     var k = calcola(op); if (k.pkMin == null) { avviso('Scrivi prima i conci del muro con le loro pk.', 'info'); return; }
@@ -35157,7 +35241,7 @@ window.MQOpere3D = (function(){
     if (c.ty === 'n') { var n = num(v); return n == null ? { err: 1 } : { v: c.dec === 0 ? Math.round(n) : tondo(n, 4) }; }
     if (c.ty === 'ts') { var t = tsDa(v); return t == null ? { err: 1 } : { v: t }; }   // 35.0
     if (c.ty === 'sez') return { v: sezCodice(v).slice(0, 16) || null };
-    if (c.ty === 'pm') { var q = pmDa(v); return q == null ? { err: 1 } : { v: q || null }; }   // 37.1: «gettato in opera», «T49», «prefabbricato»…
+    if (c.ty === 'pm') { var q = pmDa(v); return q == null ? { err: 1 } : { v: q === PM_TOMB ? testoTombino(v) : q || null }; }   // 37.1: «gettato in opera», «T49», «prefabbricato»… · 37.4: «Tombino 2x2»
     if (v instanceof Date) return { v: dataFmt(dataParse(v)) };
     return { v: String(v).replace(/\s*[\r\n]+\s*/g, ' ').trim().slice(0, 300) || null };   // a capo dentro la cella = spazio
   }
@@ -35377,10 +35461,13 @@ window.MQOpere3D = (function(){
   }
   function scena3d(opere){
     var pezzi = [], et = [], pmin = null, pmax = null, materiale = V3 && V3.colori === 'mat', una = opere.filter(Boolean).length === 1, sotto = false;
+    var lineeQ = [], scritteM = [], th0 = null;   // 37.4: le quote delle tratte, i numeri sui conci, da che parte si guarda
     var ET_T = { c: '#e9f3ff', bg: 'rgba(23,39,58,.92)', k: .024 }, ET_O = { c: '#08223f', bg: 'rgba(143,179,220,.95)', k: .026 }, ET_P = { c: '#2a1d05', bg: 'rgba(214,186,122,.95)', k: .024 }, ET_M = { c: '#03211e', bg: 'rgba(56,178,166,.95)', k: .028 };   // 36.1: tratte e conci · tombini · 36.2: piste · 37.1: le tratte dei muri
     opere.forEach(function(op){
       if (!op || op.errore) return;
       var k = calcola(op), lato = op.lato === 'sx' ? -1 : op.lato === 'asse' ? 0 : 1, zc = lato * (num(op.dist) || 0), q0 = num(op.quota) || 0, par = op.par || {}, hmax = 0;
+      var sM = lato < 0 ? -1 : 1, MZ = {};   // 37.4: la faccia vista del muro guarda fuori dalla linea; per ogni concio dove sta e quanto è alto
+      if (una && op.tipo === 'muro' && lato < 0) th0 = -Math.PI + .5;
       var PL = op.tipo === 'rilevato' ? statoPiano(op) : null;
       if (PL && PL.tr.length) {   // 36.1: il rilevato previsto (trasparente) tratto per tratto, spezzato ai tombini, con le scarpate
         var lgs = k.righe.map(function(r){ var x = k.x[r.id]; return x && x.B; }).filter(function(v){ return v > 0; }).sort(function(a, b){ return a - b; }), lgM = lgs.length ? lgs[lgs.length >> 1] : 12;
@@ -35417,21 +35504,42 @@ window.MQOpere3D = (function(){
         var x = k.x[r.id]; if (!x || x.a == null || x.b == null) return;
         var a = Math.min(x.a, x.b), b = Math.max(x.a, x.b), K = op.id + '|' + r.id;
         if (b - a <= 0) return;
-        if (op.tipo === 'muro') {
-          var h = hDi(i), sF = num(r.spF) || .6, lF = num(r.lF) || 2.5, se = num(par.spEl) || .4;
-          if (eTombino(r)) {   // 37.3: il tombino scritto nella tabella: il muro di testa (colorato per stato) e il tubo che lo attraversa
-            var dT = diamTombino(r) || Math.min(1.2, Math.max(.6, (sF + h) * .35));
-            pezzi.push({ k: K + '|t', f: 'box', x0: a, x1: b, y0: q0, y1: q0 + sF + h, z0: zc - Math.max(se, .6) / 2, z1: zc + Math.max(se, .6) / 2, st: x.st });
-            pezzi.push({ k: K + '|tb', f: 'cil', ax: 'z', cx: (a + b) / 2, cy: q0 + .45 + dT / 2, a: Math.min(dT / 2, (b - a) / 2), b: dT / 2, z0: zc - lF / 2 - 2, z1: zc + lF / 2 + 2, t: Math.max(.08, dT * .08), n: 20, st: 'fatto', colore: '#56657a' });
-            hmax = Math.max(hmax, sF + h);
-            if (una) et.push({ x: (a + b) / 2, y: q0 + sF + h + .5, z: zc, t: (r.concio != null && r.concio !== '' ? String(r.concio) + ' · ' : '') + 'tombino', c: ET_O.c, bg: ET_O.bg, k: ET_O.k });
+        if (op.tipo === 'muro') {   // 37.4: come la SEZIONE TIPO della tavola
+          var h = hDi(i), sF = num(r.spF) || .6, lF = num(r.lF) || 2.5, se = num(par.spEl) || .4, y1 = q0 + sF;
+          var toe = Math.min(.5, lF * .15), zF = zc + sM * (lF / 2 - toe);   // la faccia vista: la punta della fondazione (0,50) sta fuori
+          var zz = function(u, v){ return { z0: Math.min(u, v), z1: Math.max(u, v) }; };
+          if (eTombino(r)) {   // il tombino scatolare: il muro di testa col foro (colorato per stato) e lo scatolare che passa sotto il rilevato
+            var ht = sF + h, G = geoTombino(r, b - a, ht), xc = (a + b) / 2, xo0 = xc - G.sW / 2 - G.tW, xo1 = xc + G.sW / 2 + G.tW, yo = q0 + 2 * G.tS + G.sH;
+            var ZT = zz(zF, zF - sM * .5), ZB = zz(zF + sM * .25, zF - sM * (lF + 3)), cls = '#6b7a8f';
+            if (xo0 - a > .02) pezzi.push({ k: K + '|t', f: 'box', x0: a, x1: xo0, y0: q0, y1: q0 + ht, z0: ZT.z0, z1: ZT.z1, st: x.st });
+            if (b - xo1 > .02) pezzi.push({ k: K + '|t2', f: 'box', x0: xo1, x1: b, y0: q0, y1: q0 + ht, z0: ZT.z0, z1: ZT.z1, st: x.st });
+            if (q0 + ht - yo > .02) pezzi.push({ k: K + '|t3', f: 'box', x0: Math.max(a, xo0), x1: Math.min(b, xo1), y0: yo, y1: q0 + ht, z0: ZT.z0, z1: ZT.z1, st: x.st });
+            pezzi.push({ k: K + '|tb1', f: 'box', x0: xo0, x1: xo1, y0: q0, y1: q0 + G.tS, z0: ZB.z0, z1: ZB.z1, st: 'fatto', colore: cls });   // la soletta di fondo
+            pezzi.push({ k: K + '|tb2', f: 'box', x0: xo0, x1: xo1, y0: q0 + G.tS + G.sH, y1: yo, z0: ZB.z0, z1: ZB.z1, st: 'fatto', colore: cls });   // la soletta di copertura
+            pezzi.push({ k: K + '|tb3', f: 'box', x0: xo0, x1: xo0 + G.tW, y0: q0 + G.tS, y1: q0 + G.tS + G.sH, z0: ZB.z0, z1: ZB.z1, st: 'fatto', colore: cls });   // le pareti
+            pezzi.push({ k: K + '|tb4', f: 'box', x0: xo1 - G.tW, x1: xo1, y0: q0 + G.tS, y1: q0 + G.tS + G.sH, z0: ZB.z0, z1: ZB.z1, st: 'fatto', colore: cls });
+            hmax = Math.max(hmax, ht, yo - q0);
+            if (una) et.push({ x: xc, y: q0 + Math.max(ht, yo - q0) + .45, z: zF, t: (r.concio != null && r.concio !== '' ? String(r.concio) + ' · ' : '') + 'tombino' + (G.m ? ' ' + testoMisura(G.m) : ''), c: ET_O.c, bg: ET_O.bg, k: ET_O.k, cen: true });
+            if (pmin == null || xo0 < pmin) pmin = Math.min(xo0, a); if (pmax == null || xo1 > pmax) pmax = Math.max(xo1, b);
             return;
           }
-          pezzi.push({ k: K + '|f', f: 'box', x0: a, x1: b, y0: q0, y1: q0 + sF, z0: zc - lF / 2, z1: zc + lF / 2, st: r.fGetto ? 'fatto' : r.fCost ? 'corso' : 'dafare' });
-          var pref = pmDa(r.pm) === PM_PREF;   // 37.2: il paramento prefabbricato segue la fondazione (è finito quando la fondazione è gettata)
-          pezzi.push({ k: K + '|e', f: 'box', x0: a, x1: b, y0: q0 + sF, y1: q0 + sF + h, z0: zc - se / 2, z1: zc + se / 2, st: pref ? (r.fGetto ? 'fatto' : r.fCost ? 'corso' : 'dafare') : r.eGetto ? 'fatto' : r.eCost ? 'corso' : 'dafare' });
+          var stF = r.fGetto ? 'fatto' : r.fCost ? 'corso' : 'dafare', pref = pmDa(r.pm) === PM_PREF;   // 37.2: il paramento prefabbricato segue la fondazione
+          var stE = pref ? stF : r.eGetto ? 'fatto' : r.eCost ? 'corso' : 'dafare';
+          pezzi.push({ k: K + '|f', f: 'box', x0: a, x1: b, y0: q0, y1: y1, z0: zc - lF / 2, z1: zc + lF / 2, st: stF });
+          if (pref) {   // il pannello prefabbricato: la lastra da 0,16 con la faccia vista liscia e, dietro, le due nervature (a 0,60 dai bordi su 2,40) più profonde in basso
+            var gap = Math.min(.012, (b - a) * .01), ZP = zz(zF, zF - sM * .16), dB = Math.max(.35, Math.min(1.6, h * .23)), dT = .22, wN = Math.min(.22, (b - a) * .12);
+            pezzi.push({ k: K + '|e', f: 'box', x0: a + gap, x1: b - gap, y0: y1, y1: y1 + h, z0: ZP.z0, z1: ZP.z1, st: stE });
+            [.25, .75].forEach(function(f, j){ var xn = a + (b - a) * f;
+              pezzi.push({ k: K + '|n' + (j + 1), f: 'trap', x0: xn - wN / 2, x1: xn + wN / 2, y0: y1, h: h, B: dB, b: dT, zc: zF - sM * (.16 + dB / 2), zt: zF - sM * (.16 + dT / 2), st: stE }); });
+            MZ[r.id] = { z: zF - sM * .08, top: y1 + h };
+          } else {   // gettato in opera: la faccia vista a piombo, dietro la scarpa (1/10) fino allo spessore in testa
+            var tB = se + Math.max(0, h - .9) / 10;
+            pezzi.push({ k: K + '|e', f: 'trap', x0: a, x1: b, y0: y1, h: h, B: tB, b: se, zc: zF - sM * tB / 2, zt: zF - sM * se / 2, st: stE });
+            MZ[r.id] = { z: zF - sM * se / 2, top: y1 + h };
+          }
           hmax = Math.max(hmax, sF + h);
-          if (una && r.concio != null && r.concio !== '') et.push({ x: (a + b) / 2, y: q0 + sF + h + .5, z: zc, t: String(r.concio) + (r.tratto != null && r.tratto !== '' ? ' · ' + r.tratto : ''), c: ET_T.c, bg: ET_T.bg, k: ET_T.k });   // 36.1: il nome del concio (e la sua tratta)
+          var ncS = nomeConcioM(r, true);   // il numero del concio dipinto sulla sua faccia vista
+          if (una && ncS) scritteM.push({ x: (a + b) / 2, y: y1 + h * .56, z: zF + sM * .03, n: sM, t: ncS, h: Math.max(.25, Math.min(.85, (b - a) * .34, h * .3)), w: (b - a) * .9 });
         } else if (op.tipo === 'barriera') {
           var hb = hDi(i), cB = num(par.cB) || .8, cH = num(par.cH) || .6;
           if (una && r.campata != null && r.campata !== '') et.push({ x: (a + b) / 2, y: q0 + cH + hb + .5, z: zc, t: String(r.campata) + (r.tratto != null && r.tratto !== '' ? ' · ' + r.tratto : ''), c: ET_T.c, bg: ET_T.bg, k: ET_T.k });
@@ -35466,7 +35574,18 @@ window.MQOpere3D = (function(){
           if (una) et.push({ x: (t.a + t.b) / 2, y: q0 + hTm + .9, z: zc, t: t.nm, c: ET_O.c, bg: ET_O.bg, k: ET_O.k });
           if (pmin == null || t.a < pmin) pmin = t.a; if (pmax == null || t.b > pmax) pmax = t.b;
         });
-        if (una) tratteMuro(op).tratte.forEach(function(t){ et.push({ x: (t.a + t.b) / 2, y: q0 + hmax + 1.7, z: zc, t: nomeTrattaM(t.nm), c: ET_M.c, bg: ET_M.bg, k: ET_M.k }); });
+        if (una) {   // 37.4: le tratte come le QUOTE della tavola: la linea di quota sopra il muro, i tagli ai capi, un segno a ogni giunto
+          // dei suoi conci e le linee di richiamo che scendono sul primo e sull'ultimo concio; sopra il nome e la lunghezza
+          var yQ = q0 + hmax + 1.1, lq = [];
+          tratteMuro(op).tratte.forEach(function(t){
+            var c0 = MZ[t.c[0].r.id] || { z: zc, top: q0 + hmax }, c1 = MZ[t.c[t.c.length - 1].r.id] || c0, zq = c0.z;
+            lq.push(t.a, yQ, zq, t.b, yQ, zq, t.a, c0.top + .15, zq, t.a, yQ + .45, zq, t.b, c1.top + .15, zq, t.b, yQ + .45, zq);
+            [t.a, t.b].forEach(function(xx){ lq.push(xx - .3, yQ - .3, zq, xx + .3, yQ + .3, zq); });
+            t.c.forEach(function(c, j){ if (j) lq.push(c.a, yQ - .16, zq, c.a, yQ + .16, zq); });
+            et.push({ x: (t.a + t.b) / 2, y: yQ + .12, z: zq, t: nomeTrattaM(t.nm) + ' · ' + fN(t.L, 2) + ' m', c: ET_M.c, bg: ET_M.bg, k: ET_M.k, cen: true });
+          });
+          if (lq.length) { lineeQ.push(lq); hmax += 1.6; }
+        }
       }
       if (reg(op) && k.reg) {   // 35.0: i prelievi, uno spillo dal loro strato fino sopra il rilevato
         var RG = k.reg, cima = function(pk){ var m = 0; k.righe.forEach(function(r){ var g = k.x[r.id]; if (g && g.a != null && pk >= g.a - .5 && pk <= g.b + .5) m = Math.max(m, g.q + g.sp); }); return m; };
@@ -35481,7 +35600,7 @@ window.MQOpere3D = (function(){
       }
       if (k.pkMin != null && opere.length > 1) et.push({ x: k.pkMin, y: q0 + hmax, z: zc, t: op.nome, o: op.id });
     });
-    return { pezzi: pezzi, etichette: et, pmin: pmin, pmax: pmax, sotto: sotto };
+    return { pezzi: pezzi, etichette: et, pmin: pmin, pmax: pmax, sotto: sotto, linee: lineeQ, scritte: scritteM, th0: th0 };
   }
   function chiudi3d(){ if (V3 && V3.v) { try { V3.v.distruggi(); } catch(e){} } V3 = null; }
   function opere3d(){ return V3 && V3.opId ? [S.opere[V3.opId]] : Object.keys(S.opere).map(function(i){ return S.opere[i]; }); }
@@ -35528,7 +35647,7 @@ window.MQOpere3D = (function(){
     V3.v.imposta(sc);
     if (!sc.pezzi.length) { if (V3.inf) { V3.inf.hidden = false; V3.inf.innerHTML = '<span>Niente da disegnare: servono le progressive (pk) e le misure nella tabella.</span>'; } return; }
     if (V3.sel && !S.opere[V3.selOp] || (V3.sel && !(S.opere[V3.selOp].righe || []).concat(S.opere[V3.selOp].prove || []).some(function(r){ return r.id === V3.sel; }))) { V3.sel = ''; V3.v.evidenzia(''); if (V3.inf) V3.inf.hidden = true; }
-    else if (V3.sel) { V3.v.evidenzia(chiaveSel()); info3d(V3.selOp, V3.sel); }
+    else if (V3.sel) { V3.v.evidenzia(chiaveSel()); info3d(V3.selOp, V3.sel, V3.parte); }   // 37.4: anche la parte toccata (nervatura, scatolare…)
     if (primo) {
       var op1 = V3.opId && S.opere[V3.opId], ult = null;
       if (!V3.sel && op1 && reg(op1)) (op1.righe || []).forEach(function(r){ if (r.dStesa && (!ult || r.dStesa > ult.dStesa)) ult = r; });   // 35.0: si parte dall'ultima stesa
@@ -35542,7 +35661,7 @@ window.MQOpere3D = (function(){
     var p = (k || '').split('|');
     if (!k || !S.opere[p[0]]) { V3.sel = ''; V3.v.evidenzia(''); if (V3.inf) V3.inf.hidden = true; return; }
     if (p[1] === 'g' || p[1] === 'o' || p[1] === 'ps' || p[1] === 'mt') { V3.sel = ''; V3.selOp = p[0]; V3.v.evidenzia(p[0] + '|' + p[1] + '|' + p[2]); info3d(p[0], p[1], p[2]); return; }   // 36.1: una tratta prevista o un tombino · 36.2: una pista
-    V3.sel = p[1]; V3.selOp = p[0]; V3.v.evidenzia(p[0] + '|' + p[1]);
+    V3.sel = p[1]; V3.selOp = p[0]; V3.parte = p[2] || ''; V3.v.evidenzia(p[0] + '|' + p[1]);
     if (V3.opId) S.vista.sel = p[1];
     info3d(p[0], p[1], p[2]);
   }
@@ -35579,9 +35698,12 @@ window.MQOpere3D = (function(){
       return;
     }
     if (!r) { V3.inf.hidden = true; return; }
+    if (op.tipo === 'muro' && /^n\d$/.test(parte || '')) parte = 'e';   // 37.4: le nervature sono il pannello prefabbricato
     var x = calcola(op).x[rid], nomeP = { f: 'fondazione', e: 'elevazione', c: 'cordolo', m: 'montante', p: 'pannelli' }[parte] || '';
     var stP = '';
-    if (parte === 'f') stP = r.fGetto ? 'gettata il ' + dataFmt(r.fGetto) : r.fCost ? 'costatazione ' + dataFmt(r.fCost) : 'da fare';
+    if (op.tipo === 'muro' && /^tb?\d?$/.test(parte || '') && eTombino(r)) { var mT = misuraTombino(r); nomeP = 'tombino'; stP = (/^tb/.test(parte) ? 'lo scatolare' : 'il muro di testa') + (mT ? ' · luce ' + testoMisura(mT) + ' m' : ''); }   // 37.4
+    if (nomeP === 'tombino') {}
+    else if (parte === 'f') stP = r.fGetto ? 'gettata il ' + dataFmt(r.fGetto) : r.fCost ? 'costatazione ' + dataFmt(r.fCost) : 'da fare';
     else if (parte === 'e') stP = op.tipo === 'muro' && pmDa(r.pm) === PM_PREF ? 'paramento prefabbricato (si getta solo la fondazione)' : r.eGetto ? 'gettata il ' + dataFmt(r.eGetto) : r.eCost ? 'costatazione ' + dataFmt(r.eCost) : 'da fare';   // 37.2
     else if (parte === 'c') stP = r.fGetto ? 'gettato il ' + dataFmt(r.fGetto) : 'da fare';
     else if (parte === 'm') stP = r.mPosa ? 'posato il ' + dataFmt(r.mPosa) : 'da posare';
