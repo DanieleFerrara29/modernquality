@@ -18621,7 +18621,7 @@ setTool("erase");
 <script>
   /* ═══ NUMERO DI AGGIORNAMENTO DEL SITO ═══
      Per cambiarlo in futuro, modifica SOLO la riga qui sotto. */
-  window.APP_VERSION = 'Versione 37.2';
+  window.APP_VERSION = 'Versione 37.3';
   (function(){
     function apply(){ document.querySelectorAll('.app-ver').forEach(function(el){ el.textContent = window.APP_VERSION; }); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply);
@@ -28601,6 +28601,8 @@ button.ol-tki{cursor:pointer;} button.ol-tki:hover{border-color:rgba(var(--ol-rg
 /* 37.2 · paramento prefabbricato: l'elevazione non si costata e non si getta */
 .ol-t td.ol-npf{color:#5f6f83;background:repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 4px,transparent 4px 8px);}
 .ol-dot.st-np{background:transparent;border:1.5px dashed #8293a8;}
+/* 37.3 · il tombino scritto nella tabella del muro: il tubo che passa */
+.ol-pm-d .tbp{fill:#0b1018;stroke:#8fc0f0;stroke-width:1.4;pointer-events:none;}
 </style>
 <script id="mq-opere-3d">
 /* 34.8 · OPERE LINEARI — plastico 3D (Three.js r128, la stessa libreria della Home, caricata solo quando serve).
@@ -28656,15 +28658,49 @@ window.MQOpere3D = (function(){
     if (b - a < .01) b = a + .01;
     return [[a, s.y0, s.zc - s.B2], [a, s.y0, s.zc + s.B2], [a, s.y1, s.zc + s.b2], [a, s.y1, s.zc - s.b2], [b, e.y0, e.zc - e.B2], [b, e.y0, e.zc + e.B2], [b, e.y1, e.zc + e.b2], [b, e.y1, e.zc - e.b2]];
   }
-  function solido(THREE, lista, gonfia){   // un solo oggetto con tutti i pezzi (12 triangoli a pezzo, colore sui vertici)
-    var n = lista.length, pos = new Float32Array(n * 108), col = new Float32Array(n * 108), o = 0;
+  var TRI_BOX = []; FACCE.forEach(function(q){ TRI_BOX.push([q[0], q[1], q[2]], [q[0], q[2], q[3]]); });
+  // 37.3 · un prisma tondo o ellittico (pali, fusti, pulvini, il tubo di un tombino): asse verticale (ax 'y') o trasversale
+  // (ax 'z'), semiassi a (lungo la pk) e b, pieno o cavo (t = spessore della parete). Triangoli girati verso fuori.
+  function prisma(p, x0, E){
+    var n = Math.max(8, Math.min(48, p.n || 20)), a = Math.max(.02, p.a), b = Math.max(.02, p.b), t = p.t > 0 && p.t < Math.min(a, b) * .95 ? p.t : 0, cx = p.cx - x0;
+    var P = [], T = [], S = [], vz = p.ax === 'z';
+    var pt = function(ra, rb, s, th){ var u = Math.cos(th) * ra, v = Math.sin(th) * rb; return vz ? [cx + u, (p.cy + v) * E, s] : [cx + u, s * E, p.cz + v]; };
+    var s0 = vz ? p.z0 : p.y0, s1 = vz ? Math.max(p.z0 + .01, p.z1) : Math.max(p.y0 + .01, p.y1);
+    var anelli = t ? [[a, b, s0], [a, b, s1], [a - t, b - t, s0], [a - t, b - t, s1]] : [[a, b, s0], [a, b, s1]];
+    anelli.forEach(function(r){ for (var i = 0; i < n; i++) P.push(pt(r[0], r[1], r[2], 2 * Math.PI * i / n)); });
+    var ix = function(r, i){ return r * n + ((i % n) + n) % n; };
+    var verso = function(i0, i1, i2, d){   // il triangolo con la normale verso d
+      var A = P[i0], B = P[i1], C = P[i2], ux = B[0] - A[0], uy = B[1] - A[1], uz = B[2] - A[2], wx = C[0] - A[0], wy = C[1] - A[1], wz = C[2] - A[2];
+      var nx = uy * wz - uz * wy, ny = uz * wx - ux * wz, nz = ux * wy - uy * wx;
+      T.push(nx * d[0] + ny * d[1] + nz * d[2] >= 0 ? [i0, i1, i2] : [i0, i2, i1]);
+    };
+    var rad = function(i, dentro){ var th = 2 * Math.PI * (i + .5) / n, u = Math.cos(th) * (dentro ? -1 : 1), v = Math.sin(th) * (dentro ? -1 : 1); return vz ? [u, v, 0] : [u, 0, v]; };
+    var giu = vz ? [0, 0, -1] : [0, -1, 0], su = vz ? [0, 0, 1] : [0, 1, 0];
     for (var i = 0; i < n; i++) {
-      var P = lista[i].P, c = lista[i].c, cx = 0, cy = 0, cz = 0, j;
-      if (gonfia) { for (j = 0; j < 8; j++) { cx += P[j][0] / 8; cy += P[j][1] / 8; cz += P[j][2] / 8; } }
-      for (var f = 0; f < 6; f++) {
-        var q = FACCE[f], ix = [q[0], q[1], q[2], q[0], q[2], q[3]];
-        for (var k = 0; k < 6; k++) {
-          var v = P[ix[k]], X = v[0], Y = v[1], Z = v[2];
+      verso(ix(0, i), ix(0, i + 1), ix(1, i + 1), rad(i)); verso(ix(0, i), ix(1, i + 1), ix(1, i), rad(i));   // la parete fuori
+      if (t) {
+        verso(ix(2, i), ix(2, i + 1), ix(3, i + 1), rad(i, true)); verso(ix(2, i), ix(3, i + 1), ix(3, i), rad(i, true));   // la parete dentro
+        verso(ix(0, i), ix(0, i + 1), ix(2, i + 1), giu); verso(ix(0, i), ix(2, i + 1), ix(2, i), giu);   // la corona sotto
+        verso(ix(1, i), ix(1, i + 1), ix(3, i + 1), su); verso(ix(1, i), ix(3, i + 1), ix(3, i), su);   // e sopra
+      } else if (i > 0 && i < n - 1) { verso(ix(0, 0), ix(0, i), ix(0, i + 1), giu); verso(ix(1, 0), ix(1, i), ix(1, i + 1), su); }   // i due tappi
+      S.push([ix(0, i), ix(0, i + 1)], [ix(1, i), ix(1, i + 1)]);
+      if (t) S.push([ix(2, i), ix(2, i + 1)], [ix(3, i), ix(3, i + 1)]);
+      if (i % Math.max(1, Math.round(n / 4)) === 0) S.push([ix(0, i), ix(1, i)]);
+    }
+    return { P: P, T: T, S: S };
+  }
+  function forma(p, x0, E){ return p.f === 'cil' ? prisma(p, x0, E) : { P: angoli(p, x0, E), T: TRI_BOX, S: SPIGOLI }; }
+  function solido(THREE, lista, gonfia){   // un solo oggetto con tutti i pezzi (colore sui vertici); per ogni triangolo il suo pezzo
+    var n = lista.length, nt = 0, i, j;
+    for (i = 0; i < n; i++) nt += lista[i].T.length;
+    var pos = new Float32Array(nt * 9), col = new Float32Array(nt * 9), mappa = new Int32Array(nt), o = 0, ti = 0;
+    for (i = 0; i < n; i++) {
+      var P = lista[i].P, TT = lista[i].T, c = lista[i].c, cx = 0, cy = 0, cz = 0, np = P.length;
+      if (gonfia) { for (j = 0; j < np; j++) { cx += P[j][0] / np; cy += P[j][1] / np; cz += P[j][2] / np; } }
+      for (var f = 0; f < TT.length; f++) {
+        mappa[ti++] = i;
+        for (var k = 0; k < 3; k++) {
+          var v = P[TT[f][k]], X = v[0], Y = v[1], Z = v[2];
           if (gonfia) { X = cx + (X - cx) * gonfia + (X > cx ? .012 : -.012); Y = cy + (Y - cy) * gonfia + (Y > cy ? .012 : -.012); Z = cz + (Z - cz) * gonfia + (Z > cz ? .012 : -.012); }
           pos[o] = X; pos[o + 1] = Y; pos[o + 2] = Z; col[o] = c.r; col[o + 1] = c.g; col[o + 2] = c.b; o += 3;
         }
@@ -28673,11 +28709,13 @@ window.MQOpere3D = (function(){
     var g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
     g.computeVertexNormals();
+    g.userData.mappa = mappa;
     return g;
   }
   function spigoli(THREE, lista){
-    var n = lista.length, pos = new Float32Array(n * 72), o = 0;
-    for (var i = 0; i < n; i++) { var P = lista[i].P; for (var s = 0; s < 12; s++) { var a = P[SPIGOLI[s][0]], b = P[SPIGOLI[s][1]]; pos[o] = a[0]; pos[o + 1] = a[1]; pos[o + 2] = a[2]; pos[o + 3] = b[0]; pos[o + 4] = b[1]; pos[o + 5] = b[2]; o += 6; } }
+    var n = lista.length, ns = 0, i; for (i = 0; i < n; i++) ns += lista[i].S.length;
+    var pos = new Float32Array(ns * 6), o = 0;
+    for (i = 0; i < n; i++) { var P = lista[i].P, SS = lista[i].S; for (var s = 0; s < SS.length; s++) { var a = P[SS[s][0]], b = P[SS[s][1]]; pos[o] = a[0]; pos[o + 1] = a[1]; pos[o + 2] = a[2]; pos[o + 3] = b[0]; pos[o + 4] = b[1]; pos[o + 5] = b[2]; o += 6; } }
     var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     return g;
   }
@@ -28719,10 +28757,10 @@ window.MQOpere3D = (function(){
       info = { x0: x0, sc: sc, L: L };
       var zmax = 6;
       sc.pezzi.forEach(function(p, i){
-        var P = angoli(p, x0, E), fant = p.st === 'dafare', c = lin(p.colore && (!fant || p.fc) ? p.colore : (COL[p.st] || COL.dafare));   // 37.1: fc = trasparente col suo colore
+        var G = forma(p, x0, E), P = G.P, fant = p.st === 'dafare', c = lin(p.colore && (!fant || p.fc) ? p.colore : (COL[p.st] || COL.dafare));   // 37.1: fc = trasparente col suo colore · 37.3: anche prismi tondi
         var mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
-        for (var j = 0; j < 8; j++) for (var a = 0; a < 3; a++) { if (P[j][a] < mn[a]) mn[a] = P[j][a]; if (P[j][a] > mx[a]) mx[a] = P[j][a]; }
-        var rec = { k: p.k, P: P, c: c, mn: mn, mx: mx, fant: fant };
+        for (var j = 0; j < P.length; j++) for (var a = 0; a < 3; a++) { if (P[j][a] < mn[a]) mn[a] = P[j][a]; if (P[j][a] > mx[a]) mx[a] = P[j][a]; }
+        var rec = { k: p.k, P: P, T: G.T, S: G.S, c: c, mn: mn, mx: mx, fant: fant };
         pezzi.push(rec); (fant ? fantasmi : opachi).push(rec);
         zmax = Math.max(zmax, Math.abs(mn[2]), Math.abs(mx[2]));
       });
@@ -28841,7 +28879,7 @@ window.MQOpere3D = (function(){
       var ogg = []; if (mOpachi) ogg.push(mOpachi); if (mFantasmi) ogg.push(mFantasmi);
       var h = ray.intersectObjects(ogg, false);
       if (!h.length) return '';
-      var p = h[0].object.userData.l[Math.floor(h[0].faceIndex / 12)];
+      var o0 = h[0].object, mp = o0.geometry.userData.mappa, p = o0.userData.l[mp ? mp[h[0].faceIndex] : Math.floor(h[0].faceIndex / 12)];   // 37.3: i pezzi non hanno più tutti 12 triangoli
       return p ? p.k : '';
     }
     el.addEventListener('contextmenu', function(e){ e.preventDefault(); });
@@ -29029,7 +29067,8 @@ window.MQOpere3D = (function(){
       { k:'eGetto', t:'Getto', ty:'d', g:'Elevazione', w:94, f:'getto', x:['elev getto','elevazione getto','data getto elevazione'] },
       { k:'eDdt', t:'DDT', ty:'tx', g:'Elevazione', w:124, f:'ddt', x:['elev ddt','elevazione ddt','ddt elevazione'] },
       C_NOTE,
-      { k:'pm', t:'Paramento', ty:'pm', w:110, x:['paramento','tipo paramento','paramento tipo','tipo di paramento','tipologia paramento'] }],   // 37.1: prefabbricato o in opera · in fondo, così le colonne del foglio dei muri restano al loro posto quando si incolla
+      { k:'pm', t:'Paramento', ty:'pm', w:110, x:['paramento','tipo paramento','paramento tipo','tipo di paramento','tipologia paramento'] },
+      { k:'el', t:'Elemento', ty:'tx', w:150, dl:'ol-elm-l', x:['elemento','cosa c e','tipo elemento','elemento tra le pk'] }],   // 37.3: cosa c'è tra quelle pk (concio, tombino idraulico Ø1500…)   // 37.1: prefabbricato o in opera · in fondo, così le colonne del foglio dei muri restano al loro posto quando si incolla
     barriera: [C_TRATTO, C_PKI, C_PKF,
       { k:'campata', t:'Campata', ty:'tx', w:68, x:['campata','n campata','modulo','concio'] },
       { k:'L', t:'Interasse [m]', ty:'n', dec:2, w:84, x:['interasse','l campata','lunghezza campata','l concio','l','lunghezza'] },
@@ -29229,7 +29268,7 @@ window.MQOpere3D = (function(){
     var dataMax = function(d){ if (d && d > T.ultima) T.ultima = d; };
     if (!reg(op)) {
       var perTratto = {};
-      R.forEach(function(r){ var L = lungRiga(r); if (r.tratto != null && String(r.tratto).trim() !== '' && L != null) { var k = String(r.tratto).trim(); perTratto[k] = (perTratto[k] || 0) + L; } });
+      R.forEach(function(r){ var L = lungRiga(r); if (r.tratto != null && String(r.tratto).trim() !== '' && L != null && !(op.tipo === 'muro' && eTombino(r))) { var k = String(r.tratto).trim(); perTratto[k] = (perTratto[k] || 0) + L; } });
       R.forEach(function(r){
         var L = lungRiga(r), a = num(r.pkI), b = num(r.pkF); if (b == null && a != null && L != null) b = a + L;
         estendi(a, b);
@@ -29247,12 +29286,13 @@ window.MQOpere3D = (function(){
           if (r.pPosa) { st = 'fatto'; fr = 1; } else if (r.mPosa) { st = 'parz'; fr = .6; } else if (r.fGetto) { st = 'corso'; fr = .3; } else { st = 'dafare'; fr = 0; }
           dataMax(r.fGetto); dataMax(r.mPosa); dataMax(r.pPosa);
         }
-        T.nSt[st]++;
+        var tb = op.tipo === 'muro' && eTombino(r);   // 37.3: un tombino scritto nella tabella del muro non è un concio
+        if (tb) T.n--; else T.nSt[st]++;
         var Lt = r.tratto != null && String(r.tratto).trim() !== '' ? perTratto[String(r.tratto).trim()] : null;
-        X[r.id] = { L: L, Lt: Lt, a: a, b: b, st: st, fr: fr };
-        if (L != null) { T.Ltot += L; T.Lfat += L * fr; }
+        X[r.id] = { L: L, Lt: Lt, a: a, b: b, st: st, fr: fr, tb: tb };
+        if (L != null && !tb) { T.Ltot += L; T.Lfat += L * fr; }
       });
-      T.perc = T.Ltot > 0 ? T.Lfat / T.Ltot : (T.n ? R.reduce(function(s, r){ return s + X[r.id].fr; }, 0) / T.n : 0);
+      T.perc = T.Ltot > 0 ? T.Lfat / T.Ltot : (T.n ? R.reduce(function(s, r){ return s + (X[r.id].tb ? 0 : X[r.id].fr); }, 0) / T.n : 0);
       if (op.tipo === 'viadotto') { T.perc = T.n ? T.nSt.fatto / T.n : 0; T.Ltot = 0; T.Lfat = 0; }   // 37.0: l'avanzamento sono gli elementi gettati
     } else {
       // 35.0 · rilevati e campi prova: le stese del registro, una sopra l'altra per tipo e numero di strato
@@ -30197,7 +30237,7 @@ window.MQOpere3D = (function(){
       return dialogo({ titolo: etichettaRiga(op, r), html: h, bottoni: btv });
     }
     h += '<div class="ol-pz-dati">' + d('pk inizio', pkFmt(x.a)) + d('pk fine', pkFmt(x.b)) + d('Lunghezza', x.L != null ? fN(x.L, 2) + ' m' : '');
-    if (op.tipo === 'muro') h += d('h muro', r.h != null ? fN(num(r.h), 2) + ' m' : '') + (r.pm ? d('Paramento', r.pm) : '') + d('Fondazione', (r.spF != null ? fN(num(r.spF), 2) : '—') + ' × ' + (r.lF != null ? fN(num(r.lF), 2) : '—') + ' m') + d('Armatura', r.arm || '') + d('Tavola', r.tav || '') + d('Tratto', r.tratto || '');
+    if (op.tipo === 'muro') h += (r.el ? d('Elemento', r.el) : '') + d('h muro', r.h != null ? fN(num(r.h), 2) + ' m' : '') + (r.pm ? d('Paramento', r.pm) : '') + d('Fondazione', (r.spF != null ? fN(num(r.spF), 2) : '—') + ' × ' + (r.lF != null ? fN(num(r.lF), 2) : '—') + ' m') + d('Armatura', r.arm || '') + d('Tavola', r.tav || '') + d('Tratto', r.tratto || '');
     else if (op.tipo === 'barriera') h += d('Altezza', r.h != null ? fN(num(r.h), 2) + ' m' : '') + d('Pannelli', (r.nPann != null ? r.nPann + ' × ' : '') + (r.pann || '')) + d('Montante', r.mont || '') + d('Fondazione', r.fond || '') + d('Tavola', r.tav || '');
     else h += d('Materiale', r.mat || '') + d('Spessore', x.sp != null ? fN(x.sp, 2) + ' m' : '') + d('Base → sommità', (x.B != null ? fN(x.B, 2) : '—') + ' → ' + (x.bb != null ? fN(x.bb, 2) : '—') + ' m') + d('Quota base', fN(x.q, 2) + ' m') + d('Superficie', x.A != null ? fN(x.A, 0) + ' m²' : '') + d('Volume', x.V != null ? fN(x.V, 0) + ' m³' : '');
     h += '</div>';
@@ -30232,6 +30272,7 @@ window.MQOpere3D = (function(){
     if (c.ty === 'ts') return '<label class="l2">' + esc(c.t) + '<select class="ol-in" name="' + nm + '"><option value=""></option>' + stratiCfg().map(function(t){ return '<option value="' + esc(t.n) + '"' + (String(t.id) === String(val) ? ' selected' : '') + '>' + esc(t.n) + '</option>'; }).join('') + '</select></label>';
     if (c.ty === 'sez') return '<label>' + esc(c.t) + '<input class="ol-in" name="' + nm + '" value="' + esc(val) + '" list="ol-sez-l" autocomplete="off" spellcheck="false"></label>';
     if (c.ty === 'pm') return '<label>' + esc(c.t) + '<select class="ol-in" name="' + nm + '"><option value=""></option>' + [PM_PREF, PM_OPERA].map(function(t){ return '<option value="' + esc(t) + '"' + (pmDa(val) === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select></label>';   // 37.1
+    if (c.dl) return '<label class="l2">' + esc(c.t) + '<input class="ol-in" name="' + nm + '" value="' + esc(val) + '" list="' + c.dl + '" autocomplete="off"></label>';   // 37.3
     var ph = c.ty === 'pk' ? '18+213,90' : '';
     return '<label' + (c.k === 'tav' || c.k === 'note' ? ' class="l2"' : '') + '>' + esc(c.t) + '<input class="ol-in ' + (c.ty === 'pk' ? 'pk' : c.ty === 'n' ? 'n' : '') + '" name="' + nm + '" value="' + esc(fmtCella(c, val)) + '"' + (ph ? ' placeholder="' + ph + '"' : '') + (c.ty === 'n' ? ' inputmode="decimal"' : '') + ' autocomplete="off" spellcheck="false"></label>';
   }
@@ -30241,6 +30282,7 @@ window.MQOpere3D = (function(){
     return '<datalist id="ol-mat-l">' + l.map(function(n){ return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>'
       + '<datalist id="ol-ts-l">' + stratiCfg().map(function(t){ return '<option value="' + esc(t.n) + '">'; }).join('') + '</datalist>'
       + '<datalist id="ol-pm-l"><option value="' + PM_PREF + '"><option value="' + PM_OPERA + '"></datalist>'   // 37.1: il paramento dei muri
+      + '<datalist id="ol-elm-l"><option value="Concio"><option value="Tombino idraulico"><option value="Tombino idraulico Ø1500"></datalist>'   // 37.3: cosa c'è tra le pk
       + (haSezioni() ? '<datalist id="ol-sez-l">' + indSez().l.map(function(x){ return '<option value="' + esc(x.c) + '">' + esc(pkFmt(x.pk) + ' · ' + x.w) + '</option>'; }).join('') + '</datalist>' : '');
   }
   function modificaRiga(opId, rid){
@@ -30477,7 +30519,7 @@ window.MQOpere3D = (function(){
       inp.addEventListener('blur', function(){ setTimeout(function(){ if (G && G.ed && document.activeElement !== G.inp) confermaEd(true); }, 0); });
     }
     var inp2 = G.inp;
-    if (c.ty === 'mat') inp2.setAttribute('list', 'ol-mat-l'); else if (c.ty === 'ts') inp2.setAttribute('list', 'ol-ts-l'); else if (c.ty === 'sez') inp2.setAttribute('list', 'ol-sez-l'); else if (c.ty === 'pm') inp2.setAttribute('list', 'ol-pm-l'); else inp2.removeAttribute('list');
+    if (c.ty === 'mat') inp2.setAttribute('list', 'ol-mat-l'); else if (c.ty === 'ts') inp2.setAttribute('list', 'ol-ts-l'); else if (c.ty === 'sez') inp2.setAttribute('list', 'ol-sez-l'); else if (c.ty === 'pm') inp2.setAttribute('list', 'ol-pm-l'); else if (c.dl) inp2.setAttribute('list', c.dl); else inp2.removeAttribute('list');
     inp2.inputMode = c.ty === 'n' ? 'decimal' : 'text';
     inp2.value = testo != null ? testo : !r ? '' : (c.ty === 'd' ? dataFmt(r[c.k]) : fmtCella(c, r[c.k]));
     inp2.style.left = td.offsetLeft + 'px'; inp2.style.top = td.offsetTop + 'px';
@@ -30634,7 +30676,7 @@ window.MQOpere3D = (function(){
       var lv = num(ult.liv); n.liv = lv != null ? lv + 1 : 1; ['mat', 'pkI', 'pkF', 'sp', 'sc'].forEach(function(k){ if (ult[k] != null && ult[k] !== '') n[k] = ult[k]; });
       return n;
     }
-    ['tratto', 'el', 'h', 'spF', 'lF', 'arm', 'tav', 'pann', 'nPann', 'mont', 'fond'].forEach(function(k){ if (ult[k] != null && ult[k] !== '') n[k] = ult[k]; });   // 37.0: anche l'elemento del viadotto
+    ['tratto', 'h', 'spF', 'lF', 'arm', 'tav', 'pann', 'nPann', 'mont', 'fond'].concat(op.tipo === 'viadotto' ? ['el'] : op.tipo === 'muro' ? ['pm'] : []).forEach(function(k){ if (ult[k] != null && ult[k] !== '') n[k] = ult[k]; });   // 37.0: anche l'elemento del viadotto · 37.3: nei muri il paramento (il tombino no)
     var L = num(ult.L), pf = num(ult.pkF);
     if (pf == null && num(ult.pkI) != null && L != null) pf = num(ult.pkI) + L;
     if (pf != null) n.pkI = tondo(pf, 3);
@@ -34422,16 +34464,20 @@ window.MQOpere3D = (function(){
   var NOME_EL = {}; EL_V.forEach(function(e){ NOME_EL[e[0]] = e; });
   function elDi(r){ var s = norm(r && r.el); return SIN_EL[s] || s; }
   function nomeEl(k, plur){ var e = NOME_EL[k]; return e ? e[plur ? 1 : 2] : (k ? k.charAt(0).toUpperCase() + k.slice(1) : 'Elemento'); }
-  // le misure di partenza (dalle tavole di VI10: pile tipo 3P con 9 pali Ø1200 L 32 m; spalle con pali Ø1500 L 30 m)
+  // le misure di partenza (dalle tavole di VI10: pile standard con plinto 9,60 × 9,90 × 2,00 su 9 pali Ø1200 L 32 m, fusto
+  // ellittico cavo 3,60 × 8,60 (parete 0,50), pulvino ellittico 4,40 × 9,45 × 1,40, 4 baggioli; spalle con pali Ø1500 L 30 m)
+  // 37.3: la forma (E ellisse, R rettangolo) e gli assi di fusto e pulvino: lungo l'asse (A) e di traverso (T)
   var DEF_VS = {
-    P: { tp: '3P', nP: 9, dP: 1.2, lP: 32, pB: 6.2, pL: 11, pH: 2, fH: 8, uH: 2, nB: 4, nR: 2 },
-    S: { tp: 'Spalla', nP: 12, dP: 1.5, lP: 30, pB: 7, pL: 13, pH: 2, fH: 6, uH: 2, nB: 4, nR: 2 }
+    P: { tp: '3P', nP: 9, dP: 1.2, lP: 32, pB: 9.6, pL: 9.9, pH: 2, fo: 'E', fA: 3.6, fT: 8.6, fS: .5, fH: 7.1, uA: 4.4, uT: 9.45, uH: 1.4, nB: 4, nR: 2 },
+    S: { tp: 'Spalla', nP: 12, dP: 1.5, lP: 30, pB: 7, pL: 13, pH: 2, fo: 'R', fA: 2.5, fT: 12, fS: 0, fH: 6, uA: 1.2, uT: 12, uH: 2, nB: 4, nR: 2 }
   };
-  var K_VS = ['nm', 'pkI', 'sp', 'tp', 'nP', 'dP', 'lP', 'pB', 'pL', 'pH', 'fH', 'uH', 'nB', 'nR', 'note'];
+  var K_VS = ['nm', 'pkI', 'sp', 'tp', 'fo', 'nP', 'dP', 'lP', 'pB', 'pL', 'pH', 'fA', 'fT', 'fS', 'fH', 'uA', 'uT', 'uH', 'nB', 'nR', 'note'];
+  var FORME_VS = [['E', 'Ellisse'], ['R', 'Rettangolo']];
   function sostegniDi(op){
     return trattiDi(op).filter(function(t){ return t.ti === 'vs'; }).map(function(t){
       var d = DEF_VS[t.sp === 'S' ? 'S' : 'P'], v = function(k){ var x = num(t[k]); return x != null ? x : d[k]; };
       return { id: t.id, nm: String(t.nm || ''), pk: num(t.pkI), sp: t.sp === 'S' ? 'S' : 'P', tp: String(t.tp || ''), nP: Math.max(0, Math.round(v('nP'))), dP: v('dP'), lP: v('lP'), pB: v('pB'), pL: v('pL'), pH: v('pH'),
+        fo: t.fo === 'E' || t.fo === 'R' ? t.fo : d.fo, fA: v('fA'), fT: v('fT'), fS: v('fS'), uA: v('uA'), uT: v('uT'),   // 37.3
         fH: v('fH'), uH: v('uH'), nB: Math.max(0, Math.round(v('nB'))), nR: Math.max(0, Math.round(v('nR'))), note: t.note || '' };
     }).sort(function(a, b){ return ((a.pk == null ? 1e12 : a.pk) - (b.pk == null ? 1e12 : b.pk)) || a.nm.localeCompare(b.nm); });
   }
@@ -34588,7 +34634,8 @@ window.MQOpere3D = (function(){
   /* ---------- SOSTEGNI: la tabella delle spalle e delle pile (come in Excel) ---------- */
   var VS = {};   // per opera, mentre si scrive: { righe: [bozza] }
   var COL_VS = [['nP', 'Pali', 0, 'quanti pali'], ['dP', 'Ø pali [m]', 2], ['lP', 'L pali [m]', 2], ['pB', 'Plinto lungo l\'asse [m]', 2], ['pL', 'Plinto trasversale [m]', 2], ['pH', 'Plinto H [m]', 2],
-    ['fH', 'Fusto H [m]', 2, '0 = senza fusto'], ['uH', 'Pulvino H [m]', 2, '0 = senza pulvino'], ['nB', 'Baggioli', 0], ['nR', 'Ritegni', 0]];
+    ['fA', 'Fusto lungo l\'asse [m]', 2, 'ellisse: l\'asse corto · rettangolo: il lato lungo la linea'], ['fT', 'Fusto trasversale [m]', 2, 'ellisse: l\'asse lungo · rettangolo: il lato di traverso'], ['fS', 'Fusto parete [m]', 2, 'fusto cavo: lo spessore della parete · 0 = pieno'], ['fH', 'Fusto H [m]', 2, '0 = senza fusto'],
+    ['uA', 'Pulvino lungo l\'asse [m]', 2], ['uT', 'Pulvino trasversale [m]', 2], ['uH', 'Pulvino H [m]', 2, '0 = senza pulvino'], ['nB', 'Baggioli', 0], ['nR', 'Ritegni', 0]];   // 37.3: le misure di fusto e pulvino
   function apriSostegni(opId){
     var op = S.opere[opId]; if (!op) return;
     if (puoIcm() && !bloccaSeServe()) VS[opId] = { righe: sostegniDi(op).map(function(s){ var o = { id: s.id }; K_VS.forEach(function(k){ o[k] = k === 'pkI' ? s.pk : s[k]; }); return o; }) };
@@ -34604,21 +34651,22 @@ window.MQOpere3D = (function(){
     else if (icm) h += '<button type="button" class="ol-b picc" data-vv="mod">✎ Modifica</button>';
     h += '</div>';
     if (g) {
-      h += '<div class="ol-scorri"><table class="ol-pt ol-edt ol-xls ol-vs-e"><thead><tr><th>#</th><th>Tipo</th><th>Nome</th><th>pk</th><th>Tipo pila</th>' + COL_VS.map(function(c){ return '<th' + (c[3] ? ' title="' + esc(c[3]) + '"' : '') + '>' + esc(c[1]) + '</th>'; }).join('') + '<th>Elementi</th><th></th></tr></thead><tbody>'
+      h += '<div class="ol-scorri"><table class="ol-pt ol-edt ol-xls ol-vs-e"><thead><tr><th>#</th><th>Tipo</th><th>Nome</th><th>pk</th><th>Tipo pila</th><th title="la forma di fusto e pulvino">Forma</th>' + COL_VS.map(function(c){ return '<th' + (c[3] ? ' title="' + esc(c[3]) + '"' : '') + '>' + esc(c[1]) + '</th>'; }).join('') + '<th>Elementi</th><th></th></tr></thead><tbody>'
         + g.righe.map(function(t, i){ var spS = t.sp === 'S';
             return '<tr data-i="' + i + '"><td class="num">' + (i + 1) + '</td><td><select class="ol-in" name="sp" style="width:96px"><option value="P"' + (spS ? '' : ' selected') + '>Pila</option><option value="S"' + (spS ? ' selected' : '') + '>Spalla</option></select></td>'
               + '<td><input class="ol-in" name="nm" value="' + esc(t.nm || '') + '" placeholder="' + (spS ? 'SpA' : 'P' + (i + 1)) + '" maxlength="24" style="width:72px" aria-label="Nome"></td>'
               + '<td><input class="ol-in pk" name="pkI" value="' + esc(num(t.pkI) != null ? pkFmt(num(t.pkI), 2) : '') + '" placeholder="11+515,12" style="width:96px" aria-label="pk"></td>'
               + '<td><input class="ol-in" name="tp" value="' + esc(t.tp || '') + '" placeholder="' + (spS ? 'Spalla' : '3P') + '" maxlength="24" style="width:70px" aria-label="Tipo pila"></td>'
+              + '<td><select class="ol-in" name="fo" style="width:104px" aria-label="Forma di fusto e pulvino">' + FORME_VS.map(function(x){ var fo = t.fo === 'E' || t.fo === 'R' ? t.fo : DEF_VS[spS ? 'S' : 'P'].fo; return '<option value="' + x[0] + '"' + (fo === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></td>'   // 37.3
               + COL_VS.map(function(c){ var v = num(t[c[0]]); return '<td><input class="ol-in n" name="' + c[0] + '" value="' + esc(v != null ? fN(v, c[2]) : '') + '" inputmode="decimal" style="width:' + (c[2] ? 58 : 46) + 'px" aria-label="' + esc(c[1]) + '"></td>'; }).join('')
               + '<td class="num ol-vs-n"></td><td><button type="button" class="ol-b picc peric" data-vv="via" data-i="' + i + '" aria-label="Togli il sostegno">✕</button></td></tr>'; }).join('')
         + '</tbody></table></div><p class="err" hidden></p>'
         + '<p class="nota" style="margin-top:8px">Una riga per spalla o pila. <b>pk</b>: l\'asse del sostegno. <b>Pali</b>: quanti, Ø e lunghezza; <b>plinto</b>, <b>fusto</b> e <b>pulvino</b>: le misure (servono per il 3D; 0 = non c\'è). Salvando, il sito crea gli elementi che mancano (P01…, Plinto, Fusto, Pulvino, B1…, R1…) e toglie solo quelli vuoti: un elemento con una data resta sempre.</p>';
     } else {
       h += !sost.length ? '<p class="nota">Nessun sostegno. ' + (icm ? 'Con «✎ Modifica» scrivi le spalle e le pile (anche una serie di pile da pk a pk con l\'interasse).' : '') + '</p>'
-        : '<div class="ol-scorri"><table class="ol-pt ol-xls ol-vs-v"><thead><tr><th>#</th><th>Tipo</th><th>Nome</th><th>pk</th><th>Tipo pila</th>' + COL_VS.map(function(c){ return '<th>' + esc(c[1]) + '</th>'; }).join('') + '<th>Elementi</th><th>Gettati</th></tr></thead><tbody>'
+        : '<div class="ol-scorri"><table class="ol-pt ol-xls ol-vs-v"><thead><tr><th>#</th><th>Tipo</th><th>Nome</th><th>pk</th><th>Tipo pila</th><th>Forma</th>' + COL_VS.map(function(c){ return '<th>' + esc(c[1]) + '</th>'; }).join('') + '<th>Elementi</th><th>Gettati</th></tr></thead><tbody>'
           + sost.map(function(s, i){ var gr = N.righe.filter(function(x){ return norm(x.s.nm) === norm(s.nm); })[0], n = 0, gg = 0; if (gr) Object.keys(gr.el).forEach(function(e){ n += gr.el[e].n; gg += gr.el[e].g; });
-              return '<tr><td class="num">' + (i + 1) + '</td><td>' + (s.sp === 'S' ? 'Spalla' : 'Pila') + '</td><td><b>' + esc(s.nm) + '</b></td><td class="num">' + (s.pk != null ? pkFmt(s.pk, 2) : '—') + '</td><td>' + esc(s.tp || '') + '</td>'
+              return '<tr><td class="num">' + (i + 1) + '</td><td>' + (s.sp === 'S' ? 'Spalla' : 'Pila') + '</td><td><b>' + esc(s.nm) + '</b></td><td class="num">' + (s.pk != null ? pkFmt(s.pk, 2) : '—') + '</td><td>' + esc(s.tp || '') + '</td><td>' + (s.fo === 'R' ? 'Rettangolo' : 'Ellisse') + '</td>'
                 + COL_VS.map(function(c){ return '<td class="num">' + fN(s[c[0]], c[2]) + '</td>'; }).join('') + '<td class="num">' + n + '</td><td class="num">' + gg + '/' + n + '</td></tr>'; }).join('')
           + '</tbody></table></div>';
     }
@@ -34646,7 +34694,7 @@ window.MQOpere3D = (function(){
     b.querySelectorAll('.ol-vs-e tr[data-i]').forEach(function(tr){
       var t = g.righe[+tr.dataset.i]; if (!t) return;
       var q = function(n){ return tr.querySelector('[name="' + n + '"]'); }, pk = pkParse(q('pkI').value);
-      t.sp = q('sp').value === 'S' ? 'S' : 'P'; t.nm = q('nm').value.trim().slice(0, 24) || null; t.tp = q('tp').value.trim().slice(0, 24) || null;
+      t.sp = q('sp').value === 'S' ? 'S' : 'P'; t.nm = q('nm').value.trim().slice(0, 24) || null; t.tp = q('tp').value.trim().slice(0, 24) || null; t.fo = q('fo') && (q('fo').value === 'R' || q('fo').value === 'E') ? q('fo').value : null;
       t.pkI = pk != null ? tondo(pk, 3) : null; t._pkErr = !!q('pkI').value.trim() && pk == null;
       COL_VS.forEach(function(c){ var v = num(q(c[0]).value); t[c[0]] = v; });
     });
@@ -34712,17 +34760,28 @@ window.MQOpere3D = (function(){
     k.righe.forEach(function(r){ per[chiaveEl(r.tratto, elDi(r), r.concio)] = r; });
     var stDi = function(s, el, nm){ var r = per[chiaveEl(s.nm, el, nm)], x = r && k.x[r.id]; return { r: r, st: x ? x.st : 'dafare' }; };
     var box = function(kk, st, x0, x1, y0, y1, z0, z1){ pezzi.push({ k: kk, f: 'box', x0: x0, x1: x1, y0: y0, y1: y1, z0: z0, z1: z1, st: st }); };
+    var tondo3 = function(kk, st, cx, cz, a, b, y0, y1, t, n){ pezzi.push({ k: kk, f: 'cil', cx: cx, cz: cz, a: a, b: b, y0: y0, y1: y1, t: t || 0, n: n, st: st }); };   // 37.3: pali tondi, fusti e pulvini ellittici
     sost.forEach(function(s){
       if (s.pk == null) return;
-      var P = s.pk, yP = q0 - s.pH, ki = function(r){ return r ? op.id + '|' + r.id : op.id + '|vs|' + s.id; };
-      grigliaPali(s).forEach(function(q, i){ var e = stDi(s, 'palo', 'P' + due(i + 1)), d = s.dP / 2;
-        box(ki(e.r) + (e.r ? '' : '|p' + i), e.st, P + q.x - d, P + q.x + d, yP - s.lP, yP, zc + q.z - d, zc + q.z + d); });
+      var P = s.pk, yP = q0 - s.pH, ki = function(r){ return r ? op.id + '|' + r.id : op.id + '|vs|' + s.id; }, ell = s.fo !== 'R';
+      grigliaPali(s).forEach(function(q, i){ var e = stDi(s, 'palo', 'P' + due(i + 1)), d = Math.max(.1, s.dP) / 2;
+        tondo3(ki(e.r) + (e.r ? '' : '|p' + i), e.st, P + q.x, zc + q.z, d, d, yP - s.lP, yP, 0, 14); });
       if (s.pH > 0) { var ep = stDi(s, 'plinto', 'Plinto'); box(ki(ep.r) + (ep.r ? '' : '|pl'), ep.st, P - s.pB / 2, P + s.pB / 2, yP, q0, zc - s.pL / 2, zc + s.pL / 2); }
-      var fB = s.pB * .4, fL = s.pL * .45, uB = s.pB * .5, uL = s.pL * .85, yt = q0;
-      if (s.fH > 0) { var ef = stDi(s, 'fusto', 'Fusto'); box(ki(ef.r) + (ef.r ? '' : '|fu'), ef.st, P - fB / 2, P + fB / 2, q0, q0 + s.fH, zc - fL / 2, zc + fL / 2); yt = q0 + s.fH; }
-      if (s.uH > 0) { var eu = stDi(s, 'pulvino', 'Pulvino'); box(ki(eu.r) + (eu.r ? '' : '|pu'), eu.st, P - uB / 2, P + uB / 2, yt, yt + s.uH, zc - uL / 2, zc + uL / 2); yt += s.uH; }
-      for (var bb = 1; bb <= s.nB; bb++) { var eb = stDi(s, 'baggiolo', 'B' + bb), zb = s.nB > 1 ? -uL * .38 + (bb - 1) * uL * .76 / (s.nB - 1) : 0; box(ki(eb.r) + (eb.r ? '' : '|b' + bb), eb.st, P - .45, P + .45, yt, yt + .35, zc + zb - .45, zc + zb + .45); }
-      for (var rr = 1; rr <= s.nR; rr++) { var er = stDi(s, 'ritegno', 'R' + rr), zr = s.nR > 1 ? -uL * .47 + (rr - 1) * uL * .94 / (s.nR - 1) : 0; box(ki(er.r) + (er.r ? '' : '|r' + rr), er.st, P - .35, P + .35, yt, yt + .7, zc + zr - .3, zc + zr + .3); }
+      var fA = Math.max(.2, s.fA), fT = Math.max(.2, s.fT), uA = Math.max(.2, s.uA), uT = Math.max(.2, s.uT), yt = q0;
+      if (s.fH > 0) { var ef = stDi(s, 'fusto', 'Fusto'), kf = ki(ef.r) + (ef.r ? '' : '|fu');
+        if (ell) tondo3(kf, ef.st, P, zc, fA / 2, fT / 2, q0, q0 + s.fH, s.fS > 0 ? s.fS : 0, 36);
+        else box(kf, ef.st, P - fA / 2, P + fA / 2, q0, q0 + s.fH, zc - fT / 2, zc + fT / 2);
+        yt = q0 + s.fH; }
+      if (s.uH > 0) { var eu = stDi(s, 'pulvino', 'Pulvino'), ku = ki(eu.r) + (eu.r ? '' : '|pu');
+        if (ell) tondo3(ku, eu.st, P, zc, uA / 2, uT / 2, yt, yt + s.uH, 0, 36);
+        else box(ku, eu.st, P - uA / 2, P + uA / 2, yt, yt + s.uH, zc - uT / 2, zc + uT / 2);
+        yt += s.uH; }
+      // i baggioli su due file (una per campata, a un quarto del pulvino lungo l'asse), sparsi di traverso; i ritegni in mezzo
+      var file = s.nB >= 2 ? 2 : 1, perF = Math.ceil(s.nB / file), lb = Math.max(.4, Math.min(1.1, uA * .24)), nb = 0;
+      for (var fb = 0; fb < file; fb++) for (var jb = 0; jb < perF && nb < s.nB; jb++) {
+        nb++; var eb = stDi(s, 'baggiolo', 'B' + nb), xb = file === 2 ? (fb ? 1 : -1) * uA * .25 : 0, zb = perF > 1 ? -uT * .28 + jb * uT * .56 / (perF - 1) : 0;
+        box(ki(eb.r) + (eb.r ? '' : '|b' + nb), eb.st, P + xb - lb / 2, P + xb + lb / 2, yt, yt + .35, zc + zb - lb / 2, zc + zb + lb / 2); }
+      for (var rr = 1; rr <= s.nR; rr++) { var er = stDi(s, 'ritegno', 'R' + rr), zr = s.nR > 1 ? -uT * .12 + (rr - 1) * uT * .24 / (s.nR - 1) : 0; box(ki(er.r) + (er.r ? '' : '|r' + rr), er.st, P - .35, P + .35, yt, yt + .7, zc + zr - .3, zc + zr + .3); }
       hmax = Math.max(hmax, yt - q0 + .7);
       if (una) et.push({ x: P, y: yt + 1.2, z: zc, t: s.nm + (s.tp ? ' · ' + s.tp : ''), c: '#e9f3ff', bg: 'rgba(23,39,58,.92)', k: .024 });
     });
@@ -34748,9 +34807,20 @@ window.MQOpere3D = (function(){
     if (/^pref|^p$|^t ?\d+$|^\d+$|^tipo ?\d+$|^pannell/.test(s)) return PM_PREF;
     return null;
   }
+  // 37.3 · un tombino si scrive nella tabella del muro: la colonna «Elemento» dice cosa c'è tra quelle pk (es. «Tombino idraulico Ø1500»)
+  function eTombino(r){ return !!r && /tombin/.test(norm(r.el)); }
+  function diamTombino(r){   // il diametro scritto nell'elemento (Ø1500, DN 800, Ø 1,5): in metri
+    var m = /(?:ø|Ø|dn|diam[a-z]*\.?)\s*=?\s*(\d+(?:[.,]\d+)?)/i.exec(String(r && r.el || '')); if (!m) return null;
+    var v = parseFloat(m[1].replace(',', '.')); return v > 0 ? (v > 20 ? v / 1000 : v) : null;
+  }
+  // i tombini del muro: le righe «tombino» della tabella e (dalla 37.1) quelli scritti a parte
   function tombiniMuro(op){
-    return trattiDi(op).filter(function(t){ return t.ti === 'o'; }).map(function(t){ var a = num(t.pkI), b = num(t.pkF); if (a == null || b == null) return null;
-      return { id: t.id, nm: String(t.nm == null ? '' : t.nm).trim() || 'Tombino', a: Math.min(a, b), b: Math.max(a, b) }; }).filter(Boolean);
+    var k = calcola(op), l = [];
+    k.righe.forEach(function(r){ if (!eTombino(r)) return; var x = k.x[r.id]; if (!x || x.a == null || x.b == null) return;
+      var nm = String(r.concio == null ? '' : r.concio).trim(); l.push({ id: r.id, nm: nm || 'Tombino', a: Math.min(x.a, x.b), b: Math.max(x.a, x.b), d: diamTombino(r), r: r, st: x.st }); });
+    trattiDi(op).filter(function(t){ return t.ti === 'o'; }).forEach(function(t){ var a = num(t.pkI), b = num(t.pkF); if (a == null || b == null) return;
+      l.push({ id: t.id, nm: String(t.nm == null ? '' : t.nm).trim() || 'Tombino', a: Math.min(a, b), b: Math.max(a, b), d: null, vec: true }); });
+    return l.sort(function(p, q){ return p.a - q.a; });
   }
   function nomeTrattaM(nm){ nm = String(nm == null ? '' : nm).trim(); return !nm ? 'Senza tratta' : /^\d+[a-z]?$/i.test(nm) ? 'Tratta ' + nm : nm; }
   function nomeConcioM(r, corto){ var c = String(r.concio == null ? '' : r.concio).trim(); if (!c) return ''; return /^\d+[a-z]?$/i.test(c) ? (corto ? c : 'Concio ' + c) : c; }
@@ -34758,7 +34828,7 @@ window.MQOpere3D = (function(){
   // i conci in fila per pk e le tratte: conci di fila con lo stesso nome di tratta
   function tratteMuro(op){
     var k = calcola(op), conci = [];
-    k.righe.forEach(function(r){ var x = k.x[r.id]; if (!x || x.a == null || x.b == null) return; var a = Math.min(x.a, x.b), b = Math.max(x.a, x.b); if (!(b - a > 0)) return;
+    k.righe.forEach(function(r){ var x = k.x[r.id]; if (!x || x.a == null || x.b == null || eTombino(r)) return; var a = Math.min(x.a, x.b), b = Math.max(x.a, x.b); if (!(b - a > 0)) return;   // 37.3: i tombini a parte
       var pm = pmDa(r.pm) || '', stF = statoFase(r.fCost, r.fGetto);
       conci.push({ r: r, a: a, b: b, stF: stF, stE: pm === PM_PREF ? stF : statoFase(r.eCost, r.eGetto), pm: pm, st: x.st }); });   // 37.2: il prefabbricato segue la fondazione
     conci.sort(function(p, q){ return p.a - q.a || p.b - q.b; });
@@ -34774,7 +34844,7 @@ window.MQOpere3D = (function(){
       + '\nfondazione ' + f(r.fCost, r.fGetto) + (c.pm === PM_PREF ? '\nparamento prefabbricato: si getta solo la fondazione' : ' · elevazione ' + f(r.eCost, r.eGetto) + (c.pm ? '\nparamento ' + c.pm.toLowerCase() : ''));
   }
 
-  var PMV = {}, TBM = {};   // per opera: zoom, posizione e tratta scelta · i tombini mentre si scrivono
+  var PMV = {};   // per opera: zoom, posizione e tratta scelta
   function vistaProspetto(b, op, soloDati){
     if (!soloDati || !b.querySelector('.ol-pm')) {
       b.innerHTML = '<div class="ol-pm"><section class="ol-card ol-card-in"><div class="ol-ch"><h3>Prospetto<small>come il profilo della tavola · tocca una tratta per evidenziarla, un concio per le sue date · Ctrl+rotella o due dita per avvicinare</small></h3>'
@@ -34795,7 +34865,7 @@ window.MQOpere3D = (function(){
     if (dv.tr != null && !T.tratte.some(function(t){ return t.k === dv.tr; })) dv.tr = null;
     chipsTratte(b, T, dv); numeriPm(b, op, T, dv);
     b._pm = disegnoMuro(b.querySelector('.ol-pm-d'), op, { mantieni: soloDati });
-    cardTombini(b, op, soloDati);
+    cardTombini(b, op);
   }
   // una tratta scelta (o tutto il muro): i numeri sopra, il disegno la evidenzia e ci va
   function scegliTratta(b, op, key, daDisegno){
@@ -34912,10 +34982,16 @@ window.MQOpere3D = (function(){
       // la tratta scelta: una cornice intorno ai suoi conci
       if (sel != null) T.tratte.forEach(function(t){ if (t.k !== sel) return; var Xa = X(t.a), Xb = X(t.b); if (Xb < LW - 2 || Xa > W + 2) return;
         h.push('<rect class="trs" x="' + (Xa - 2).toFixed(1) + '" y="' + (Y_TR - 2) + '" width="' + (Xb - Xa + 4).toFixed(1) + '" height="' + (yB - Y_TR + 6).toFixed(1) + '" rx="3"/>'); });
-      // i tombini: un rettangolone dalla fascia delle tratte fin sotto la fondazione
+      // i tombini: un rettangolone dalla fascia delle tratte fin sotto la fondazione; quelli della tabella anche col muro di
+      // testa (colorato per stato) e il tubo che passa, come nella foto (37.3)
       TB.forEach(function(t){ var Xa = X(t.a), Xb = X(t.b); if (Xb < LW - 2 || Xa > W + 2) return; var w = Math.max(5, Xb - Xa), yt = Y_TR - 4, yb = yDi(-.5);
-        h.push('<rect class="tbm" data-tb="' + esc(t.id) + '" x="' + Xa.toFixed(1) + '" y="' + yt + '" width="' + w.toFixed(1) + '" height="' + (yb - yt).toFixed(1) + '"><title>' + esc(t.nm + ' · tombino · ' + pkFmt(t.a) + ' → ' + pkFmt(t.b) + ' · ' + fN(t.b - t.a, 2) + ' m') + '</title></rect>');
-        h.push('<text class="trh tbn" x="' + (Xa + w / 2).toFixed(1) + '" y="' + (Y_E + 12) + '" text-anchor="middle">' + esc(t.nm) + '</text>');
+        if (t.r) {
+          var ht = num(t.r.h) != null ? num(t.r.h) + (num(t.r.spF) || .6) : zMax * .9, dd = t.d || Math.min(1.2, Math.max(.6, ht * .35)), zc = .45 + dd / 2;
+          h.push('<rect class="pz tbt" data-r="' + esc(t.r.id) + '" x="' + Xa.toFixed(1) + '" y="' + yDi(ht).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + (yB - yDi(ht)).toFixed(1) + '" fill="' + COL_ST[t.st] + '" fill-opacity=".55" stroke="#0b1018" stroke-width=".8"/>');
+          h.push('<ellipse class="tbp" cx="' + ((Xa + Xb) / 2).toFixed(1) + '" cy="' + yDi(zc).toFixed(1) + '" rx="' + Math.max(2, Math.min(w / 2 - 1, dd / 2 * dv.s)).toFixed(1) + '" ry="' + Math.max(2, dd / 2 * ky).toFixed(1) + '"/>');
+        }
+        h.push('<rect class="tbm" data-tb="' + esc(t.id) + '" x="' + Xa.toFixed(1) + '" y="' + yt + '" width="' + w.toFixed(1) + '" height="' + (yb - yt).toFixed(1) + '"' + (t.r ? ' fill-opacity=".08"' : '') + '><title>' + esc(t.nm + ' · tombino' + (t.d ? ' Ø' + fN(t.d, 2) + ' m' : '') + ' · ' + pkFmt(t.a) + ' → ' + pkFmt(t.b) + ' · ' + fN(t.b - t.a, 2) + ' m') + '</title></rect>');
+        h.push('<text class="trh tbn" x="' + (Xa + w / 2).toFixed(1) + '" y="' + (Y_E + 12) + '" text-anchor="middle">' + esc(t.nm + (t.d && w > 70 ? ' · Ø' + fN(t.d, 2) : '')) + '</text>');
       });
       cont.innerHTML = h.join('');
     }
@@ -34968,108 +35044,63 @@ window.MQOpere3D = (function(){
   }
   function infoTombino(b, op, id){
     var t = tombiniMuro(op).filter(function(x){ return x.id === id; })[0]; if (!t) return;
+    if (t.r) return schedaPezzo(op.id, t.r.id);   // 37.3: un tombino della tabella: la sua scheda
     var d = function(k, v){ return '<div><small>' + esc(k) + '</small><b>' + esc(v) + '</b></div>'; };
     var bt = [{ t: 'Chiudi' }];
-    if (puoIcm() && b) bt.push({ t: '✎ Modifica i tombini', cls: 'pri', fn: function(dd, ch){ ch(); var x = b.querySelector('[data-tm="mod"]'); if (x) { x.click(); try { b.querySelector('.ol-pm-tb').scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch(e){} } } });
-    dialogo({ titolo: t.nm, html: '<div class="ol-pz-dati">' + d('Tombino', t.nm) + d('Da pk a pk', pkFmt(t.a) + ' → ' + pkFmt(t.b)) + d('Larghezza', fN(t.b - t.a, 2) + ' m') + '</div>', bottoni: bt });
+    if (puoIcm() && b) bt.push({ t: 'Porta nella tabella', cls: 'pri', fn: function(dd, ch){ ch(); portaNellaTabella(b, S.opere[op.id] || op); } });
+    dialogo({ titolo: t.nm, html: '<div class="ol-pz-dati">' + d('Tombino', t.nm) + d('Da pk a pk', pkFmt(t.a) + ' → ' + pkFmt(t.b)) + d('Larghezza', fN(t.b - t.a, 2) + ' m') + '</div>'
+      + '<p class="nota" style="margin-top:8px">Questo tombino è scritto a parte (37.1): «Porta nella tabella» lo mette nella Tabella del muro, come gli altri.</p>', bottoni: bt });
   }
 
-  /* ---------- i tombini del muro: una tabella (nome, da pk, a pk), anche presi dai rilevati ---------- */
-  function cardTombini(b, op, soloDati){
+  /* ---------- 37.3 · i tombini del muro si scrivono nella Tabella: una riga da pk a pk con «Elemento» = Tombino idraulico ---------- */
+  function cardTombini(b, op){
     var box = b.querySelector('.ol-pm-tb'); if (!box) return;
-    var icm = puoIcm(), g = icm ? TBM[op.id] : null;
-    if (soloDati && g && box.querySelector('.ol-tbm-e')) return;   // mentre scrivi non ridisegno sotto le mani
-    var l = tombiniMuro(op);
-    var h = '<div class="ol-ch"><h3>Tombini<small>i tombini idraulici lungo il muro: nel prospetto e nel 3D sono un rettangolone</small></h3><div class="ol-az">';
-    if (g) h += '<button type="button" class="ol-b picc" data-tm="+">＋ Tombino</button><button type="button" class="ol-b picc" data-tm="ril" title="i tombini scritti nella geometria dei rilevati, dentro le pk del muro">Dai rilevati</button><button type="button" class="ol-b picc" data-tm="ann">Annulla</button><button type="button" class="ol-b pri picc" data-tm="salva">Salva</button>';
-    else if (icm) h += '<button type="button" class="ol-b picc" data-tm="mod">✎ ' + (l.length ? 'Modifica i tombini' : 'Scrivi i tombini') + '</button>';
-    h += '</div></div>';
-    if (g) {
-      h += '<div class="ol-scorri"><table class="ol-pt ol-edt ol-xls ol-tbm-e"><thead><tr><th>#</th><th>Nome</th><th>Da pk</th><th>A pk</th><th>Larghezza [m]</th><th></th></tr></thead><tbody>'
-        + g.righe.map(function(t, i){ return '<tr data-i="' + i + '"><td class="num">' + (i + 1) + '</td><td><input class="ol-in" name="nm" value="' + esc(t.nm || '') + '" placeholder="IN28" maxlength="24" style="width:96px" aria-label="Nome"></td>'
-            + '<td><input class="ol-in pk" name="pkI" value="' + esc(num(t.pkI) != null ? pkFmt(num(t.pkI), 2) : '') + '" placeholder="18+300,00" style="width:100px" aria-label="Da pk"></td>'
-            + '<td><input class="ol-in pk" name="pkF" value="' + esc(num(t.pkF) != null ? pkFmt(num(t.pkF), 2) : '') + '" placeholder="18+304,00" style="width:100px" aria-label="A pk"></td>'
-            + '<td class="num ol-tbm-l"></td><td><button type="button" class="ol-b picc peric" data-tm="via" data-i="' + i + '" aria-label="Togli il tombino">✕</button></td></tr>'; }).join('')
-        + '</tbody></table></div><p class="err" hidden></p>'
-        + '<p class="nota" style="margin-top:8px">Una riga per tombino: il nome (es. IN28) e da pk a pk. «Dai rilevati» prende i tombini già scritti nella geometria dei rilevati, dentro le pk del muro.</p>';
-    } else {
-      h += !l.length ? '<p class="nota">Nessun tombino.' + (icm ? ' Con «✎ Scrivi i tombini» li metti da pk a pk (o li prendi dai rilevati).' : '') + '</p>'
-        : '<div class="ol-scorri"><table class="ol-pt ol-xls ol-tbm-v"><thead><tr><th>#</th><th>Nome</th><th>Da pk</th><th>A pk</th><th>Larghezza [m]</th></tr></thead><tbody>'
-          + l.map(function(t, i){ return '<tr class="cl" data-tm="vedi" data-pk="' + tondo((t.a + t.b) / 2, 3) + '" data-w="' + tondo(t.b - t.a, 3) + '"><td class="num">' + (i + 1) + '</td><td><b>' + esc(t.nm) + '</b></td><td class="num">' + pkFmt(t.a) + '</td><td class="num">' + pkFmt(t.b) + '</td><td class="num">' + fN(t.b - t.a, 2) + '</td></tr>'; }).join('') + '</tbody></table></div>';
-    }
+    var icm = puoIcm(), l = tombiniMuro(op), vecchi = l.filter(function(t){ return t.vec; }).length;
+    var h = '<div class="ol-ch"><h3>Tombini<small>si scrivono nella Tabella: una riga da pk a pk con «Elemento» = Tombino idraulico (anche col diametro, es. Ø1500)</small></h3><div class="ol-az">'
+      + (icm ? '<button type="button" class="ol-b picc" data-tm="ril" title="i tombini scritti nella geometria dei rilevati, dentro le pk del muro: diventano righe della Tabella">Dai rilevati</button>' : '')
+      + (icm && vecchi ? '<button type="button" class="ol-b pri picc" data-tm="porta" title="i tombini scritti a parte con la 37.1 vanno nella Tabella del muro">Porta nella tabella (' + vecchi + ')</button>' : '') + '</div></div>';
+    h += !l.length ? '<p class="nota">Nessun tombino.</p>'
+      : '<div class="ol-scorri"><table class="ol-pt ol-xls ol-tbm-v"><thead><tr><th>#</th><th>Nome</th><th>Da pk</th><th>A pk</th><th>Larghezza [m]</th><th>Ø [m]</th><th>Stato</th></tr></thead><tbody>'
+        + l.map(function(t, i){ return '<tr class="cl" data-tm="vedi" data-pk="' + tondo((t.a + t.b) / 2, 3) + '" data-w="' + tondo(t.b - t.a, 3) + '"><td class="num">' + (i + 1) + '</td><td><b>' + esc(t.nm) + '</b></td><td class="num">' + pkFmt(t.a) + '</td><td class="num">' + pkFmt(t.b) + '</td><td class="num">' + fN(t.b - t.a, 2) + '</td><td class="num">' + (t.d ? fN(t.d, 2) : '—') + '</td>'
+            + '<td>' + (t.r ? '<span class="ol-chip st-' + t.st + '">' + esc(NOMI_ST.muro[t.st] || t.st) + '</span>' : '<span class="nota">scritto a parte</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
     box.innerHTML = h;
-    if (g) { contaTombini(box); box.querySelector('.ol-tbm-e tbody').addEventListener('input', function(){ contaTombini(box); }); }
-  }
-  function leggiTombini(box, g){
-    box.querySelectorAll('.ol-tbm-e tr[data-i]').forEach(function(tr){
-      var t = g.righe[+tr.dataset.i]; if (!t) return;
-      var q = function(n){ return tr.querySelector('[name="' + n + '"]'); }, a = pkParse(q('pkI').value), b = pkParse(q('pkF').value);
-      t.nm = q('nm').value.trim().slice(0, 24) || null; t.pkI = a; t.pkF = b;
-      t._e = (!!q('pkI').value.trim() && a == null) || (!!q('pkF').value.trim() && b == null);
-    });
-  }
-  function contaTombini(box){
-    box.querySelectorAll('.ol-tbm-e tr[data-i]').forEach(function(tr){
-      var a = pkParse(tr.querySelector('[name=pkI]').value), b = pkParse(tr.querySelector('[name=pkF]').value);
-      tr.querySelector('.ol-tbm-l').textContent = a != null && b != null && b > a ? fN(b - a, 2) : '';
-    });
   }
   function azioneTombini(b, op, x){
-    var a = x.dataset.tm, box = b.querySelector('.ol-pm-tb');
+    var a = x.dataset.tm;
     if (a === 'vedi') { if (b._pm) b._pm.vai(num(x.dataset.pk), Math.max(.5, (b.querySelector('.ol-pm-d').clientWidth - 60) / Math.max(30, (num(x.dataset.w) || 4) * 8))); return; }
-    if (a === 'mod') {
-      if (!puoIcm() || bloccaSeServe()) return;
-      TBM[op.id] = { righe: trattiDi(op).filter(function(t){ return t.ti === 'o'; }).map(function(t){ return { id: t.id, nm: t.nm || '', pkI: num(t.pkI), pkF: num(t.pkF) }; }) };
-      if (!TBM[op.id].righe.length) TBM[op.id].righe.push({});
-      return cardTombini(b, op);
-    }
-    var g = TBM[op.id]; if (!g || !box) return;
-    leggiTombini(box, g);
-    if (a === 'ann') { delete TBM[op.id]; return cardTombini(b, op); }
-    if (a === 'salva') return salvaTombini(b, op);
-    if (a === '+') g.righe.push({});
-    else if (a === 'via') g.righe.splice(+x.dataset.i, 1);
-    else if (a === 'ril') { var n = tombiniDaiRilevati(op, g); avviso(n ? n + (n === 1 ? ' tombino preso' : ' tombini presi') + ' dai rilevati: controlla e salva.' : 'Nessun tombino dei rilevati dentro le pk del muro (o ci sono già).', n ? 'success' : 'info'); }
-    g.righe.sort(function(p, q){ var x1 = num(p.pkI), x2 = num(q.pkI); return ((x1 == null ? 1e12 : x1) - (x2 == null ? 1e12 : x2)); });
-    cardTombini(b, op);
+    if (!puoIcm() || bloccaSeServe()) return;
+    if (a === 'ril') return tombiniDaiRilevati(b, op);
+    if (a === 'porta') return portaNellaTabella(b, op);
   }
-  function tombiniDaiRilevati(op, g){
-    var k = calcola(op); if (k.pkMin == null) return 0;
-    var a0 = Math.min(k.pkMin, k.pkMax) - 1, b0 = Math.max(k.pkMin, k.pkMax) + 1, n = 0;
+  // una riga tombino nella tabella: al suo posto tra i conci (per pk)
+  function rigaTombino(op, nm, a, z, d){
+    var k = calcola(op), prima = null, dopo = null;
+    k.righe.forEach(function(r){ var x = k.x[r.id], o = num(r.o); if (!x || x.a == null || o == null) return; var pa = Math.min(x.a, x.b);
+      if (pa <= a && (!prima || pa > prima.pk)) prima = { pk: pa, o: o }; if (pa > a && (!dopo || pa < dopo.pk)) dopo = { pk: pa, o: o }; });
+    var o = prima && dopo ? (prima.o + dopo.o) / 2 : prima ? prima.o + .5 : dopo ? dopo.o - .5 : 1;
+    return { id: nuovoId('r'), concio: nm || null, pkI: tondo(a, 3), pkF: tondo(z, 3), L: tondo(z - a, 3), el: 'Tombino idraulico' + (d ? ' Ø' + Math.round(d * 1000) : ''), o: tondo(o, 4) };
+  }
+  function tombiniDaiRilevati(b, op){
+    var k = calcola(op); if (k.pkMin == null) { avviso('Scrivi prima i conci del muro con le loro pk.', 'info'); return; }
+    var a0 = Math.min(k.pkMin, k.pkMax) - 1, b0 = Math.max(k.pkMin, k.pkMax) + 1, gia = tombiniMuro(op), nuove = [];
     Object.keys(S.opere).forEach(function(id){ var o = S.opere[id]; if (!o || o.tipo !== 'rilevato') return;
       trattiDi(o).filter(function(t){ return t.ti === 'o'; }).forEach(function(t){
-        var a = num(t.pkI), b = num(t.pkF); if (a == null || b == null) return; var lo = Math.min(a, b), hi = Math.max(a, b);
+        var p1 = num(t.pkI), p2 = num(t.pkF); if (p1 == null || p2 == null) return; var lo = Math.min(p1, p2), hi = Math.max(p1, p2);
         if (hi < a0 || lo > b0) return;
-        if (g.righe.some(function(x){ return (x.nm && t.nm && norm(x.nm) === norm(t.nm)) || (x.pkI != null && x.pkF != null && Math.abs(x.pkI - lo) < .5 && Math.abs(x.pkF - hi) < .5); })) return;
-        g.righe = g.righe.filter(function(x){ return x.nm || x.pkI != null || x.pkF != null; });   // via le righe vuote
-        g.righe.push({ nm: String(t.nm || '').trim().slice(0, 24) || null, pkI: tondo(lo, 3), pkF: tondo(hi, 3) }); n++;
+        var nm = String(t.nm || '').trim().slice(0, 24);
+        if (gia.concat(nuove.map(function(r){ return { nm: r.concio, a: r.pkI, b: r.pkF }; })).some(function(x){ return (nm && x.nm && norm(x.nm) === norm(nm)) || (Math.abs(x.a - lo) < .5 && Math.abs(x.b - hi) < .5); })) return;
+        nuove.push(rigaTombino(op, nm, lo, hi, null));
       });
     });
-    return n;
+    if (!nuove.length) { avviso('Nessun tombino dei rilevati dentro le pk del muro (o ci sono già).', 'info'); return; }
+    nuoveRighe(op.id, nuove, 'ha preso ' + nuove.length + (nuove.length === 1 ? ' tombino' : ' tombini') + ' dai rilevati');
+    avviso(nuove.length + (nuove.length === 1 ? ' tombino messo' : ' tombini messi') + ' nella Tabella: controlla le pk e il diametro.', 'success');
   }
-  function salvaTombini(b, op){
-    var g = TBM[op.id]; if (!g) return;
-    var box = b.querySelector('.ol-pm-tb'), err = box.querySelector('.err'), errore = function(m){ err.textContent = m; err.hidden = false; try { err.scrollIntoView({ block: 'nearest' }); } catch(e){} };
-    var l = g.righe.filter(function(t){ return t.nm || t.pkI != null || t.pkF != null || t._e; });
-    for (var i = 0; i < l.length; i++) {
-      var t = l[i], r = 'Riga ' + (g.righe.indexOf(t) + 1) + ': ';
-      if (t._e || t.pkI == null || t.pkF == null) return errore(r + 'scrivi da pk a pk, per esempio 18+300,00 e 18+304,00.');
-      if (t.pkF <= t.pkI) return errore(r + 'la pk finale deve venire dopo quella iniziale.');
-      if (t.pkF - t.pkI > 200) return errore(r + 'un tombino lungo più di 200 m? Controlla le pk.');
-    }
-    var vecchi = trattiDi(op).filter(function(t2){ return t2.ti === 'o'; }), via = vecchi.map(function(t2){ return t2.id; }), nuove = [], cel = [];
-    l.forEach(function(t2, i2){
-      var w = t2.id ? vecchi.filter(function(x){ return x.id === t2.id && via.indexOf(x.id) >= 0; })[0] : null, v = { nm: t2.nm || null, pkI: tondo(t2.pkI, 3), pkF: tondo(t2.pkF, 3), o: 2000 + i2 };
-      if (w) { via.splice(via.indexOf(w.id), 1); Object.keys(v).forEach(function(k){ var a = w[k] == null || w[k] === '' ? null : w[k]; if (String(a) !== String(v[k])) cel.push({ rid: w.id, k: k, v: v[k] }); }); return; }
-      var r2 = { id: nuovoId('t'), tr: 1, ti: 'o', pkI: v.pkI, pkF: v.pkF, o: v.o }; if (v.nm) r2.nm = v.nm; nuove.push(r2);
-    });
-    var n = 0;
-    if (via.length) { togliRighe(op.id, via, 'ha tolto ' + via.length + (via.length === 1 ? ' tombino' : ' tombini')); n++; }
-    if (nuove.length) { nuoveRighe(op.id, nuove, 'ha aggiunto ' + nuove.length + (nuove.length === 1 ? ' tombino' : ' tombini')); n++; }
-    if (cel.length) { cambiaCelle(op.id, cel, 'ha cambiato i tombini (' + cel.length + ' dati)'); n++; }
-    delete TBM[op.id];
-    avviso(n ? 'Tombini salvati: il prospetto e il 3D li disegnano.' : 'Nessuna modifica ai tombini.', n ? 'success' : 'info');
-    vistaProspetto(b, S.opere[op.id] || op, true);
+  function portaNellaTabella(b, op){
+    var l = tombiniMuro(op).filter(function(t){ return t.vec; }); if (!l.length) return;
+    nuoveRighe(op.id, l.map(function(t){ return rigaTombino(op, t.nm === 'Tombino' ? '' : t.nm, t.a, t.b, null); }), 'ha portato ' + l.length + (l.length === 1 ? ' tombino' : ' tombini') + ' nella tabella');
+    togliRighe(op.id, l.map(function(t){ return t.id; }), 'ha tolto ' + l.length + (l.length === 1 ? ' tombino scritto a parte' : ' tombini scritti a parte'));
+    avviso('Tombini nella Tabella del muro.', 'success');
   }
 
 
@@ -35388,6 +35419,14 @@ window.MQOpere3D = (function(){
         if (b - a <= 0) return;
         if (op.tipo === 'muro') {
           var h = hDi(i), sF = num(r.spF) || .6, lF = num(r.lF) || 2.5, se = num(par.spEl) || .4;
+          if (eTombino(r)) {   // 37.3: il tombino scritto nella tabella: il muro di testa (colorato per stato) e il tubo che lo attraversa
+            var dT = diamTombino(r) || Math.min(1.2, Math.max(.6, (sF + h) * .35));
+            pezzi.push({ k: K + '|t', f: 'box', x0: a, x1: b, y0: q0, y1: q0 + sF + h, z0: zc - Math.max(se, .6) / 2, z1: zc + Math.max(se, .6) / 2, st: x.st });
+            pezzi.push({ k: K + '|tb', f: 'cil', ax: 'z', cx: (a + b) / 2, cy: q0 + .45 + dT / 2, a: Math.min(dT / 2, (b - a) / 2), b: dT / 2, z0: zc - lF / 2 - 2, z1: zc + lF / 2 + 2, t: Math.max(.08, dT * .08), n: 20, st: 'fatto', colore: '#56657a' });
+            hmax = Math.max(hmax, sF + h);
+            if (una) et.push({ x: (a + b) / 2, y: q0 + sF + h + .5, z: zc, t: (r.concio != null && r.concio !== '' ? String(r.concio) + ' · ' : '') + 'tombino', c: ET_O.c, bg: ET_O.bg, k: ET_O.k });
+            return;
+          }
           pezzi.push({ k: K + '|f', f: 'box', x0: a, x1: b, y0: q0, y1: q0 + sF, z0: zc - lF / 2, z1: zc + lF / 2, st: r.fGetto ? 'fatto' : r.fCost ? 'corso' : 'dafare' });
           var pref = pmDa(r.pm) === PM_PREF;   // 37.2: il paramento prefabbricato segue la fondazione (è finito quando la fondazione è gettata)
           pezzi.push({ k: K + '|e', f: 'box', x0: a, x1: b, y0: q0 + sF, y1: q0 + sF + h, z0: zc - se / 2, z1: zc + se / 2, st: pref ? (r.fGetto ? 'fatto' : r.fCost ? 'corso' : 'dafare') : r.eGetto ? 'fatto' : r.eCost ? 'corso' : 'dafare' });
@@ -35422,7 +35461,7 @@ window.MQOpere3D = (function(){
       });
       if (op.tipo === 'muro') {   // 37.1: i tombini del muro (un rettangolone azzurro trasparente) e il nome di ogni tratta
         var lFm = k.righe.reduce(function(m, r){ return Math.max(m, num(r.lF) || 0); }, 0) || 2.5, hTm = Math.max(2, hmax);
-        tombiniMuro(op).forEach(function(t){
+        tombiniMuro(op).filter(function(t){ return t.vec; }).forEach(function(t){   // 37.3: quelli scritti a parte (37.1); quelli della tabella sono già disegnati
           pezzi.push({ k: op.id + '|mt|' + t.id, f: 'box', x0: t.a, x1: t.b, y0: q0 - .8, y1: q0 + hTm + .3, z0: zc - lFm / 2 - 1.5, z1: zc + lFm / 2 + 1.5, st: 'dafare', colore: '#5d9bdc', fc: true });
           if (una) et.push({ x: (t.a + t.b) / 2, y: q0 + hTm + .9, z: zc, t: t.nm, c: ET_O.c, bg: ET_O.bg, k: ET_O.k });
           if (pmin == null || t.a < pmin) pmin = t.a; if (pmax == null || t.b > pmax) pmax = t.b;
